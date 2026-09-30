@@ -29,13 +29,16 @@ Typical pinout (verify with your model):
 
 The dry-contact relay acts as a simple switch between the two DRM terminals. When the relay is closed, the Envoy sees the DRM signal and reduces export to the configured level (0% for zero-injection).
 
-```text
-Envoy DRM+  ───┐
-               │
-         Relay (dry contact)
-               │
-Envoy DRM-  ───┘
-```
+![Wiring diagram for the Legrand 412173 dry-contact relay connected to the Envoy-S DRM port](assets/electrical_wiring_diagram/diagram_legrand_412173_envoy_drm.png)
+
+Example wiring with a **Legrand 412173** Zigbee dry-contact relay:
+
+- **O (output)** → **Com / DRM 0** on the Envoy DRM port.
+- **I (input)** → **1 / 5** on the Envoy DRM port.
+- Set the relay `device_mode` to **switch** (not "auto").
+- Set `power_on_behavior` to **off** so the contact opens on power loss / Zigbee / Home Assistant failure (fail-safe).
+
+The C1/C2 auxiliary inputs are not used in this setup.
 
 - Connect one side of the relay contact to **DRM+**.
 - Connect the other side of the relay contact to **DRM-**.
@@ -63,5 +66,9 @@ If the inverter does not react immediately, allow a few seconds for the DRM sign
 
 ## References
 
-- Enphase Envoy installation manual
+- [Enphase Envoy-S Installation and Operation Manual (PDF)](assets/enphase/EnvoySMultiphase-IOM-FR.pdf)
+- [Enphase Envoy-S Quick Install Guide (PDF)](assets/enphase/Envoy-S-M-QIG-Multi-Kit-Rev05-FR-2024-01-05.pdf)
+- [Enphase Envoy-S Reference Manual (PDF)](assets/enphase/Envoy-S-MAN-EN-INTL_FR.pdf)
+- [Legrand 412173 connected dry-contact switch (PDF)](assets/legrand/F03387FR-01%20(Contact%20sec%20connect%C3%A9).pdf)
+- [Legrand 412173 datasheet (PDF)](assets/legrand/LE12973AC-FR.pdf)
 - [Automatisation-Bridage-3ERL-Emphase](https://github.com/ALP40/Automatisation-Bridage-3ERL-Emphase)

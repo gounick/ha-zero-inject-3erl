@@ -9,6 +9,8 @@ All notable changes to this project will be documented in this file.
 - GitHub Actions workflows: hassfest, HACS validation, security scans, release checks.
 - README badges and improved installation instructions.
 - Renovate configuration for automated dependency update pull requests.
+- Documentation assets: wiring diagram, DRM port identification and manufacturer PDFs.
+- Detailed Enphase support steps in the Envoy DRM guide.
 
 ## [0.1.0] - 2026-09-30
 

@@ -8,6 +8,10 @@ DRM is a feature that allows an external signal to command the inverter to limit
 
 For Enphase systems, the DRM port is a physical terminal on the Envoy gateway. Closing the contact between the DRM terminals tells the micro-inverters to reduce production/export according to the configured DRM profile.
 
+![DRM port identification on the Envoy-S Metered gateway](assets/electrical_wiring_diagram/identification_of_the_DRM_port_on_the_Envoy-S-Metered_gateway.png)
+
+On the **Envoy-S Metered** gateway, the DRM port is the small terminal block above the main terminals. Look for the **Com / DRM 0** and **1 / 5** labels.
+
 ## Requirements
 
 - An Envoy-S or IQ Gateway with a physical DRM terminal.
@@ -18,28 +22,29 @@ For Enphase systems, the DRM port is a physical terminal on the Envoy gateway. C
 
 By default, Enphase systems are registered under an **Owner** account. The DRM settings are only visible under an **Installer** account.
 
-### Option 1: Convert your account through Enlighten
+### Upgrade through the Enlighten Manager program
 
-1. Log in to [Enphase Enlighten](https://enlighten.enphaseenergy.com).
-2. Open the system and go to **Settings → Access**.
-3. Request to change your role to **Installer**. Depending on your region, this may require support from the original installer or Enphase.
+The simplest path for a homeowner is to use the **Enlighten Manager Upgrade Program**. You can log in with your existing Owner account.
 
-### Option 2: Use the installer toolkit (legacy)
-
-Some older firmware versions allow local access via the Envoy installer toolkit app. This method is being phased out and may not work on recent firmware.
-
-### Option 3: Lifetime Installer subscription
-
-Enphase offers a paid **Lifetime** subscription that converts a homeowner account to full Installer access for a single system. This is a one-time purchase managed through the Enlighten portal.
-
-Steps:
-
-1. Log in to [Enphase Enlighten](https://enlighten.enphaseenergy.com).
-2. Navigate to the **Subscriptions** or **Installer access** section.
-3. Purchase the **Lifetime** subscription for the system you want to control.
-4. After confirmation, log out and log back in. The system should now show **Installer** role.
+1. Go to the [Enlighten Manager Upgrade Program](https://encare.enphase.com/?upgradeProgramType=1).
+2. Choose a subscription:
+   - **Monthly Subscription** — 9,99 €/month.
+   - **Lifetime Subscription** — 249 € one-time.
+3. Complete the purchase.
+4. After confirmation, log out and log back in to Enlighten. Your account should now have **Installer** capabilities for your own system.
 
 > This is a third-party paid service. Prices and availability depend on your region and are subject to change. This integration is not affiliated with Enphase.
+
+### Contact Enphase support
+
+Even after upgrading, you may find that the **Grid Profile** page is accessible but the list of available profiles is empty, or that some installer-level settings are missing for your specific system.
+
+In that case, contact [Enphase support](https://enphase.com/fr-fr/contact-enphase-support) and ask them to grant the necessary rights for your own system. Mention that you need:
+
+- Access to **Grid Profiles** / **Grid Management**.
+- The DRM profile list to be populated so you can select the 0% export profile.
+
+The Enphase support team can usually resolve this quickly, often by phone, and will enable the missing parameters remotely.
 
 ## Enabling the DRM port
 
@@ -78,5 +83,7 @@ If the export does not drop to zero when the DRM contact is closed, verify:
 ## References
 
 - [Enphase Enlighten](https://enlighten.enphaseenergy.com)
-- Enphase Envoy and IQ Gateway installation manuals
+- [Enphase Envoy-S Installation and Operation Manual (PDF)](assets/enphase/EnvoySMultiphase-IOM-FR.pdf)
+- [Enphase Envoy-S Quick Install Guide (PDF)](assets/enphase/Envoy-S-M-QIG-Multi-Kit-Rev05-FR-2024-01-05.pdf)
+- [Enphase Envoy-S Reference Manual (PDF)](assets/enphase/Envoy-S-MAN-EN-INTL_FR.pdf)
 - [Automatisation-Bridage-3ERL-Emphase](https://github.com/ALP40/Automatisation-Bridage-3ERL-Emphase)
