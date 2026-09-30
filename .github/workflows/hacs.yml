@@ -1,0 +1,29 @@
+---
+name: HACS Validation
+
+"on":
+  push:
+    branches: [main, master]
+  pull_request:
+  schedule:
+    - cron: "0 0 * * *"
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  hacs:
+    name: HACS Action
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: HACS Validation
+        uses: hacs/action@main
+        with:
+          category: integration
+          # Repository topics and brand assets must be configured for HACS publish.
+          # Ignore here so CI passes until the repository settings are updated.
+          ignore: "topics brands"

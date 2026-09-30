@@ -1,0 +1,58 @@
+name: Update changelog and manifest on release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  update-changelog:
+    name: Update CHANGELOG.md and manifest.json
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.target_commitish }}
+
+      - name: Update CHANGELOG.md and manifest.json
+        run: |
+          python3 <<'PY'
+          import json
+          import re
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          version = "${{ github.event.release.tag_name }}".lstrip("v")
+          today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+
+          changelog = Path("CHANGELOG.md")
+          text = changelog.read_text(encoding="utf-8")
+          text = text.replace(
+              "## [Unreleased]",
+              f"## [Unreleased]\n\n## [{version}] - {today}",
+              1,
+          )
+          changelog.write_text(text, encoding="utf-8")
+
+          for manifest in Path("custom_components").glob("*/manifest.json"):
+              data = json.loads(manifest.read_text(encoding="utf-8"))
+              data["version"] = version
+              manifest.write_text(
+                  json.dumps(data, indent=2) + "\n", encoding="utf-8"
+              )
+          PY
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add CHANGELOG.md custom_components/*/manifest.json
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+          git commit -m "chore(release): bump manifest and changelog for ${{ github.event.release.tag_name }}"
+          git push

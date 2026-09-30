@@ -1,0 +1,37 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "data": {
+          "api_url": "URL de l'API 3ERL",
+          "update_interval": "Intervalle de mise à jour (minutes)",
+          "pv_system_type": "Type de système photovoltaïque",
+          "pv_power_entity": "Capteur de puissance de production PV",
+          "relay_entity": "Interrupteur du relais de limitation d'injection",
+          "notify_service": "Service de notification (optionnel)"
+        },
+        "description": "Configurez le bridage zéro-injection 3ERL. L'intégration interroge l'API 3ERL et commande un relais pour limiter l'injection photovoltaïque sur demande.",
+        "title": "3ERL Zero-Injection"
+      }
+    },
+    "error": {
+      "cannot_connect": "Connexion à l'API 3ERL impossible. Vérifiez l'URL et le réseau.",
+      "unknown": "Erreur inattendue."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "data": {
+          "api_url": "URL de l'API 3ERL",
+          "update_interval": "Intervalle de mise à jour (minutes)",
+          "pv_power_entity": "Capteur de puissance de production PV",
+          "relay_entity": "Interrupteur du relais de limitation d'injection",
+          "notify_service": "Service de notification (optionnel)"
+        },
+        "description": "Mettez à jour les paramètres du bridage 3ERL.",
+        "title": "3ERL Zero-Injection"
+      }
+    }
+  }
+}

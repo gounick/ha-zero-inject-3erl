@@ -1,0 +1,4 @@
+reset_counters:
+  name: Reset counters
+  description: Reset the cumulative curtailed energy and estimated gain counters for all 3ERL config entries.
+  fields: {}

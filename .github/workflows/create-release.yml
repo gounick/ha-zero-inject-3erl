@@ -1,0 +1,78 @@
+---
+name: Create release
+
+"on":
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version to release (e.g. 0.2.0)
+        required: true
+        type: string
+      prerelease:
+        description: Mark as prerelease
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Create release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update CHANGELOG.md and manifest.json
+        run: |
+          python3 <<'PY'
+          import json
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          version = "${{ github.event.inputs.version }}".lstrip("v")
+          today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+
+          changelog = Path("CHANGELOG.md")
+          text = changelog.read_text(encoding="utf-8")
+          text = text.replace(
+              "## [Unreleased]",
+              f"## [Unreleased]\n\n## [{version}] - {today}",
+              1,
+          )
+          changelog.write_text(text, encoding="utf-8")
+
+          for manifest in Path("custom_components").glob("*/manifest.json"):
+              data = json.loads(manifest.read_text(encoding="utf-8"))
+              data["version"] = version
+              manifest.write_text(
+                  json.dumps(data, indent=2) + "\n", encoding="utf-8"
+              )
+          PY
+
+      - name: Commit, tag and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add CHANGELOG.md custom_components/*/manifest.json
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+          VERSION="${{ github.event.inputs.version }}"
+          git commit -m "chore(release): prepare v${VERSION}"
+          git tag -a "v${VERSION}" -m "Release v${VERSION}"
+          BRANCH="${{ github.event.repository.default_branch }}"
+          git push origin "HEAD:${BRANCH}" --follow-tags
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ github.event.inputs.version }}
+          name: Release v${{ github.event.inputs.version }}
+          generate_release_notes: true
+          prerelease: ${{ github.event.inputs.prerelease }}

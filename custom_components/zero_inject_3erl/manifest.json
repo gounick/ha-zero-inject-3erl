@@ -1,0 +1,12 @@
+{
+  "domain": "zero_inject_3erl",
+  "name": "3ERL Zero-Injection",
+  "codeowners": ["@gounick"],
+  "config_flow": true,
+  "documentation": "https://github.com/gounick/ha-zero-inject-3erl",
+  "integration_type": "device",
+  "iot_class": "cloud_polling",
+  "issue_tracker": "https://github.com/gounick/ha-zero-inject-3erl/issues",
+  "requirements": [],
+  "version": "0.1.0"
+}

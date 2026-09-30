@@ -1,0 +1,6 @@
+{
+  "name": "3ERL Zero-Injection",
+  "hacs": "2.0.0",
+  "render_readme": true,
+  "homeassistant": "2026.9.3"
+}
