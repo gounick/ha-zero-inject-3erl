@@ -1,8 +1,8 @@
-# Dashboard examples
+# Build a dashboard
 
-This page provides example Lovelace cards for the 3ERL Zero-Injection integration.
+Goal: add Lovelace cards for the 3ERL Zero-Injection entities.
 
-Replace the entity IDs below with the ones generated on your Home Assistant instance.
+Replace the entity IDs below with the ones generated on your Home Assistant instance. The full list is in the [entities reference](../reference/entities.md).
 
 ## Overview tiles
 

@@ -6,18 +6,43 @@ from typing import Any
 
 from homeassistant.core import HomeAssistant
 
-from .const import DEFAULT_ZERO_INJECT_MODE, SENSOR_KEY_BRIDAGE, ZERO_INJECT_MODES
+from .const import (
+    AGGREGATION_MODE_ACC,
+    DEFAULT_AGGREGATION_MODE,
+    DEFAULT_ZERO_INJECT_MODE,
+    SENSOR_KEY_BRIDAGE,
+    SENSOR_KEY_BRIDAGE_CDC,
+    ZERO_INJECT_MODES,
+)
 
 
-def is_bridage_active(api_data: dict[str, Any]) -> bool:
+def curtailment_signal_key(aggregation_mode: str = DEFAULT_AGGREGATION_MODE) -> str:
+    """Return the 3ERL API field that carries the curtailment signal.
+
+    :param aggregation_mode: Self-consumption contract type (aci or acc).
+    :type aggregation_mode: str
+    :return: The API key to read (Bridage for ACI, Bridage_CDC for ACC).
+    :rtype: str
+    """
+    if aggregation_mode == AGGREGATION_MODE_ACC:
+        return SENSOR_KEY_BRIDAGE_CDC
+    return SENSOR_KEY_BRIDAGE
+
+
+def is_bridage_active(
+    api_data: dict[str, Any],
+    aggregation_mode: str = DEFAULT_AGGREGATION_MODE,
+) -> bool:
     """Return whether the 3ERL API requests curtailment.
 
     :param api_data: Raw data returned by the 3ERL API.
     :type api_data: dict[str, Any]
+    :param aggregation_mode: Self-consumption contract type (aci or acc).
+    :type aggregation_mode: str
     :return: True when curtailment is requested.
     :rtype: bool
     """
-    bridage = api_data.get(SENSOR_KEY_BRIDAGE)
+    bridage = api_data.get(curtailment_signal_key(aggregation_mode))
     return bridage == 1 or str(bridage).lower() in ("true", "on", "yes")
 
 

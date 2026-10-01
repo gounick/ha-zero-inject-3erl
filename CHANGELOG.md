@@ -11,6 +11,9 @@ All notable changes to this project will be documented in this file.
 - Renovate configuration for automated dependency update pull requests.
 - Documentation assets: wiring diagram, DRM port identification and manufacturer PDFs.
 - Detailed Enphase support steps in the Envoy DRM guide.
+- Self-consumption contract type option (`aci`/`acc`): selects the `Bridage` or `Bridage_CDC` API signal for the curtailment decision.
+- Envoy relay-level configuration table (ACI 0% / ACC floor) in the Envoy DRM guide.
+- README guidance on using a grid-side Linky sensor (e.g. ZLinky TIC) when injection can come from multiple sources.
 
 ## [0.1.0] - 2026-09-30
 

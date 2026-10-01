@@ -14,12 +14,15 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .api import ThreeERLApiClient, ThreeERLApiError
 from .const import (
+    AGGREGATION_MODES,
+    CONF_AGGREGATION_MODE,
     CONF_API_URL,
     CONF_NOTIFY_SERVICE,
     CONF_PV_POWER_ENTITY,
     CONF_PV_SYSTEM_TYPE,
     CONF_RELAY_ENTITY,
     CONF_UPDATE_INTERVAL,
+    DEFAULT_AGGREGATION_MODE,
     DEFAULT_API_URL,
     DEFAULT_UPDATE_INTERVAL_MINUTES,
     DOMAIN,
@@ -46,6 +49,15 @@ STEP_USER_DATA_SCHEMA = vol.Schema(
             selector.SelectSelectorConfig(
                 options=PV_SYSTEM_TYPES,
                 mode=selector.SelectSelectorMode.DROPDOWN,
+            )
+        ),
+        vol.Required(
+            CONF_AGGREGATION_MODE, default=DEFAULT_AGGREGATION_MODE
+        ): selector.SelectSelector(
+            selector.SelectSelectorConfig(
+                options=AGGREGATION_MODES,
+                mode=selector.SelectSelectorMode.DROPDOWN,
+                translation_key=CONF_AGGREGATION_MODE,
             )
         ),
         vol.Required(CONF_PV_POWER_ENTITY): selector.EntitySelector(
@@ -135,6 +147,16 @@ class ZeroInject3ERLOptionsFlow(config_entries.OptionsFlow):
                         max=60,
                         unit_of_measurement="minutes",
                         mode=selector.NumberSelectorMode.BOX,
+                    )
+                ),
+                vol.Required(
+                    CONF_AGGREGATION_MODE,
+                    default=current.get(CONF_AGGREGATION_MODE, DEFAULT_AGGREGATION_MODE),
+                ): selector.SelectSelector(
+                    selector.SelectSelectorConfig(
+                        options=AGGREGATION_MODES,
+                        mode=selector.SelectSelectorMode.DROPDOWN,
+                        translation_key=CONF_AGGREGATION_MODE,
                     )
                 ),
                 vol.Required(

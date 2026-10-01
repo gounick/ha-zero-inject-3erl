@@ -123,7 +123,7 @@ class ThreeERLActiveBinarySensor(ThreeERLBaseBinarySensor):
         """Return True when zero-injection should be active."""
         mode = get_current_mode(self.hass, self._mode_entity_id())
         api_data = self.coordinator.data.get("api_data", {}) if self.coordinator.data else {}
-        bridage_active = is_bridage_active(api_data)
+        bridage_active = is_bridage_active(api_data, self.coordinator.aggregation_mode)
         return compute_zero_inject_active(mode, bridage_active)
 
     @property
@@ -136,7 +136,8 @@ class ThreeERLActiveBinarySensor(ThreeERLBaseBinarySensor):
         elif mode == "Off":
             reason = "Forced OFF (manual override)"
         elif is_bridage_active(
-            self.coordinator.data.get("api_data", {}) if self.coordinator.data else {}
+            self.coordinator.data.get("api_data", {}) if self.coordinator.data else {},
+            self.coordinator.aggregation_mode,
         ):
             reason = "Curtailment active - 3ERL signal"
 

@@ -14,8 +14,10 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, Upda
 
 from .api import ThreeERLApiClient, ThreeERLApiError
 from .const import (
+    CONF_AGGREGATION_MODE,
     CONF_PV_POWER_ENTITY,
     CONF_UPDATE_INTERVAL,
+    DEFAULT_AGGREGATION_MODE,
     DEFAULT_UPDATE_INTERVAL_MINUTES,
     DOMAIN,
     MEGAWATT_HOURS_PER_KILOWATT_HOUR,
@@ -59,6 +61,10 @@ class ThreeERLUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self._pv_power_entity = entry.options.get(
             CONF_PV_POWER_ENTITY, entry.data[CONF_PV_POWER_ENTITY]
         )
+        self._aggregation_mode = entry.options.get(
+            CONF_AGGREGATION_MODE,
+            entry.data.get(CONF_AGGREGATION_MODE, DEFAULT_AGGREGATION_MODE),
+        )
         self._cumulative_energy_kwh = 0.0
         self._cumulative_gain_eur = 0.0
         self._last_update_time: datetime | None = None
@@ -82,6 +88,15 @@ class ThreeERLUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             [self._pv_power_entity],
             self._handle_power_state_change,
         )
+
+    @property
+    def aggregation_mode(self) -> str:
+        """Return the configured self-consumption contract type.
+
+        :return: "aci" or "acc".
+        :rtype: str
+        """
+        return self._aggregation_mode
 
     async def async_load_cumulative_data(self) -> None:
         """Restore cumulative energy and gain values from storage."""
@@ -154,7 +169,7 @@ class ThreeERLUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
         if api_data is None:
             api_data = self.data.get("api_data", {}) if self.data else {}
-        bridage_active = is_bridage_active(api_data)
+        bridage_active = is_bridage_active(api_data, self._aggregation_mode)
         dernier_prep = self._numeric_value(api_data.get(SENSOR_KEY_DERNIER_PREP))
 
         if bridage_active and power_w > 0:
@@ -186,7 +201,7 @@ class ThreeERLUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         """
         power_state = self.hass.states.get(self._pv_power_entity)
         power_w = self._numeric_state(power_state) or 0.0
-        bridage_active = is_bridage_active(api_data)
+        bridage_active = is_bridage_active(api_data, self._aggregation_mode)
         dernier_prep = self._numeric_value(api_data.get(SENSOR_KEY_DERNIER_PREP)) or 0.0
 
         puissance_bridable = power_w if bridage_active else 0.0
@@ -196,6 +211,7 @@ class ThreeERLUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         return {
             "api_data": api_data,
             "timestamp": datetime.now(UTC).isoformat(),
+            "aggregation_mode": self._aggregation_mode,
             "pv_power_w": power_w,
             "puissance_bridable": puissance_bridable,
             "puissance_gain": round(puissance_gain, 6),

@@ -17,6 +17,7 @@ Home Assistant custom integration that monitors the French [3ERL](https://3erl.f
 ## Features
 
 - Polls the public 3ERL API (`https://3erl.fr/api.json`) for curtailment signals.
+- Supports both self-consumption contract types: **ACI** (`Bridage` signal) and **ACC** (`Bridage_CDC` signal).
 - Creates sensors for all 3ERL fields: `Bridage`, `Bridage_CDC`, `Dernier_PREP`, `PRD4`, `PREP_Profile`, `Heure_Update`, `Bridage_Long_Terme`, and more.
 - Controls a Home Assistant switch/relay in three modes:
   - **Auto** — relay follows the 3ERL curtailment signal.
@@ -60,33 +61,13 @@ The integration currently supports a generic PV production power sensor. The `PV
 
 ## Configuration
 
-1. Go to **Settings** → **Devices & services**.
-2. Click **Add integration** and search for **3ERL Zero-Injection**.
-3. Configure:
-   - **3ERL API URL** — leave the default unless you use a mirror.
-   - **Update interval** — how often to poll the 3ERL API (default: 15 minutes).
-   - **PV system type** — reserved for future use; choose **Generic**.
-   - **PV production power sensor** — a power sensor reporting current PV production in watts.
-   - **Zero-injection relay switch** — the switch that controls the relay wired to your inverter DRM port.
-   - **Notification service** — optional `notify.*` service for state-change notifications.
+Follow [docs/how-to/install-and-configure.md](docs/how-to/install-and-configure.md). All fields are described in the [configuration reference](docs/reference/configuration-options.md).
+
+One choice matters: pick **Self-consumption contract type** (`aci` or `acc`) to match your 3ERL contract. It decides which API signal drives the relay and how the Envoy relay levels must be set.
 
 ## Entities
 
-The integration creates the following entities per config entry:
-
-| Entity | Type | Description |
-|---|---|---|
-| `sensor.zero_inject_3erl_dernier_pre` | Sensor | Latest PRE+ value (€/MWh). |
-| `sensor.zero_inject_3erl_prd4` | Sensor | Daily average PREP value (€/MWh). |
-| `sensor.zero_inject_3erl_tendance_du_jour` | Sensor | Current PREP profile trend. |
-| `sensor.zero_inject_3erl_puissance_bridable` | Sensor | PV power during curtailment periods (W). |
-| `sensor.zero_inject_3erl_puissance_gain` | Sensor | Estimated current remuneration rate (€/h). |
-| `sensor.zero_inject_3erl_energie_bridage` | Sensor | Cumulative curtailed energy (kWh). |
-| `sensor.zero_inject_3erl_gain_cumule` | Sensor | Cumulative estimated gain (€). |
-| `binary_sensor.zero_inject_3erl_bridage_demande` | Binary sensor | True when 3ERL requests curtailment. |
-| `binary_sensor.zero_inject_3erl_bridage_cdc_demande` | Binary sensor | True when 3ERL requests CDC curtailment. |
-| `binary_sensor.zero_inject_3erl_zero_inject_active` | Binary sensor | True when zero-injection is currently active. |
-| `select.zero_inject_3erl_mode_zero_inject` | Select | Auto / On / Off mode. |
+The integration creates sensors for the 3ERL API fields, computed sensors for curtailed energy and estimated gain, binary sensors for the curtailment and active states, and an Auto / On / Off mode select. See the [entities reference](docs/reference/entities.md) for the full list.
 
 ## How remuneration is estimated
 
@@ -106,13 +87,17 @@ Reset the cumulative `Énergie bridage` and `Gain cumulé` sensors to zero.
 
 ## Dashboard
 
-Example Lovelace cards can be found in [docs/dashboard.md](docs/dashboard.md).
+Example Lovelace cards can be found in [docs/how-to/build-a-dashboard.md](docs/how-to/build-a-dashboard.md).
 
 ## Documentation
 
-- [Wiring the dry-contact relay](docs/wiring.md)
-- [Enabling Envoy DRM port](docs/envoy_drm.md)
-- [Dashboard examples](docs/dashboard.md)
+See [docs/README.md](docs/README.md) for the full index.
+
+- [How 3ERL zero-injection works](docs/explanation/concepts.md)
+- [Configure the Envoy DRM port](docs/how-to/configure-envoy-drm.md)
+- [Wire the dry-contact relay](docs/how-to/wire-the-relay.md)
+- [Install and configure](docs/how-to/install-and-configure.md)
+- [Entities](docs/reference/entities.md), [configuration options](docs/reference/configuration-options.md), [API fields](docs/reference/api-fields.md), [services](docs/reference/services.md)
 - [Troubleshooting](docs/troubleshooting.md)
 - [Workflow and architecture](WORKFLOW.md)
 

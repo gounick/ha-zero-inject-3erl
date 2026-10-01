@@ -16,10 +16,18 @@ CONF_PV_SYSTEM_TYPE = "pv_system_type"
 CONF_PV_POWER_ENTITY = "pv_power_entity"
 CONF_RELAY_ENTITY = "relay_entity"
 CONF_NOTIFY_SERVICE = "notify_service"
+CONF_AGGREGATION_MODE = "aggregation_mode"
 
 PV_SYSTEM_ENPHASE = "enphase"
 PV_SYSTEM_GENERIC = "generic"
 PV_SYSTEM_TYPES = [PV_SYSTEM_ENPHASE, PV_SYSTEM_GENERIC]
+
+# Self-consumption contract types. ACI (individual) uses the `Bridage` API
+# signal; ACC (collective) uses `Bridage_CDC`.
+AGGREGATION_MODE_ACI = "aci"
+AGGREGATION_MODE_ACC = "acc"
+AGGREGATION_MODES = [AGGREGATION_MODE_ACI, AGGREGATION_MODE_ACC]
+DEFAULT_AGGREGATION_MODE = AGGREGATION_MODE_ACI
 
 ZERO_INJECT_MODES = ["Auto", "On", "Off"]
 

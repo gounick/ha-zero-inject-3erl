@@ -6,11 +6,12 @@
           "api_url": "3ERL API URL",
           "update_interval": "Update interval (minutes)",
           "pv_system_type": "PV system type",
+          "aggregation_mode": "Self-consumption contract type",
           "pv_power_entity": "PV production power sensor",
           "relay_entity": "Zero-injection relay switch",
           "notify_service": "Notification service (optional)"
         },
-        "description": "Set up 3ERL zero-injection curtailment. The integration polls the 3ERL API and controls a relay to limit PV export when requested.",
+        "description": "Set up 3ERL zero-injection curtailment. The integration polls the 3ERL API and controls a relay to limit PV export when requested. Choose 'aci' for individual self-consumption or 'acc' for collective self-consumption.",
         "title": "3ERL Zero-Injection"
       }
     },
@@ -25,12 +26,21 @@
         "data": {
           "api_url": "3ERL API URL",
           "update_interval": "Update interval (minutes)",
+          "aggregation_mode": "Self-consumption contract type",
           "pv_power_entity": "PV production power sensor",
           "relay_entity": "Zero-injection relay switch",
           "notify_service": "Notification service (optional)"
         },
         "description": "Update the 3ERL zero-injection settings.",
         "title": "3ERL Zero-Injection"
+      }
+    }
+  },
+  "selector": {
+    "aggregation_mode": {
+      "options": {
+        "aci": "ACI - Individual self-consumption (Bridage signal)",
+        "acc": "ACC - Collective self-consumption (Bridage_CDC signal)"
       }
     }
   }

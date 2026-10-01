@@ -125,7 +125,8 @@ class ZeroInjectController:
         """
         mode = get_current_mode(self._hass, self._mode_entity_id)
         bridage_active = is_bridage_active(
-            self._coordinator.data.get("api_data", {}) if self._coordinator.data else {}
+            self._coordinator.data.get("api_data", {}) if self._coordinator.data else {},
+            self._coordinator.aggregation_mode,
         )
         return compute_zero_inject_active(mode, bridage_active)
 

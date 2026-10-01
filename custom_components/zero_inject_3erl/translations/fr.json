@@ -6,11 +6,12 @@
           "api_url": "URL de l'API 3ERL",
           "update_interval": "Intervalle de mise à jour (minutes)",
           "pv_system_type": "Type de système photovoltaïque",
+          "aggregation_mode": "Type de contrat d'autoconsommation",
           "pv_power_entity": "Capteur de puissance de production PV",
           "relay_entity": "Interrupteur du relais de limitation d'injection",
           "notify_service": "Service de notification (optionnel)"
         },
-        "description": "Configurez le bridage zéro-injection 3ERL. L'intégration interroge l'API 3ERL et commande un relais pour limiter l'injection photovoltaïque sur demande.",
+        "description": "Configurez le bridage zéro-injection 3ERL. L'intégration interroge l'API 3ERL et commande un relais pour limiter l'injection photovoltaïque sur demande. Choisissez 'aci' pour l'autoconsommation individuelle ou 'acc' pour l'autoconsommation collective.",
         "title": "3ERL Zero-Injection"
       }
     },
@@ -25,12 +26,21 @@
         "data": {
           "api_url": "URL de l'API 3ERL",
           "update_interval": "Intervalle de mise à jour (minutes)",
+          "aggregation_mode": "Type de contrat d'autoconsommation",
           "pv_power_entity": "Capteur de puissance de production PV",
           "relay_entity": "Interrupteur du relais de limitation d'injection",
           "notify_service": "Service de notification (optionnel)"
         },
         "description": "Mettez à jour les paramètres du bridage 3ERL.",
         "title": "3ERL Zero-Injection"
+      }
+    }
+  },
+  "selector": {
+    "aggregation_mode": {
+      "options": {
+        "aci": "ACI - Autoconsommation individuelle (signal Bridage)",
+        "acc": "ACC - Autoconsommation collective (signal Bridage_CDC)"
       }
     }
   }

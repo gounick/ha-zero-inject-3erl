@@ -21,10 +21,10 @@
 
 ## Export is not limited when relay is on
 
-- Verify the DRM port is enabled in the Envoy installer settings.
-- Confirm the selected DRM profile sets export to **0%** when the contact is closed.
+- Verify the relay limitation is configured in the Envoy installer settings.
+- Confirm Level 2 sets export to **0%** (ACI) or the correct floor (ACC) when the contact is closed.
 - Measure continuity across the DRM terminals when the relay is on.
-- Check the wiring guide in [wiring.md](wiring.md) and the Envoy setup in [envoy_drm.md](envoy_drm.md).
+- Check the wiring guide in [how-to/wire-the-relay.md](how-to/wire-the-relay.md) and the Envoy setup in [how-to/configure-envoy-drm.md](how-to/configure-envoy-drm.md).
 
 ## Energy and gain counters stay at zero
 
