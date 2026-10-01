@@ -46,6 +46,6 @@ jobs:
           kingfisher scan . --format sarif --output kingfisher-results.sarif
       - name: Upload Kingfisher SARIF
         if: always()
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: kingfisher-results.sarif
