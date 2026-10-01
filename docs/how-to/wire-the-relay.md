@@ -13,7 +13,7 @@ Electrical work should only be performed by a qualified person. Make sure the in
   - Non-exhaustive list :
     - [Legrand 412173](https://www.zigbee2mqtt.io/devices/412173.html)
     - [ADEO SIN-4-1-20_EQU](https://www.zigbee2mqtt.io/devices/SIN-4-1-20_EQU.html)
-    - [some Shelly devices](https://www.shelly.com/fr/collections/smart-switches-dimmers?sort_by=manual&filter.p.m.custom.filter_product_type_2=gid%3A%2F%2Fshopify%2FMetaobject%2F495237431645&filter.p.m.custom.filter_inputs_2=gid%3A%2F%2Fshopify%2FMetaobject%2F495629107549&filter.p.m.custom.filter_outputs_2=gid%3A%2F%2Fshopify%2FMetaobject%2F495652995421&filter.v.price.gte=&filter.v.price.lte=)
+    - [some Shelly devices](https://www.shelly.com/fr/collections/smart-switches-dimmers?filter.p.m.custom.filter_product_type_2=gid%3A%2F%2Fshopify%2FMetaobject%2F495237431645&filter.p.m.custom.filter_inputs_2=gid%3A%2F%2Fshopify%2FMetaobject%2F495629107549&filter.p.m.custom.filter_outputs_2=gid%3A%2F%2Fshopify%2FMetaobject%2F495652995421)
 - Suitable low-voltage cable (twisted pair or shielded, depending on distance).
 - For Zigbee relays, a coordinator compatible with Home Assistant (ZHA, Zigbee2MQTT, deCONZ).
 
