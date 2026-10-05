@@ -21,7 +21,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
       - name: HACS Validation
-        uses: hacs/action@main
+        uses: hacs/action@22.5.0
         with:
           category: integration
           # Repository topics and brand assets must be configured for HACS publish.

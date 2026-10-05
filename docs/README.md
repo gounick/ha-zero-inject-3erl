@@ -18,7 +18,7 @@ flowchart TD
     Q4 -->|yes| TS["troubleshooting.md"]
 ```
 
-| I need to... | Go to |
+| Need | Go to |
 |---|---|
 | Understand 3ERL, curtailment, ACI vs ACC and how the relay stops export | [explanation/concepts.md](explanation/concepts.md) |
 | Get Installer access on Enphase and configure the DRM relay levels | [how-to/configure-envoy-drm.md](how-to/configure-envoy-drm.md) |
@@ -31,3 +31,8 @@ flowchart TD
 | Look up the exposed services | [reference/services.md](reference/services.md) |
 | Diagnose a problem | [troubleshooting.md](troubleshooting.md) |
 | Understand the internal architecture | [../WORKFLOW.md](../WORKFLOW.md) |
+| Use a pure-YAML package instead of the custom integration | [examples/package-3erl.yaml](examples/package-3erl.yaml) and [examples/view.yaml](examples/view.yaml) |
+
+## YAML package example
+
+If you prefer a pure-YAML setup instead of the custom integration, see [examples/package-3erl.yaml](examples/package-3erl.yaml) and the matching [examples/view.yaml](examples/view.yaml).

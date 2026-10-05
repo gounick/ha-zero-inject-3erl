@@ -18,6 +18,7 @@ Home Assistant custom integration that monitors the French [3ERL](https://3erl.f
 
 - Polls the public 3ERL API (`https://3erl.fr/api.json`) for curtailment signals.
 - Supports both self-consumption contract types: **ACI** (`Bridage` signal) and **ACC** (`Bridage_CDC` signal).
+- Available as a HACS custom integration or as a pure-YAML package (see [docs/examples/package-3erl.yaml](docs/examples/package-3erl.yaml)).
 - Creates sensors for all 3ERL fields: `Bridage`, `Bridage_CDC`, `Dernier_PREP`, `PRD4`, `PREP_Profile`, `Heure_Update`, `Bridage_Long_Terme`, and more.
 - Controls a Home Assistant switch/relay in three modes:
   - **Auto** — relay follows the 3ERL curtailment signal.
@@ -71,11 +72,23 @@ The integration creates sensors for the 3ERL API fields, computed sensors for cu
 
 ## How remuneration is estimated
 
-3ERL remunerates participants with 70% of the positive imbalance settlement price (PRE+) when market prices are positive. The integration computes:
+3ERL remunerates participants with 70% of the positive imbalance settlement price (PRE+) when market prices are positive.
 
-```text
-gain (€) = energy_bridée (kWh) × Dernier_PREP (€/MWh) × 0.7 / 1000
-```
+The price used depends on the contract type:
+
+- **ACI**: estimated daily PRE+ computed from RTE quarter-hourly PRE+ values weighted by the Enedis PRD3 profile. If Enedis has not yet published today's profile, the integration uses the profile from a configurable past day (default `-2`).
+
+  ```text
+  gain (€) = curtailed_energy (kWh) × estimated_daily_PREP (€/MWh) × 0.7 / 1000
+  ```
+
+- **ACC**: current quarter-hour PRE+ from RTE.
+
+  ```text
+  gain (€) = curtailed_energy (kWh) × current_PREP (€/MWh) × 0.7 / 1000
+  ```
+
+If the external pricing sources are unavailable, the integration falls back to the `Dernier_PREP` value from the 3ERL API.
 
 The cumulative values are persisted across Home Assistant restarts.
 
@@ -100,7 +113,6 @@ See [docs/README.md](docs/README.md) for the full index.
 - [Entities](docs/reference/entities.md), [configuration options](docs/reference/configuration-options.md), [API fields](docs/reference/api-fields.md), [services](docs/reference/services.md)
 - [Troubleshooting](docs/troubleshooting.md)
 - [Workflow and architecture](WORKFLOW.md)
-
 
 ## Contributions
 

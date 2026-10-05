@@ -18,12 +18,14 @@ from .const import (
     CONF_AGGREGATION_MODE,
     CONF_API_URL,
     CONF_NOTIFY_SERVICE,
+    CONF_PRD3_DAY_OFFSET,
     CONF_PV_POWER_ENTITY,
     CONF_PV_SYSTEM_TYPE,
     CONF_RELAY_ENTITY,
     CONF_UPDATE_INTERVAL,
     DEFAULT_AGGREGATION_MODE,
     DEFAULT_API_URL,
+    DEFAULT_PRD3_DAY_OFFSET,
     DEFAULT_UPDATE_INTERVAL_MINUTES,
     DOMAIN,
     PV_SYSTEM_GENERIC,
@@ -74,6 +76,17 @@ STEP_USER_DATA_SCHEMA = vol.Schema(
         vol.Optional(CONF_NOTIFY_SERVICE): selector.EntitySelector(
             selector.EntitySelectorConfig(
                 domain="notify",
+            )
+        ),
+        vol.Optional(
+            CONF_PRD3_DAY_OFFSET,
+            default=DEFAULT_PRD3_DAY_OFFSET,
+        ): selector.NumberSelector(
+            selector.NumberSelectorConfig(
+                min=-7,
+                max=0,
+                step=1,
+                mode=selector.NumberSelectorMode.BOX,
             )
         ),
     }
@@ -182,6 +195,17 @@ class ZeroInject3ERLOptionsFlow(config_entries.OptionsFlow):
                 ): selector.EntitySelector(
                     selector.EntitySelectorConfig(
                         domain="notify",
+                    )
+                ),
+                vol.Optional(
+                    CONF_PRD3_DAY_OFFSET,
+                    default=current.get(CONF_PRD3_DAY_OFFSET, DEFAULT_PRD3_DAY_OFFSET),
+                ): selector.NumberSelector(
+                    selector.NumberSelectorConfig(
+                        min=-7,
+                        max=0,
+                        step=1,
+                        mode=selector.NumberSelectorMode.BOX,
                     )
                 ),
             }

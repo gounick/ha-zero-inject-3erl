@@ -7,7 +7,9 @@ The integration creates the following entities per config entry. Entity IDs are 
 | Entity | Unit | Source | Description |
 |---|---|---|---|
 | `sensor.zero_inject_3erl_dernier_pre` | €/MWh | `Dernier_PREP` | Latest positive imbalance settlement price. |
-| `sensor.zero_inject_3erl_estimation_jour_prd4` | €/MWh | `PRD4` | Daily weighted average PREP. |
+| `sensor.zero_inject_3erl_estimation_jour_prd4` | €/MWh | `PRD4` | Daily weighted average PREP from 3ERL. |
+| `sensor.zero_inject_3erl_current_pre` | €/MWh | computed | Current quarter-hour PRE+ from RTE (used for ACC). |
+| `sensor.zero_inject_3erl_estimated_daily_pre` | €/MWh | computed | Estimated daily PRE+ for ACI, computed with the Enedis PRD3 profile. |
 | `sensor.zero_inject_3erl_tendance_du_jour` | — | `PREP_Profile` | Daily price trend. Attribute `heure_update` carries the API timestamp. |
 | `sensor.zero_inject_3erl_heure_update` | — | `Heure_Update` | Timestamp of the last API data update. |
 | `sensor.zero_inject_3erl_bridage_long_terme` | h | `Bridage_Long_Terme` | Long-term curtailment indicator. |

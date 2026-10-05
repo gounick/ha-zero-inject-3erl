@@ -155,6 +155,22 @@ async def async_setup_entry(
             SensorDeviceClass.MONETARY,
             SensorStateClass.TOTAL_INCREASING,
         ),
+        ThreeERLComputedSensor(
+            coordinator,
+            "Current PRE+",
+            "current_prep",
+            "€/MWh",
+            SensorDeviceClass.MONETARY,
+            SensorStateClass.MEASUREMENT,
+        ),
+        ThreeERLComputedSensor(
+            coordinator,
+            "Estimated daily PRE+",
+            "estimated_daily_prep",
+            "€/MWh",
+            SensorDeviceClass.MONETARY,
+            SensorStateClass.MEASUREMENT,
+        ),
     ]
 
     async_add_entities(entities)

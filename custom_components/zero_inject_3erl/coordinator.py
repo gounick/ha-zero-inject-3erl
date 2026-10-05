@@ -6,6 +6,7 @@ import logging
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
+import aiohttp
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.event import async_track_state_change_event
@@ -14,10 +15,13 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, Upda
 
 from .api import ThreeERLApiClient, ThreeERLApiError
 from .const import (
+    AGGREGATION_MODE_ACC,
     CONF_AGGREGATION_MODE,
+    CONF_PRD3_DAY_OFFSET,
     CONF_PV_POWER_ENTITY,
     CONF_UPDATE_INTERVAL,
     DEFAULT_AGGREGATION_MODE,
+    DEFAULT_PRD3_DAY_OFFSET,
     DEFAULT_UPDATE_INTERVAL_MINUTES,
     DOMAIN,
     MEGAWATT_HOURS_PER_KILOWATT_HOUR,
@@ -29,6 +33,7 @@ from .const import (
     WATTS_PER_KILOWATT,
 )
 from .helpers import is_bridage_active
+from .pricing import PricingDataError, PricingDataManager
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -53,6 +58,7 @@ class ThreeERLUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self,
         hass: HomeAssistant,
         api_client: ThreeERLApiClient,
+        session: aiohttp.ClientSession,
         entry: ConfigEntry,
     ) -> None:
         """Initialize the coordinator."""
@@ -65,6 +71,11 @@ class ThreeERLUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             CONF_AGGREGATION_MODE,
             entry.data.get(CONF_AGGREGATION_MODE, DEFAULT_AGGREGATION_MODE),
         )
+        prd3_offset = entry.options.get(
+            CONF_PRD3_DAY_OFFSET,
+            entry.data.get(CONF_PRD3_DAY_OFFSET, DEFAULT_PRD3_DAY_OFFSET),
+        )
+        self._pricing = PricingDataManager(session, prd3_offset)
         self._cumulative_energy_kwh = 0.0
         self._cumulative_gain_eur = 0.0
         self._last_update_time: datetime | None = None
@@ -122,6 +133,11 @@ class ThreeERLUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         except ThreeERLApiError as err:
             raise UpdateFailed(f"Failed to fetch 3ERL data: {err}") from err
 
+        try:
+            await self._pricing.async_update()
+        except PricingDataError as err:
+            _LOGGER.warning("Pricing data refresh failed: %s", err)
+
         self._accumulate_from_power_sensor()
 
         return self._build_data(api_data)
@@ -170,16 +186,16 @@ class ThreeERLUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         if api_data is None:
             api_data = self.data.get("api_data", {}) if self.data else {}
         bridage_active = is_bridage_active(api_data, self._aggregation_mode)
-        dernier_prep = self._numeric_value(api_data.get(SENSOR_KEY_DERNIER_PREP))
+        current_price = self._current_price(api_data)
 
         if bridage_active and power_w > 0:
             energy_delta_kwh = (power_w * delta_hours) / WATTS_PER_KILOWATT
             self._cumulative_energy_kwh += energy_delta_kwh
 
-            if dernier_prep is not None and dernier_prep > 0:
+            if current_price is not None and current_price > 0:
                 gain_delta_eur = (
                     energy_delta_kwh
-                    * dernier_prep
+                    * current_price
                     * REMUNERATION_RATE
                     / MEGAWATT_HOURS_PER_KILOWATT_HOUR
                 )
@@ -190,6 +206,27 @@ class ThreeERLUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             )
 
         self._last_update_time = now
+
+    def _current_price(self, api_data: dict[str, Any]) -> float | None:
+        """Return the price to use for the current remuneration estimate.
+
+        For ACC this is the current quarter-hour PRE+. For ACI it is the
+        estimated daily PRE+ computed from the PRD3 profile. If the external
+        pricing sources are unavailable, fall back to the latest 3ERL PRE+.
+
+        :param api_data: Raw data returned by the 3ERL API.
+        :type api_data: dict[str, Any]
+        :return: Price in EUR/MWh, or None if unavailable.
+        :rtype: float | None
+        """
+        if self._aggregation_mode == AGGREGATION_MODE_ACC:
+            return self._pricing.current_prep() or self._numeric_value(
+                api_data.get(SENSOR_KEY_DERNIER_PREP)
+            )
+        estimated = self._pricing.estimated_daily_prep
+        if estimated is not None:
+            return estimated
+        return self._numeric_value(api_data.get(SENSOR_KEY_DERNIER_PREP))
 
     def _build_data(self, api_data: dict[str, Any]) -> dict[str, Any]:
         """Combine API data with computed power, energy and gain values.
@@ -202,17 +239,19 @@ class ThreeERLUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         power_state = self.hass.states.get(self._pv_power_entity)
         power_w = self._numeric_state(power_state) or 0.0
         bridage_active = is_bridage_active(api_data, self._aggregation_mode)
-        dernier_prep = self._numeric_value(api_data.get(SENSOR_KEY_DERNIER_PREP)) or 0.0
+        current_price = self._current_price(api_data) or 0.0
 
         puissance_bridable = power_w if bridage_active else 0.0
         gain_per_mwh = REMUNERATION_RATE / MEGAWATT_HOURS_PER_KILOWATT_HOUR
-        puissance_gain = puissance_bridable * dernier_prep * gain_per_mwh / WATTS_PER_KILOWATT
+        puissance_gain = puissance_bridable * current_price * gain_per_mwh / WATTS_PER_KILOWATT
 
         return {
             "api_data": api_data,
             "timestamp": datetime.now(UTC).isoformat(),
             "aggregation_mode": self._aggregation_mode,
             "pv_power_w": power_w,
+            "current_prep": self._pricing.current_prep(),
+            "estimated_daily_prep": self._pricing.estimated_daily_prep,
             "puissance_bridable": puissance_bridable,
             "puissance_gain": round(puissance_gain, 6),
             "energie_bridage_kwh": round(self._cumulative_energy_kwh, 4),

@@ -38,7 +38,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     api_url = entry.data.get(CONF_API_URL, DEFAULT_API_URL)
     api = ThreeERLApiClient(session, api_url)
 
-    coordinator = ThreeERLUpdateCoordinator(hass, api, entry)
+    coordinator = ThreeERLUpdateCoordinator(hass, api, session, entry)
     try:
         await coordinator.async_load_cumulative_data()
         await coordinator.async_config_entry_first_refresh()

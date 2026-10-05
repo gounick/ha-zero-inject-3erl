@@ -10,6 +10,11 @@ DEFAULT_API_URL = "https://3erl.fr/api.json"
 DEFAULT_UPDATE_INTERVAL_MINUTES = 15
 DEFAULT_ZERO_INJECT_MODE = "Auto"
 
+DEFAULT_RTE_PRICE_API_URL = "https://www.services-rte.com/cms/open_data/v1/price/table"
+DEFAULT_ENEDIS_PRD3_API_URL = "https://openservices.enedis.fr/php/opendata.php"
+DEFAULT_PRD3_DAY_OFFSET = -2
+DEFAULT_PRD3_PROFILE = "PRD3_BASE"
+
 CONF_API_URL = "api_url"
 CONF_UPDATE_INTERVAL = "update_interval"
 CONF_PV_SYSTEM_TYPE = "pv_system_type"
@@ -17,6 +22,7 @@ CONF_PV_POWER_ENTITY = "pv_power_entity"
 CONF_RELAY_ENTITY = "relay_entity"
 CONF_NOTIFY_SERVICE = "notify_service"
 CONF_AGGREGATION_MODE = "aggregation_mode"
+CONF_PRD3_DAY_OFFSET = "prd3_day_offset"
 
 PV_SYSTEM_ENPHASE = "enphase"
 PV_SYSTEM_GENERIC = "generic"

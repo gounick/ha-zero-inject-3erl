@@ -1,0 +1,99 @@
+# Lovelace view for the 3ERL Zero-Injection package.
+#
+# Paste this as a new view in a Lovelace dashboard and replace the entity IDs
+# with the ones generated on your Home Assistant instance.
+
+path: 3erl-zero-injection
+title: 3ERL Zero-Injection
+icon: mdi:solar-power
+type: masonry
+cards:
+  - type: heading
+    heading: "3ERL — Bridage and remuneration"
+
+  - type: grid
+    columns: 3
+    square: false
+    cards:
+      - type: tile
+        entity: input_select.zero_inject_3erl_mode
+        name: Mode zero-inject
+        icon: mdi:tune
+      - type: tile
+        entity: binary_sensor.3erl_bridage_demande
+        name: Bridage demandé
+        icon: mdi:car-speed-limiter
+      - type: tile
+        entity: binary_sensor.3erl_zero_inject
+        name: Zero-Inject actif
+        icon: mdi:flash-off
+
+  - type: grid
+    columns: 3
+    square: false
+    cards:
+      - type: tile
+        entity: sensor.3erl_puissance_bridable
+        name: Puissance bridable
+        icon: mdi:solar-power
+      - type: tile
+        entity: sensor.3erl_puissance_gain
+        name: Puissance gain
+        icon: mdi:currency-eur
+      - type: tile
+        entity: sensor.3erl_dernier_pre
+        name: PRE+ actuel
+        icon: mdi:currency-eur
+      - type: tile
+        entity: sensor.3erl_tendance_du_jour
+        name: Tendance
+        icon: mdi:trending-up
+      - type: tile
+        entity: switch.z2m_legrand_contacteur_sec_injection_photovoltaique
+        name: Relais bridage
+        icon: mdi:electric-switch
+        # <-- replace with your relay switch entity
+
+  - type: grid
+    columns: 3
+    square: false
+    cards:
+      - type: tile
+        entity: sensor.3erl_energie_bridage
+        name: Énergie bridage
+        icon: mdi:counter
+      - type: tile
+        entity: sensor.3erl_gain_cumule
+        name: Gain cumulé
+        icon: mdi:currency-eur
+      - type: tile
+        entity: sensor.3erl_gain_cumule_annuel
+        name: Gain estimé (an)
+        icon: mdi:calendar
+
+  - type: history-graph
+    title: Bridage 3ERL — 24h
+    hours_to_show: 24
+    entities:
+      - entity: binary_sensor.3erl_bridage_demande
+        name: Bridage demandé
+      - entity: binary_sensor.3erl_zero_inject
+        name: Zero-Inject actif
+
+  - type: history-graph
+    title: 3ERL — Énergie bridée and gain cumulé
+    hours_to_show: 168
+    entities:
+      - entity: sensor.3erl_energie_bridage
+        name: Énergie bridée (kWh)
+      - entity: sensor.3erl_gain_cumule
+        name: Gain cumulé (€)
+
+  - type: history-graph
+    title: 3ERL — Puissance bridable and PRE+
+    hours_to_show: 24
+    entities:
+      - entity: sensor.3erl_puissance_bridable
+        name: Puissance bridable (W)
+      - entity: sensor.3erl_dernier_pre
+        name: PRE+ (€/MWh)

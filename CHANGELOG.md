@@ -14,10 +14,14 @@ All notable changes to this project will be documented in this file.
 - Self-consumption contract type option (`aci`/`acc`): selects the `Bridage` or `Bridage_CDC` API signal for the curtailment decision.
 - Envoy relay-level configuration table (ACI 0% / ACC floor) in the Envoy DRM guide.
 - README guidance on using a grid-side Linky sensor (e.g. ZLinky TIC) when injection can come from multiple sources.
+- Full documentation restructure following Diátaxis: explanation, how-to guides, reference and troubleshooting sections with precise Mermaid diagrams.
+- Improved remuneration estimation using RTE PRE+ data and Enedis PRD3 profile, with contract-type specific logic (ACI daily average, ACC current quarter-hour).
+- New sensors for current PRE+ and estimated daily PRE+.
+- YAML package example (`docs/examples/package-3erl.yaml` and `view.yaml`) for users who prefer a pure-YAML setup.
 
 ## [0.1.0] - 2026-09-30
 
-### Added
+### Added in 0.1.0
 
 - Initial release of the 3ERL Zero-Injection integration.
 - Polls the public 3ERL API for curtailment signals and PREP pricing.

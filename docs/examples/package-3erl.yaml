@@ -1,0 +1,229 @@
+# 3ERL Zero-Injection YAML package
+#
+# This is a standalone Home Assistant package for users who prefer YAML over
+# the custom integration. It polls the 3ERL API, exposes curtailment and
+# pricing sensors, provides an Auto/On/Off mode, controls a relay, and
+# estimates curtailed energy and remuneration.
+#
+# Place this file in your packages folder (e.g. packages/3erl_zero_injection.yaml)
+# and ensure configuration.yaml includes:
+#
+#   homeassistant:
+#     packages: !include_dir_named packages
+#
+# Adapt the entity IDs marked with # <-- to match your own installation.
+
+input_select:
+  zero_inject_3erl_mode:
+    name: "Mode zero-inject 3ERL"
+    icon: mdi:tune
+    options:
+      - Auto
+      - On
+      - Off
+    initial: Auto
+
+rest:
+  - resource: https://3erl.fr/api.json
+    scan_interval: 60
+    binary_sensor:
+      - name: "3ERL: Bridage demandé"
+        unique_id: "3erl_bridage_demande"
+        icon: mdi:car-speed-limiter
+        value_template: "{{ value_json['Bridage'] }}"
+      - name: "3ERL: Bridage CDC demandé"
+        unique_id: "3erl_bridage_cdc_demande"
+        icon: mdi:car-speed-limiter
+        value_template: "{{ value_json['Bridage_CDC'] }}"
+    sensor:
+      - name: "3ERL: Dernier PRE+"
+        unique_id: "3erl_dernier_pre"
+        icon: mdi:currency-eur
+        unit_of_measurement: "€/MWh"
+        device_class: monetary
+        state_class: measurement
+        value_template: "{{ value_json['Dernier_PREP'] }}"
+      - name: "3ERL: Estimation jour PRD4"
+        unique_id: "3erl_estimation_jour_prd4"
+        icon: mdi:chart-line
+        unit_of_measurement: "€/MWh"
+        device_class: monetary
+        state_class: measurement
+        value_template: "{{ value_json['PRD4'] }}"
+      - name: "3ERL: Tendance du jour"
+        unique_id: "3erl_tendance_du_jour"
+        icon: mdi:trending-up
+        value_template: >
+          {% set data = value_json['PREP_Profile'] %}
+          {% if data == '3+' %}   🟢🟢🟢
+          {% elif data == '2+' %} 🟢🟢
+          {% elif data == '1+' %} 🟢
+          {% elif data == '0' %}  ⚠️
+          {% elif data == '1-' %} ⛔️
+          {% elif data == '2-' %} ⛔️⛔️
+          {% elif data == '3-' %} ⛔️⛔️⛔️
+          {% else %}              ⁉️
+          {% endif %}
+      - name: "3ERL: Heure update"
+        unique_id: "3erl_heure_update"
+        icon: mdi:clock-outline
+        value_template: "{{ value_json['Heure_Update'] }}"
+      - name: "3ERL: Bridage long terme"
+        unique_id: "3erl_bridage_long_terme"
+        icon: mdi:timer-sand
+        unit_of_measurement: "h"
+        value_template: "{{ value_json['Bridage_Long_Terme'] }}"
+      - name: "3ERL: Mode degrade"
+        unique_id: "3erl_mode_degrade"
+        icon: mdi:alert-circle-outline
+        value_template: "{{ value_json['mode_degrade'] }}"
+      - name: "3ERL: RTE indisponible depuis"
+        unique_id: "3erl_rte_indispo_depuis"
+        icon: mdi:signal-off
+        value_template: "{{ value_json['rte_indispo_depuis'] }}"
+      - name: "3ERL: Commentaires"
+        unique_id: "3erl_commentaires"
+        icon: mdi:message-text-outline
+        value_template: "{{ value_json['Commentaires'] }}"
+
+template:
+  - binary_sensor:
+      - name: "3ERL: Zero-Inject actif"
+        unique_id: "3erl_zero_inject"
+        icon: mdi:flash-off
+        device_class: running
+        state: >-
+          {% set mode = states('input_select.zero_inject_3erl_mode') %}
+          {% set aci = states('binary_sensor.3erl_bridage_demande') %}
+          {% set acc = states('binary_sensor.3erl_bridage_cdc_demande') %}
+          {% if mode == 'On' %}
+            true
+          {% elif mode == 'Off' %}
+            false
+          {% else %}
+            {{ aci == 'on' or acc == 'on' }}
+          {% endif %}
+  - sensor:
+      - name: "3ERL: Puissance bridable"
+        unique_id: "3erl_puissance_bridable"
+        icon: mdi:solar-power
+        unit_of_measurement: "W"
+        device_class: power
+        state_class: measurement
+        state: >-
+          {% if is_state('binary_sensor.3erl_zero_inject', 'on') %}
+            {{ states('sensor.z2m_lixee_zlinky_tic_ccain') | float(0) }}
+          {% else %}
+            0
+          {% endif %}
+        # <-- replace sensor.z2m_lixee_zlinky_tic_ccain with your grid-side injected power sensor
+      - name: "3ERL: Puissance gain"
+        unique_id: "3erl_puissance_gain"
+        icon: mdi:currency-eur
+        unit_of_measurement: "€/h"
+        state_class: measurement
+        state: >-
+          {% if is_state('binary_sensor.3erl_zero_inject', 'on') %}
+            {{ (states('sensor.z2m_lixee_zlinky_tic_ccain') | float(0)
+                * states('sensor.3erl_dernier_pre') | float(0)
+                * 0.7 / 1000000) | round(6) }}
+          {% else %}
+            0
+          {% endif %}
+        # <-- replace sensor.z2m_lixee_zlinky_tic_ccain with your grid-side injected power sensor
+
+sensor:
+  - platform: integration
+    source: sensor.3erl_puissance_bridable
+    name: "3ERL: Énergie bridage"
+    unit_prefix: k
+    round: 3
+    method: left
+  - platform: integration
+    source: sensor.3erl_puissance_gain
+    name: "3ERL: Gain cumulé"
+    round: 4
+    method: left
+
+utility_meter:
+  3erl_energie_bridage_quotidien:
+    name: "3ERL: Énergie bridage — jour"
+    source: sensor.3erl_energie_bridage
+    cycle: daily
+  3erl_energie_bridage_mensuel:
+    name: "3ERL: Énergie bridage — mois"
+    source: sensor.3erl_energie_bridage
+    cycle: monthly
+  3erl_energie_bridage_annuel:
+    name: "3ERL: Énergie bridage — an"
+    source: sensor.3erl_energie_bridage
+    cycle: yearly
+  3erl_gain_cumule_quotidien:
+    name: "3ERL: Gain cumulé — jour"
+    source: sensor.3erl_gain_cumule
+    cycle: daily
+  3erl_gain_cumule_mensuel:
+    name: "3ERL: Gain cumulé — mois"
+    source: sensor.3erl_gain_cumule
+    cycle: monthly
+  3erl_gain_cumule_annuel:
+    name: "3ERL: Gain cumulé — an"
+    source: sensor.3erl_gain_cumule
+    cycle: yearly
+  # <-- Optional: quarter-hourly meter on the grid-side Linky cumulative counter
+  3erl_energie_injectee_quart_dheure:
+    name: "3ERL: Énergie injectée — quart d’heure"
+    source: sensor.z2m_lixee_zlinky_tic_eait
+    cycle: quarter-hourly
+
+automation:
+  - id: "3erl_appliquer_le_bridage"
+    alias: "3ERL: Appliquer le bridage"
+    description: Turn the relay on when zero-inject becomes active, off when it becomes inactive.
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.3erl_zero_inject
+        to: "on"
+      - platform: state
+        entity_id: binary_sensor.3erl_zero_inject
+        from: "on"
+        to: "off"
+    action:
+      - choose:
+          - conditions:
+              - condition: state
+                entity_id: binary_sensor.3erl_zero_inject
+                state: "on"
+            sequence:
+              - action: switch.turn_on
+                target:
+                  entity_id: switch.z2m_legrand_contacteur_sec_injection_photovoltaique
+                # <-- replace with your relay switch entity
+          - conditions:
+              - condition: state
+                entity_id: binary_sensor.3erl_zero_inject
+                state: "off"
+            sequence:
+              - action: switch.turn_off
+                target:
+                  entity_id: switch.z2m_legrand_contacteur_sec_injection_photovoltaique
+                # <-- replace with your relay switch entity
+
+  - id: "3erl_notification_changement_etat"
+    alias: "3ERL: Notification changement d'état"
+    description: Notify when the zero-injection state changes.
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.3erl_zero_inject
+    action:
+      - action: notify.mobile_app_your_phone
+        # <-- replace with your notify service, or remove this automation
+        data:
+          title: "3ERL Zero-Injection"
+          message: >-
+            Zero-injection is now
+            {% if is_state('binary_sensor.3erl_zero_inject', 'on') %}
+              ACTIVE.
+            {% else %}
+              INACTIVE.
+            {% endif %}

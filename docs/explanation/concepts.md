@@ -51,11 +51,24 @@ This arrangement is fail-safe. If the relay, Zigbee network or Home Assistant fa
 
 3ERL pays 70 % of the positive imbalance settlement price (PRE+) when market prices are positive. The remaining 30 % covers the association's operating costs.
 
-The integration integrates the estimate over time instead of multiplying a cumulative energy by the latest price:
+The integration integrates the estimate over time instead of multiplying a cumulative energy by the latest price.
 
-```text
-gain (€) = curtailed_energy (kWh) × Dernier_PREP (€/MWh) × 0.7 / 1000
-```
+The price used depends on the contract type:
+
+- **ACI**: estimated daily PRE+ computed from RTE quarter-hourly PRE+ values weighted by the Enedis PRD3 profile. Because Enedis only publishes the current day's PRD3 profile after the day is over, the integration uses the profile from a configurable past day (default `-2`) as an estimate.
+
+  ```text
+  estimated_daily_PREP = sum(PREP × PRD3_factor) / sum(PRD3_factor)
+  gain (€) = curtailed_energy (kWh) × estimated_daily_PREP (€/MWh) × 0.7 / 1000
+  ```
+
+- **ACC**: current quarter-hour PRE+ for the active 15-minute slot.
+
+  ```text
+  gain (€) = curtailed_energy (kWh) × current_PREP (€/MWh) × 0.7 / 1000
+  ```
+
+If the external RTE or Enedis sources are unavailable, the integration falls back to the latest `Dernier_PREP` from the 3ERL API.
 
 Curtailed energy is an upper bound. It equals the measured injection power integrated over curtailment periods, which is why a grid-side sensor that sees every injection source (PV, wind, battery) gives the most faithful estimate.
 

@@ -46,7 +46,8 @@ def coordinator(hass: HomeAssistant) -> ThreeERLUpdateCoordinator:
     )
     entry.add_to_hass(hass)
     api = AsyncMock(spec=ThreeERLApiClient)
-    return ThreeERLUpdateCoordinator(hass, api, entry)
+    session = AsyncMock()
+    return ThreeERLUpdateCoordinator(hass, api, session, entry)
 
 
 async def test_build_data_no_power(
