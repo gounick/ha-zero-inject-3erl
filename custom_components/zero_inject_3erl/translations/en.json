@@ -90,9 +90,6 @@
       "gain_rate": {
         "name": "Gain rate"
       },
-      "curtailed_energy": {
-        "name": "Estimated curtailed energy"
-      },
       "cumulative_gain": {
         "name": "Cumulative gain"
       }

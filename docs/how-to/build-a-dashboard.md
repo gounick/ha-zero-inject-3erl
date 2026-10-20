@@ -54,10 +54,6 @@ columns: 2
 square: false
 cards:
   - type: tile
-    entity: sensor.3erl_zero_injection_curtailed_energy
-    name: Énergie bridage
-    icon: mdi:counter
-  - type: tile
     entity: sensor.3erl_zero_injection_cumulative_gain
     name: Gain cumulé
     icon: mdi:currency-eur
@@ -78,11 +74,9 @@ entities:
 
 ```yaml
 type: history-graph
-title: Énergie bridée & gain cumulé — 7j
+title: Gain cumulé — 7j
 hours_to_show: 168
 entities:
-  - entity: sensor.3erl_zero_injection_curtailed_energy
-    name: Énergie bridée (kWh)
   - entity: sensor.3erl_zero_injection_cumulative_gain
     name: Gain cumulé (€)
 ```

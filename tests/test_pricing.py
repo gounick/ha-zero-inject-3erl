@@ -107,6 +107,30 @@ async def test_update_falls_back_when_no_prd3_data() -> None:
         assert manager.current_prep() is not None
 
 
+async def test_current_prep_falls_back_to_latest_published_slot() -> None:
+    """Test that current_prep uses the latest published slot when RTE lags."""
+    # RTE publishes PRE+ values with a delay: at 14:50 the newest published
+    # slot is 14:15, so the current 14:30 slot is not yet in the response.
+    now = datetime(2026, 10, 4, 14, 50, tzinfo=ZoneInfo("Europe/Paris"))
+    rte_base = datetime(2026, 10, 4, 0, 0, tzinfo=ZoneInfo("Europe/Paris"))
+    prd3_base = datetime(2026, 10, 2, 0, 0, tzinfo=ZoneInfo("Europe/Paris"))
+
+    rte = _rte_response(rte_base)
+    rte["values"] = rte["values"][:58]  # keep slots 00:00-14:15 only
+
+    session = _mock_session(
+        _mock_response(json_data=rte),
+        _mock_response(json_data=_enedis_response(prd3_base)),
+    )
+
+    with patch("custom_components.zero_inject_3erl.pricing.dt_now", return_value=now):
+        manager = PricingDataManager(session)
+        await manager.async_update()
+
+        # Falls back to the 14:15 slot (index 57): 100.0 + 57.
+        assert manager.current_prep() == pytest.approx(157.0, rel=1e-6)
+
+
 async def test_prd3_profile_is_fetched_once_per_day() -> None:
     """Test that the PRD3 profile is cached for the selected day."""
     now = datetime(2026, 10, 4, 14, 20, tzinfo=ZoneInfo("Europe/Paris"))
