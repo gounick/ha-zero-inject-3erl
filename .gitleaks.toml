@@ -1,0 +1,10 @@
+# Gitleaks configuration.
+# https://github.com/gitleaks/gitleaks/blob/master/config/gitleaks.toml
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Home Assistant translation_key assignments are entity metadata, not secrets."
+regexTarget = "line"
+regexes = ['''translation_key\s*=\s*"''']
