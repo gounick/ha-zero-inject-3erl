@@ -90,9 +90,6 @@
       "gain_rate": {
         "name": "Puissance gain"
       },
-      "curtailed_energy": {
-        "name": "Énergie bridée estimée"
-      },
       "cumulative_gain": {
         "name": "Gain cumulé"
       }

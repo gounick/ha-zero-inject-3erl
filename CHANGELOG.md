@@ -19,7 +19,7 @@ All notable changes to this project will be documented in this file.
 - Improved remuneration estimation using RTE PRE+ data and Enedis PRD3 profile, with contract-type specific logic (ACI daily average, ACC current quarter-hour).
 - New sensors for current PRE+ and estimated daily PRE+.
 - New sensor `Daily PRE+ weighted by PRD3 (3ERL)` exposing the `PREP_Profile_Num` API field.
-- New optional `consumption_power_entity` setting: the curtailed-energy counter integrates `production − consumption` during curtailment instead of production alone, making the estimate reflect the surplus that would have been injected.
+- New optional `consumption_power_entity` setting: the curtailed-power estimate integrates `production − consumption` during curtailment instead of production alone, making the gain estimate reflect the surplus that would have been injected.
 - Explanation of the daily PRE+ calculation, in English and French (`docs/explanation/daily-prep-estimate.md`).
 - YAML package example (`docs/examples/package-3erl.yaml` and `view.yaml`) for users who prefer a pure-YAML setup.
 - Entity name translations: entities use English `translation_key`s with French names in `translations/fr.json`.
@@ -41,6 +41,7 @@ All notable changes to this project will be documented in this file.
 ### Removed
 
 - `update_interval` and `pv_system_type` configuration fields (see Changed).
+- `Estimated curtailed energy` sensor: a single power sensor cannot measure the counterfactual lost energy, and the value was misleading. The internal accumulation still feeds `Gain cumulé`.
 
 ### Fixed
 
@@ -52,6 +53,7 @@ All notable changes to this project will be documented in this file.
 - `Zero-Inject actif` did not update when the mode select changed.
 - Entity IDs in the documentation did not match the IDs created by Home Assistant.
 - The select unique-ID migration was never triggered because the config flow did not declare `MINOR_VERSION`.
+- `Current PRE+` was permanently `unknown`: RTE publishes slots with a delay, so the current quarter-hour slot rarely exists yet. The sensor now falls back to the latest published slot.
 - The Enedis PRD3 endpoint answers with a `text/html` Content-Type, so the profile fetch always failed and `Estimated daily PRE+` stayed `unknown`.
 
 ## [0.1.0] - 2026-09-30

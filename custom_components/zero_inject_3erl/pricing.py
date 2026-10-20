@@ -70,15 +70,21 @@ class PricingDataManager:
         return self._estimated_daily_prep
 
     def current_prep(self) -> float | None:
-        """Return the PRE+ for the current quarter-hour slot.
+        """Return the most recent published PRE+ value.
 
-        This is the value used for ACC contracts.
+        RTE publishes quarter-hourly values with a delay, so the slot covering
+        the current time is often not published yet. Return the PRE+ of the
+        latest slot not later than the current slot. This is the value used
+        for ACC contracts.
 
-        :return: Current quarter-hour PRE+ in EUR/MWh, or None if unavailable.
+        :return: Latest published PRE+ in EUR/MWh, or None if unavailable.
         :rtype: float | None
         """
         slot = self._current_slot()
-        return self._prep_values.get(slot)
+        published = [s for s in self._prep_values if s <= slot]
+        if not published:
+            return None
+        return self._prep_values[max(published)]
 
     async def async_update(self) -> None:
         """Fetch RTE and Enedis data and refresh the price estimates.
