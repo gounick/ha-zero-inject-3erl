@@ -1,3 +1,16 @@
 reset_counters:
-  name: Reset counters
-  description: Reset the cumulative curtailed energy and estimated gain counters for all 3ERL config entries.
+  fields:
+    energy_kwh:
+      required: false
+      selector:
+        number:
+          min: 0
+          mode: box
+          unit_of_measurement: kWh
+    gain_eur:
+      required: false
+      selector:
+        number:
+          min: 0
+          mode: box
+          unit_of_measurement: "EUR"

@@ -337,10 +337,21 @@ class ThreeERLUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         """Persist cumulative energy and gain values now."""
         await self._store.async_save(self._cumulative_data())
 
-    async def async_reset_counters(self) -> None:
-        """Reset cumulative energy and gain values to zero."""
-        self._cumulative_energy_kwh = 0.0
-        self._cumulative_gain_eur = 0.0
+    async def async_reset_counters(
+        self, energy_kwh: float | None = None, gain_eur: float | None = None
+    ) -> None:
+        """Reset cumulative energy and gain values, optionally to given values.
+
+        Passing a value seeds the counter, e.g. to match the totals shown on
+        the 3ERL dashboard. Omitted values are reset to zero.
+
+        :param energy_kwh: Curtailed energy to start from, in kWh.
+        :type energy_kwh: float | None
+        :param gain_eur: Cumulative gain to start from, in EUR.
+        :type gain_eur: float | None
+        """
+        self._cumulative_energy_kwh = energy_kwh if energy_kwh is not None else 0.0
+        self._cumulative_gain_eur = gain_eur if gain_eur is not None else 0.0
         await self._store_cumulative_data()
         self._async_push_computed_data()
         _LOGGER.info("Reset 3ERL cumulative energy and gain counters")

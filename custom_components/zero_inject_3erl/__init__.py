@@ -63,12 +63,18 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     async def async_handle_reset_counters(call: ServiceCall) -> None:
         """Reset the counters of every loaded config entry.
 
+        Optional ``energy_kwh`` and ``gain_eur`` fields seed the counters
+        instead of zeroing them, e.g. to match the 3ERL dashboard totals.
+
         :param call: Service call data.
         :type call: ServiceCall
         """
         entries: list[ThreeERLConfigEntry] = hass.config_entries.async_loaded_entries(DOMAIN)
         for entry in entries:
-            await entry.runtime_data.coordinator.async_reset_counters()
+            await entry.runtime_data.coordinator.async_reset_counters(
+                energy_kwh=call.data.get("energy_kwh"),
+                gain_eur=call.data.get("gain_eur"),
+            )
 
     hass.services.async_register(DOMAIN, SERVICE_RESET_COUNTERS, async_handle_reset_counters)
     return True

@@ -268,7 +268,17 @@
   "services": {
     "reset_counters": {
       "name": "Réinitialiser les compteurs",
-      "description": "Remet à zéro les compteurs cumulés d'énergie bridée et de gain estimé de toutes les entrées 3ERL."
+      "description": "Remet à zéro les compteurs d'énergie bridée et de gain estimé de toutes les entrées 3ERL. Renseignez des valeurs pour initialiser les compteurs, par exemple avec les totaux du dashboard 3ERL.",
+      "fields": {
+        "energy_kwh": {
+          "name": "Énergie bridée",
+          "description": "Valeur initiale optionnelle du compteur d'énergie bridée, en kWh."
+        },
+        "gain_eur": {
+          "name": "Gain cumulé",
+          "description": "Valeur initiale optionnelle du compteur de gain cumulé, en EUR."
+        }
+      }
     }
   }
 }

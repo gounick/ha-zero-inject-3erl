@@ -96,7 +96,7 @@ The cumulative values are persisted across Home Assistant restarts.
 
 ### `zero_inject_3erl.reset_counters`
 
-Reset the cumulative `Énergie bridage` and `Gain cumulé` sensors to zero.
+Reset the cumulative curtailed energy and `Gain cumulé` counters to zero, or seed them with optional `energy_kwh` / `gain_eur` values (e.g. from the 3ERL dashboard).
 
 ## Dashboard
 

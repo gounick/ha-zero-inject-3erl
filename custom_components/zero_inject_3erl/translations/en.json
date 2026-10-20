@@ -268,7 +268,17 @@
   "services": {
     "reset_counters": {
       "name": "Reset counters",
-      "description": "Reset the cumulative curtailed energy and estimated gain counters for all 3ERL config entries."
+      "description": "Reset the cumulative curtailed energy and estimated gain counters for all 3ERL config entries. Pass optional values to seed the counters, e.g. from the 3ERL dashboard totals.",
+      "fields": {
+        "energy_kwh": {
+          "name": "Curtailed energy",
+          "description": "Optional starting value of the curtailed energy counter, in kWh."
+        },
+        "gain_eur": {
+          "name": "Cumulative gain",
+          "description": "Optional starting value of the cumulative gain counter, in EUR."
+        }
+      }
     }
   }
 }

@@ -68,6 +68,25 @@ async def test_reset_counters_service(
     assert coordinator.data["energie_bridage_kwh"] == 0.0
 
 
+async def test_reset_counters_service_accepts_values(
+    hass: HomeAssistant, config_entry: MockConfigEntry, mock_fetch: AsyncMock
+) -> None:
+    """Test that optional fields set the counters instead of zeroing them."""
+    assert await hass.config_entries.async_setup(config_entry.entry_id)
+    await hass.async_block_till_done()
+    coordinator = config_entry.runtime_data.coordinator
+
+    await hass.services.async_call(
+        DOMAIN,
+        SERVICE_RESET_COUNTERS,
+        {"energy_kwh": 12.5, "gain_eur": 3.75},
+        blocking=True,
+    )
+
+    assert coordinator.data["energie_bridage_kwh"] == 12.5
+    assert coordinator.data["gain_cumule_eur"] == 3.75
+
+
 async def test_api_url_option_is_used(
     hass: HomeAssistant, config_entry: MockConfigEntry, mock_fetch: AsyncMock
 ) -> None:

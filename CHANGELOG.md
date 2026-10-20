@@ -19,6 +19,7 @@ All notable changes to this project will be documented in this file.
 - Improved remuneration estimation using RTE PRE+ data and Enedis PRD3 profile, with contract-type specific logic (ACI daily average, ACC current quarter-hour).
 - New sensors for current PRE+ and estimated daily PRE+.
 - Translated `description` attribute on every entity, visible under More info → Attributes.
+- `reset_counters` accepts optional `energy_kwh` and `gain_eur` fields to seed the counters, e.g. from the 3ERL dashboard.
 - New sensor `Daily PRE+ weighted by PRD3 (3ERL)` exposing the `PREP_Profile_Num` API field.
 - New optional `consumption_power_entity` setting: the curtailed-power estimate integrates `production − consumption` during curtailment instead of production alone, making the gain estimate reflect the surplus that would have been injected.
 - `pv_power_entity` now accepts several production sensors; their power values are summed so multiple sources (for example an Envoy plus a second array) can be combined. Entries created with a single sensor keep working.

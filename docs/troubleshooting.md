@@ -40,4 +40,4 @@
 
 ## Reset counters
 
-Call the service `zero_inject_3erl.reset_counters` from **Developer Tools → Services** to reset the cumulative energy and gain counters.
+Call the service `zero_inject_3erl.reset_counters` from **Developer Tools → Services** to reset the cumulative energy and gain counters. To correct them instead, pass `energy_kwh` and/or `gain_eur` — for instance the totals shown on the 3ERL dashboard.
