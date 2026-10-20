@@ -49,6 +49,27 @@ def update_manifests(root: Path, version: str) -> None:
         manifest.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
 
 
+def update_pyproject(path: Path, version: str) -> None:
+    """Set the project version in pyproject.toml.
+
+    :param path: Path of pyproject.toml.
+    :type path: Path
+    :param version: Validated release version.
+    :type version: str
+    """
+    if not path.is_file():
+        return
+    text = path.read_text(encoding="utf-8")
+    text, count = re.subn(
+        r'(?m)^(version\s*=\s*)"[^"]*"',
+        lambda m: f'{m.group(1)}"{version}"',
+        text,
+        count=1,
+    )
+    if count:
+        path.write_text(text, encoding="utf-8")
+
+
 def main() -> int:
     """Validate the version and update the release files.
 
@@ -62,6 +83,7 @@ def main() -> int:
 
     update_changelog(Path("CHANGELOG.md"), version)
     update_manifests(Path("custom_components"), version)
+    update_pyproject(Path("pyproject.toml"), version)
 
     output = os.environ.get("GITHUB_OUTPUT")
     if output:

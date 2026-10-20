@@ -3,8 +3,11 @@
 from __future__ import annotations
 
 from datetime import timedelta
-from unittest.mock import AsyncMock
+from pathlib import Path
+from unittest.mock import AsyncMock, patch
 
+import pytest
+import voluptuous as vol
 from freezegun.api import FrozenDateTimeFactory
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.core import HomeAssistant
@@ -14,7 +17,13 @@ from pytest_homeassistant_custom_component.common import (
     async_fire_time_changed,
 )
 
-from custom_components.zero_inject_3erl.const import CONF_API_URL, DOMAIN, SERVICE_RESET_COUNTERS
+from custom_components.zero_inject_3erl.api import ThreeERLApiError
+from custom_components.zero_inject_3erl.const import (
+    CONF_API_URL,
+    DOMAIN,
+    SERVICE_RESET_COUNTERS,
+    STORAGE_KEY,
+)
 
 from .conftest import PV_POWER_ENTITY
 
@@ -85,6 +94,64 @@ async def test_reset_counters_service_accepts_values(
 
     assert coordinator.data["energie_bridage_kwh"] == 12.5
     assert coordinator.data["gain_cumule_eur"] == 3.75
+
+
+async def test_reset_counters_service_rejects_invalid_values(
+    hass: HomeAssistant, config_entry: MockConfigEntry, mock_fetch: AsyncMock
+) -> None:
+    """Test that non-numeric or negative values are rejected by the schema."""
+    assert await hass.config_entries.async_setup(config_entry.entry_id)
+    await hass.async_block_till_done()
+
+    with pytest.raises(vol.Invalid):
+        await hass.services.async_call(
+            DOMAIN,
+            SERVICE_RESET_COUNTERS,
+            {"energy_kwh": "not-a-number"},
+            blocking=True,
+        )
+    with pytest.raises(vol.Invalid):
+        await hass.services.async_call(
+            DOMAIN,
+            SERVICE_RESET_COUNTERS,
+            {"gain_eur": -1},
+            blocking=True,
+        )
+
+
+async def test_failed_setup_does_not_leak_power_listener(
+    hass: HomeAssistant, config_entry: MockConfigEntry
+) -> None:
+    """Test that a failed first refresh registers no PV power listener."""
+    with (
+        patch(
+            "custom_components.zero_inject_3erl.api.ThreeERLApiClient.fetch",
+            side_effect=ThreeERLApiError("boom"),
+        ),
+        patch(
+            "custom_components.zero_inject_3erl.coordinator.async_track_state_change_event"
+        ) as track,
+    ):
+        assert not await hass.config_entries.async_setup(config_entry.entry_id)
+        await hass.async_block_till_done()
+
+    track.assert_not_called()
+
+
+async def test_remove_entry_deletes_cumulative_storage(
+    hass: HomeAssistant, config_entry: MockConfigEntry, mock_fetch: AsyncMock
+) -> None:
+    """Test that removing the entry deletes its persisted counters."""
+    assert await hass.config_entries.async_setup(config_entry.entry_id)
+    await hass.async_block_till_done()
+    coordinator = config_entry.runtime_data.coordinator
+    await coordinator.async_reset_counters(energy_kwh=5.0, gain_eur=1.0)
+
+    assert await hass.config_entries.async_remove(config_entry.entry_id)
+    await hass.async_block_till_done()
+
+    path = Path(hass.config.path(f".storage/{STORAGE_KEY}_{config_entry.entry_id}"))
+    assert not await hass.async_add_executor_job(path.exists)
 
 
 async def test_api_url_option_is_used(

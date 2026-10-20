@@ -11,6 +11,7 @@ from homeassistant.util.dt import now as dt_now
 
 from .const import (
     API_TIMEOUT_SECONDS,
+    API_TIMEZONE,
     DEFAULT_ENEDIS_PRD3_API_URL,
     DEFAULT_PRD3_DAY_OFFSET,
     DEFAULT_PRD3_PROFILE,
@@ -162,7 +163,7 @@ class PricingDataManager:
                 continue
             try:
                 result[slot] = float(positive)
-            except (ValueError, TypeError):
+            except ValueError, TypeError:
                 continue
         return result
 
@@ -218,7 +219,7 @@ class PricingDataManager:
                 continue
             try:
                 result[slot] = float(coefficient)
-            except (ValueError, TypeError):
+            except ValueError, TypeError:
                 continue
         return result
 
@@ -267,6 +268,9 @@ class PricingDataManager:
         if not isinstance(value, str):
             return None
         try:
-            return datetime.fromisoformat(value)
+            parsed = datetime.fromisoformat(value)
         except ValueError:
             return None
+        if parsed.tzinfo is None:
+            parsed = parsed.replace(tzinfo=API_TIMEZONE)
+        return parsed

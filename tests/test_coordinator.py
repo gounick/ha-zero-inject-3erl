@@ -48,6 +48,23 @@ def coordinator(hass: HomeAssistant) -> ThreeERLUpdateCoordinator:
     return ThreeERLUpdateCoordinator(hass, api, session, entry)
 
 
+async def test_power_tracking_starts_once(
+    hass: HomeAssistant, coordinator: ThreeERLUpdateCoordinator
+) -> None:
+    """Test that the power listener is registered only once, on demand."""
+    assert coordinator._unsub_power is None
+
+    coordinator.start_power_tracking()
+    first = coordinator._unsub_power
+    assert first is not None
+
+    coordinator.start_power_tracking()
+    assert coordinator._unsub_power is first
+
+    await coordinator.async_shutdown()
+    assert coordinator._unsub_power is None
+
+
 async def test_build_data_no_power(
     hass: HomeAssistant, coordinator: ThreeERLUpdateCoordinator
 ) -> None:

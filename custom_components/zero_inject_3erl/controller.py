@@ -180,7 +180,7 @@ class ZeroInjectController:
         """
         try:
             await self._hass.services.async_call(domain, service, service_data)
-        except (HomeAssistantError, vol.Invalid):
+        except HomeAssistantError, vol.Invalid:
             _LOGGER.exception(
                 "Failed to call %s.%s on %s",
                 domain,

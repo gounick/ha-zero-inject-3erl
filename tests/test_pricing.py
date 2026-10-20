@@ -195,3 +195,12 @@ async def test_requests_use_client_timeout() -> None:
 
     assert isinstance(session.get.call_args.kwargs["timeout"], aiohttp.ClientTimeout)
     assert isinstance(session.post.call_args.kwargs["timeout"], aiohttp.ClientTimeout)
+
+
+def test_parse_datetime_defaults_naive_values_to_paris() -> None:
+    """Test that naive ISO datetimes get the Europe/Paris timezone."""
+    parsed = PricingDataManager._parse_datetime("2026-10-04T14:15:00")
+
+    assert parsed is not None
+    assert parsed.tzinfo is not None
+    assert parsed.utcoffset() is not None

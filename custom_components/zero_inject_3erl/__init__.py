@@ -5,12 +5,14 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass
 
+import voluptuous as vol
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant, ServiceCall, callback
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.helpers.storage import Store
 from homeassistant.helpers.typing import ConfigType
 
 from .api import ThreeERLApiClient
@@ -20,6 +22,7 @@ from .const import (
     DOMAIN,
     MODE_UNIQUE_ID_SUFFIX,
     SERVICE_RESET_COUNTERS,
+    STORAGE_KEY,
 )
 from .controller import ZeroInjectController
 from .coordinator import ThreeERLUpdateCoordinator
@@ -36,6 +39,13 @@ PLATFORMS: list[Platform] = [
 ]
 # The mode select is set up first so other entities can resolve its entity id.
 DEPENDENT_PLATFORMS = [platform for platform in PLATFORMS if platform is not Platform.SELECT]
+
+RESET_COUNTERS_SCHEMA = vol.Schema(
+    {
+        vol.Optional("energy_kwh"): vol.All(vol.Coerce(float), vol.Range(min=0)),
+        vol.Optional("gain_eur"): vol.All(vol.Coerce(float), vol.Range(min=0)),
+    }
+)
 
 
 @dataclass
@@ -76,7 +86,12 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
                 gain_eur=call.data.get("gain_eur"),
             )
 
-    hass.services.async_register(DOMAIN, SERVICE_RESET_COUNTERS, async_handle_reset_counters)
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_RESET_COUNTERS,
+        async_handle_reset_counters,
+        schema=RESET_COUNTERS_SCHEMA,
+    )
     return True
 
 
@@ -126,6 +141,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ThreeERLConfigEntry) -> 
     )
     await coordinator.async_load_cumulative_data()
     await coordinator.async_config_entry_first_refresh()
+    coordinator.start_power_tracking()
 
     controller = ZeroInjectController(hass, entry, coordinator)
     entry.runtime_data = ThreeERLRuntimeData(coordinator, controller)
@@ -163,3 +179,14 @@ async def async_unload_entry(hass: HomeAssistant, entry: ThreeERLConfigEntry) ->
     if unload_ok:
         await entry.runtime_data.controller.async_shutdown()
     return unload_ok
+
+
+async def async_remove_entry(hass: HomeAssistant, entry: ThreeERLConfigEntry) -> None:
+    """Remove the persisted cumulative data of a deleted config entry.
+
+    :param hass: Home Assistant instance.
+    :type hass: HomeAssistant
+    :param entry: Config entry being removed.
+    :type entry: ThreeERLConfigEntry
+    """
+    await Store(hass, 1, f"{STORAGE_KEY}_{entry.entry_id}").async_remove()

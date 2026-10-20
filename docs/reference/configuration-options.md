@@ -12,6 +12,10 @@ All fields are set during the config flow and remain editable under **Settings â
 | Notification entities | `notify_service` | no | â€” | One or more `notify` entities that each receive a message through `notify.send_message` when the active state changes. |
 | PRD3 profile day offset | `prd3_day_offset` | no | `-2` | Day offset used to pick the Enedis PRD3 profile when estimating the daily ACI price. `-2` uses the profile from two days ago because Enedis publishes yesterday's profile late in the morning. |
 
+## Single instance
+
+Only one config entry can be created: the 3ERL API is a single shared endpoint, so a second entry would poll the same data. Adding the integration again aborts with `already_configured`.
+
 ## Polling
 
 There is no polling-interval option. The integration follows the update schedule published by 3ERL: it waits about 18 minutes after each `Heure_Update` and retries after about a minute when fresh data is late. See [3ERL API fields](api-fields.md#update-schedule).

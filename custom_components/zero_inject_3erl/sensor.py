@@ -12,7 +12,7 @@ from homeassistant.components.sensor import (
     SensorEntityDescription,
     SensorStateClass,
 )
-from homeassistant.const import UnitOfPower
+from homeassistant.const import EntityCategory, UnitOfPower
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
@@ -98,7 +98,11 @@ def _text(key: str, translation_key: str, **kwargs: Any) -> ThreeERLSensorEntity
     :rtype: ThreeERLSensorEntityDescription
     """
     return ThreeERLSensorEntityDescription(
-        key=key, translation_key=translation_key, value_fn=_api(key), **kwargs
+        key=key,
+        translation_key=translation_key,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=_api(key),
+        **kwargs,
     )
 
 

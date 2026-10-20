@@ -186,7 +186,7 @@ def next_poll_delay(heure_update: Any, now: datetime) -> timedelta:
     """
     try:
         published = datetime.strptime(heure_update, API_TIME_FORMAT).replace(tzinfo=API_TIMEZONE)
-    except (TypeError, ValueError):
+    except TypeError, ValueError:
         return API_FALLBACK_INTERVAL
     next_publication = published + API_PUBLICATION_DELAY + API_POLL_MARGIN
     if next_publication <= now:

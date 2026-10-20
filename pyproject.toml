@@ -18,8 +18,9 @@ test = [
 ]
 
 [tool.ruff]
-# py313 keeps parenthesized exception tuples; PEP 758 bare tuples read like Python 2.
-target-version = "py313"
+# Match requires-python (HA 2026.9+ requires Python 3.14); PEP 758 bare
+# exception tuples are the canonical 3.14 style applied by ruff format.
+target-version = "py314"
 line-length = 100
 
 [tool.ruff.lint]

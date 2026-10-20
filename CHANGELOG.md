@@ -29,6 +29,10 @@ All notable changes to this project will be documented in this file.
 - YAML package example (`docs/examples/package-3erl.yaml` and `view.yaml`) for users who prefer a pure-YAML setup.
 - Entity name translations: entities use English `translation_key`s with French names in `translations/fr.json`.
 - Tests for the config and options flows, setup and unload, the relay controller, sensors and binary sensors.
+- `reset_counters` now validates its fields: non-numeric or negative values are rejected instead of corrupting the counters.
+- Persisted cumulative data is deleted when the config entry is removed.
+- Raw API text sensors (last update, comments, degraded mode, RTE unavailability, long-term curtailment, daily trend) are now categorized as diagnostic entities.
+- Single-instance limitation documented in the configuration reference.
 
 ### Changed
 
@@ -38,6 +42,8 @@ All notable changes to this project will be documented in this file.
 - Notifications are sent only when the zero-injection state changes, no longer on every startup or reload.
 - The mode select restores its last value after a restart or reload instead of falling back to `Auto`.
 - Cumulative counters are written to disk at most once a minute and flushed on unload, instead of on every PV power change.
+- The PV power listener now starts only after the first successful API refresh; a failed setup no longer leaks a listener on retry.
+- Manifest `integration_type` set to `service`, matching the 3ERL cloud service.
 - `Gain cumulé` now uses the `EUR` unit and the `total` state class. Price sensors (`Dernier PRE+`, `Estimation jour PRD4`, `Current PRE+`, `Estimated daily PRE+`) no longer use the `monetary` device class. Home Assistant may ask to fix the long-term statistics unit once.
 - RTE and Enedis pricing data are fetched independently, so one failing source no longer blocks the other. The daily PRD3 profile is fetched once per day.
 - Entity names moved to translation keys. Fresh installs get English-based entity IDs (for example `sensor.3erl_zero_injection_estimated_curtailed_energy`); existing installs keep their current entity IDs. The mode select unique ID gains a domain prefix through a config entry migration.

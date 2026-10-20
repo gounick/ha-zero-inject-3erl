@@ -78,6 +78,7 @@ class ThreeERLUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self._cumulative_gain_eur = 0.0
         self._last_update_time: datetime | None = None
         self._store = Store(hass, 1, f"{STORAGE_KEY}_{entry.entry_id}")
+        self._unsub_power: Any = None
 
         super().__init__(
             hass,
@@ -87,11 +88,19 @@ class ThreeERLUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             update_interval=API_FALLBACK_INTERVAL,
         )
 
+    def start_power_tracking(self) -> None:
+        """Start listening to the configured power sensors.
+
+        Called after the first successful refresh so a failed setup does not
+        leak a listener when the entry is retried.
+        """
+        if self._unsub_power is not None:
+            return
         tracked = list(self._pv_power_entities)
         if self._consumption_entity:
             tracked.append(self._consumption_entity)
         self._unsub_power = async_track_state_change_event(
-            hass,
+            self.hass,
             tracked,
             self._handle_power_state_change,
         )
@@ -117,7 +126,9 @@ class ThreeERLUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
     async def async_shutdown(self) -> None:
         """Stop tracking the PV power sensor, flush counters and shut down."""
-        self._unsub_power()
+        if self._unsub_power is not None:
+            self._unsub_power()
+            self._unsub_power = None
         await self._store_cumulative_data()
         await super().async_shutdown()
 
@@ -369,7 +380,7 @@ class ThreeERLUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             return None
         try:
             return float(state_obj.state)
-        except (ValueError, TypeError):
+        except ValueError, TypeError:
             return None
 
     @staticmethod
@@ -385,5 +396,5 @@ class ThreeERLUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             return None
         try:
             return float(value)
-        except (ValueError, TypeError):
+        except ValueError, TypeError:
             return None
