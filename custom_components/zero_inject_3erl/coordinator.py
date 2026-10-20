@@ -23,7 +23,6 @@ from .const import (
     CONF_AGGREGATION_MODE,
     CONF_CONSUMPTION_POWER_ENTITY,
     CONF_PRD3_DAY_OFFSET,
-    CONF_PV_POWER_ENTITY,
     DEFAULT_AGGREGATION_MODE,
     DEFAULT_PRD3_DAY_OFFSET,
     DOMAIN,
@@ -37,7 +36,7 @@ from .const import (
     STORE_SAVE_DELAY_SECONDS,
     WATTS_PER_KILOWATT,
 )
-from .helpers import entry_settings, is_bridage_active, next_poll_delay
+from .helpers import entry_settings, is_bridage_active, next_poll_delay, pv_power_entities
 from .pricing import PricingDataError, PricingDataManager
 
 _LOGGER = logging.getLogger(__name__)
@@ -70,7 +69,7 @@ class ThreeERLUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         settings = entry_settings(entry)
         self._api_client = api_client
         self._entry = entry
-        self._pv_power_entity = settings[CONF_PV_POWER_ENTITY]
+        self._pv_power_entities = pv_power_entities(settings)
         self._consumption_entity = settings.get(CONF_CONSUMPTION_POWER_ENTITY)
         self._aggregation_mode = settings.get(CONF_AGGREGATION_MODE, DEFAULT_AGGREGATION_MODE)
         prd3_offset = settings.get(CONF_PRD3_DAY_OFFSET, DEFAULT_PRD3_DAY_OFFSET)
@@ -88,9 +87,12 @@ class ThreeERLUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             update_interval=API_FALLBACK_INTERVAL,
         )
 
+        tracked = list(self._pv_power_entities)
+        if self._consumption_entity:
+            tracked.append(self._consumption_entity)
         self._unsub_power = async_track_state_change_event(
             hass,
-            [self._pv_power_entity],
+            tracked,
             self._handle_power_state_change,
         )
 
@@ -236,10 +238,10 @@ class ThreeERLUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         production minus home consumption, clipped at zero. If the configured
         consumption sensor is unreadable, production is used as a fallback.
 
-        :return: Curtailable power in watts, or None if the PV sensor is down.
+        :return: Curtailable power in watts, or None if every PV sensor is down.
         :rtype: float | None
         """
-        power_w = self._numeric_state(self.hass.states.get(self._pv_power_entity))
+        power_w = self._pv_power_w()
         if power_w is None:
             return None
         if not self._consumption_entity:
@@ -248,6 +250,25 @@ class ThreeERLUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         if consumption_w is None:
             return power_w
         return max(power_w - consumption_w, 0.0)
+
+    def _pv_power_w(self) -> float | None:
+        """Return the summed production power of the configured sensors.
+
+        Several production sources (for example an Envoy plus a second array
+        read through the battery) are added together. Unreadable sensors are
+        skipped; if none can be read, the production is unknown.
+
+        :return: Production power in watts, or None if no sensor is readable.
+        :rtype: float | None
+        """
+        values = [
+            power
+            for entity_id in self._pv_power_entities
+            if (power := self._numeric_state(self.hass.states.get(entity_id))) is not None
+        ]
+        if not values:
+            return None
+        return sum(values)
 
     def _current_price(self, api_data: dict[str, Any]) -> float | None:
         """Return the price to use for the current remuneration estimate.
@@ -278,7 +299,7 @@ class ThreeERLUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         :return: Combined data used by sensor entities.
         :rtype: dict[str, Any]
         """
-        pv_power_w = self._numeric_state(self.hass.states.get(self._pv_power_entity)) or 0.0
+        pv_power_w = self._pv_power_w() or 0.0
         power_w = self._curtailable_power() or 0.0
         bridage_active = is_bridage_active(api_data, self._aggregation_mode)
         current_price = self._current_price(api_data) or 0.0

@@ -9,9 +9,9 @@ Goal: install `zero_inject_3erl` in Home Assistant and connect it to your relay 
 - The Envoy DRM port configured. See [Configure the Envoy DRM port](configure-envoy-drm.md).
 - A power sensor reporting injected power in watts (see below).
 
-## Choose the power sensor
+## Choose the power sensors
 
-The integration estimates the energy lost to curtailment by integrating this sensor during curtailment periods. Choose a **production** power sensor, such as the Envoy `current_power_production` entity — the energy that would have been injected can only be derived from what was being generated at the time.
+The integration estimates the energy lost to curtailment by integrating the configured sensors during curtailment periods. Choose one or more **production** power sensors, such as the Envoy `current_power_production` entity — the energy that would have been injected can only be derived from what was being generated at the time. With several production sources, select all of them: their power values are summed.
 
 Do not pick a grid-side injection sensor for this field: when the relay cuts export, measured injection falls to about zero and the counter stops counting.
 
@@ -40,7 +40,7 @@ For a more accurate estimate, also fill the optional **Home consumption power se
    |---|---|
    | 3ERL API URL | Leave the default `https://3erl.fr/api.json`. |
    | Self-consumption contract type | `aci` uses the `Bridage` signal, `acc` uses `Bridage_CDC`. See [ACI vs ACC](../explanation/concepts.md#aci-vs-acc). |
-   | PV production power sensor | The power sensor chosen above. |
+   | PV production power sensors | The power sensor(s) chosen above. |
    | Zero-injection relay switch | The `switch.*` entity of your dry-contact relay. |
    | Home consumption power sensor | Optional `sensor.*` reporting home consumption; refines the curtailed-energy estimate. |
    | Notification service | Optional `notify.*` service for state-change notifications. |

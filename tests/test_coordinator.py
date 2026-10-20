@@ -136,6 +136,33 @@ async def test_accumulate_energy_subtracts_consumption(
     assert coordinator._cumulative_energy_kwh == pytest.approx(0.7, rel=1e-6)
 
 
+async def test_multiple_pv_sensors_are_summed(
+    hass: HomeAssistant,
+) -> None:
+    """Test that several production sensors are summed into a single power."""
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={
+            CONF_PV_POWER_ENTITY: ["sensor.pv_power_a", "sensor.pv_power_b"],
+        },
+        entry_id="test_entry",
+    )
+    entry.add_to_hass(hass)
+    api = AsyncMock(spec=ThreeERLApiClient)
+    coordinator = ThreeERLUpdateCoordinator(hass, api, AsyncMock(), entry)
+
+    hass.states.async_set("sensor.pv_power_a", "1000")
+    hass.states.async_set("sensor.pv_power_b", "500")
+    await hass.async_block_till_done()
+
+    now = datetime.now(UTC)
+    coordinator._last_update_time = now - timedelta(hours=1)
+    coordinator._accumulate_from_power_sensor(now, _sample_api_response())
+
+    # (1000 W + 500 W) * 1 h / 1000 = 1.5 kWh
+    assert coordinator._cumulative_energy_kwh == pytest.approx(1.5, rel=1e-6)
+
+
 async def test_accumulation_writes_are_batched(
     hass: HomeAssistant, coordinator: ThreeERLUpdateCoordinator
 ) -> None:

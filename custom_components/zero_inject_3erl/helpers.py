@@ -19,6 +19,7 @@ from .const import (
     API_RETRY_INTERVAL,
     API_TIME_FORMAT,
     API_TIMEZONE,
+    CONF_PV_POWER_ENTITY,
     DEFAULT_AGGREGATION_MODE,
     DEFAULT_ZERO_INJECT_MODE,
     DOMAIN,
@@ -41,6 +42,26 @@ def entry_settings(entry: ConfigEntry) -> Mapping[str, Any]:
     :rtype: Mapping[str, Any]
     """
     return entry.options or entry.data
+
+
+def pv_power_entities(settings: Mapping[str, Any]) -> list[str]:
+    """Return the configured PV production sensor entity ids.
+
+    The setting is stored as a list by the config flow. Entries created
+    before multi-sensor support may hold a single entity id string; it is
+    normalized to a one-element list.
+
+    :param settings: Active settings of a config entry.
+    :type settings: Mapping[str, Any]
+    :return: Entity ids of the production sensors to sum.
+    :rtype: list[str]
+    """
+    value = settings.get(CONF_PV_POWER_ENTITY)
+    if isinstance(value, str):
+        return [value]
+    if isinstance(value, list):
+        return [entity_id for entity_id in value if isinstance(entity_id, str)]
+    return []
 
 
 def build_device_info(entry_id: str) -> DeviceInfo:

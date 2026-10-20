@@ -5,7 +5,7 @@
         "data": {
           "api_url": "URL de l'API 3ERL",
           "aggregation_mode": "Type de contrat d'autoconsommation",
-          "pv_power_entity": "Capteur de puissance de production PV",
+          "pv_power_entity": "Capteurs de puissance de production PV",
           "relay_entity": "Interrupteur du relais de limitation d'injection",
           "consumption_power_entity": "Capteur de puissance consommée par la maison (optionnel)",
           "notify_service": "Entité de notification (optionnel)",
@@ -26,7 +26,7 @@
         "data": {
           "api_url": "URL de l'API 3ERL",
           "aggregation_mode": "Type de contrat d'autoconsommation",
-          "pv_power_entity": "Capteur de puissance de production PV",
+          "pv_power_entity": "Capteurs de puissance de production PV",
           "relay_entity": "Interrupteur du relais de limitation d'injection",
           "consumption_power_entity": "Capteur de puissance consommée par la maison (optionnel)",
           "notify_service": "Entité de notification (optionnel)",

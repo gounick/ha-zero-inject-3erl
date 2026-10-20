@@ -26,6 +26,7 @@ from .const import (
     DEFAULT_PRD3_DAY_OFFSET,
     DOMAIN,
 )
+from .helpers import pv_power_entities
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -46,7 +47,7 @@ SETTINGS_SCHEMA = vol.Schema(
             )
         ),
         vol.Required(CONF_PV_POWER_ENTITY): selector.EntitySelector(
-            selector.EntitySelectorConfig(domain="sensor", device_class="power")
+            selector.EntitySelectorConfig(domain="sensor", device_class="power", multiple=True)
         ),
         vol.Required(CONF_RELAY_ENTITY): selector.EntitySelector(
             selector.EntitySelectorConfig(domain="switch")
@@ -140,6 +141,9 @@ class ZeroInject3ERLOptionsFlow(config_entries.OptionsFlow):
                 return self.async_create_entry(data=user_input)
 
         current = {**DEFAULT_VALUES, **self.config_entry.data, **self.config_entry.options}
+        # Entries created before multi-sensor support store a single entity
+        # id string; the selector expects a list.
+        current[CONF_PV_POWER_ENTITY] = pv_power_entities(current)
         return self.async_show_form(
             step_id="init",
             data_schema=self.add_suggested_values_to_schema(SETTINGS_SCHEMA, user_input or current),
