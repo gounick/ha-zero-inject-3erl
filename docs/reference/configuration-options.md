@@ -7,7 +7,7 @@ All fields are set during the config flow and remain editable under **Settings �
 | 3ERL API URL | `api_url` | yes | `https://3erl.fr/api.json` | Endpoint polled for curtailment data. |
 | Self-consumption contract type | `aggregation_mode` | yes | `aci` | `aci` follows the `Bridage` signal; `acc` follows `Bridage_CDC`. See [ACI vs ACC](../explanation/concepts.md#aci-vs-acc). |
 | PV production power sensors | `pv_power_entity` | yes | — | One or more `sensor` entities with device class `power`, reporting production power in watts. Their values are summed, so several production sources can be combined. |
-| Zero-injection relay switch | `relay_entity` | yes | — | `switch` entity wired to the DRM port. |
+| Zero-injection relay switches | `relay_entity` | yes | — | One or more `switch` entities wired to the DRM port(s). Every listed relay is aligned with the computed state, so several production sources can be curtailed independently. |
 | Home consumption power sensor | `consumption_power_entity` | no | — | `sensor` entity with device class `power`, reporting home consumption in watts. Improves the curtailed-energy estimate; see below. |
 | Notification entity | `notify_service` | no | — | `notify` entity that receives a message through `notify.send_message` when the active state changes. |
 | PRD3 profile day offset | `prd3_day_offset` | no | `-2` | Day offset used to pick the Enedis PRD3 profile when estimating the daily ACI price. `-2` uses the profile from two days ago because Enedis publishes yesterday's profile late in the morning. |

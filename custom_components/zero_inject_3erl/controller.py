@@ -26,7 +26,6 @@ from homeassistant.helpers.event import async_track_state_change_event
 
 from .const import (
     CONF_NOTIFY_SERVICE,
-    CONF_RELAY_ENTITY,
     DOMAIN,
 )
 from .coordinator import ThreeERLUpdateCoordinator
@@ -35,6 +34,7 @@ from .helpers import (
     entry_settings,
     get_current_mode,
     get_mode_entity_id,
+    relay_entities,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -46,7 +46,7 @@ class ZeroInjectController:
     The controller listens to three inputs:
     - changes of the 3ERL API coordinator (bridage demand)
     - changes of the mode select entity (Auto / On / Off)
-    - changes of the relay itself
+    - changes of the relays themselves
 
     It then decides whether the relay should be on and calls the configured
     switch service when the real relay state differs.
@@ -70,7 +70,7 @@ class ZeroInjectController:
         self._entry = entry
         self._coordinator = coordinator
         settings = entry_settings(entry)
-        self._relay_entity = settings[CONF_RELAY_ENTITY]
+        self._relay_entities = relay_entities(settings)
         self._notify_service = settings.get(CONF_NOTIFY_SERVICE)
         self._mode_entity_id: str | None = None
         self._unsub_coordinator: Any = None
@@ -82,7 +82,7 @@ class ZeroInjectController:
         self._mode_entity_id = self._resolve_mode_entity_id()
 
         self._unsub_coordinator = self._coordinator.async_add_listener(self._apply_relay_state)
-        tracked = [self._relay_entity]
+        tracked = list(self._relay_entities)
         if self._mode_entity_id:
             tracked.append(self._mode_entity_id)
         self._unsub_states = async_track_state_change_event(
@@ -140,17 +140,28 @@ class ZeroInjectController:
             self._maybe_notify(active)
         self._last_active_state = active
 
-        relay_state = self._hass.states.get(self._relay_entity)
+        for relay_entity in self._relay_entities:
+            self._align_relay(relay_entity, active)
+
+    def _align_relay(self, relay_entity: str, active: bool) -> None:
+        """Align one relay with the desired state.
+
+        :param relay_entity: Entity id of the relay switch.
+        :type relay_entity: str
+        :param active: Whether zero-injection should be active.
+        :type active: bool
+        """
+        relay_state = self._hass.states.get(relay_entity)
         if relay_state is None or relay_state.state not in (STATE_ON, STATE_OFF):
             return
         if (relay_state.state == STATE_ON) == active:
             return
 
-        domain = self._relay_entity.split(".", 1)[0]
+        domain = relay_entity.split(".", 1)[0]
         service = SERVICE_TURN_ON if active else SERVICE_TURN_OFF
-        _LOGGER.debug("Calling %s.%s on %s", domain, service, self._relay_entity)
+        _LOGGER.debug("Calling %s.%s on %s", domain, service, relay_entity)
         self._hass.async_create_background_task(
-            self._async_call_service(domain, service, {ATTR_ENTITY_ID: self._relay_entity}),
+            self._async_call_service(domain, service, {ATTR_ENTITY_ID: relay_entity}),
             name=f"{DOMAIN}_relay_control",
         )
 

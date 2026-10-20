@@ -13,7 +13,11 @@ from pytest_homeassistant_custom_component.common import (
     mock_restore_cache,
 )
 
-from custom_components.zero_inject_3erl.const import CONF_NOTIFY_SERVICE, DOMAIN
+from custom_components.zero_inject_3erl.const import (
+    CONF_NOTIFY_SERVICE,
+    CONF_RELAY_ENTITY,
+    DOMAIN,
+)
 
 from .conftest import RELAY_ENTITY, sample_api_response
 
@@ -145,6 +149,32 @@ async def test_relay_retried_when_available_again(
     await hass.async_block_till_done()
 
     assert len(turn_on_calls) == 1
+
+
+async def test_multiple_relays_are_all_driven(
+    hass: HomeAssistant,
+    config_entry: MockConfigEntry,
+    mock_fetch: AsyncMock,
+    turn_on_calls: list[ServiceCall],
+    turn_off_calls: list[ServiceCall],
+) -> None:
+    """Test that every configured relay is aligned with the computed state."""
+    mock_fetch.return_value = sample_api_response(bridage=1)
+    hass.config_entries.async_update_entry(
+        config_entry,
+        options={
+            **config_entry.data,
+            CONF_RELAY_ENTITY: ["switch.relay_a", "switch.relay_b"],
+        },
+    )
+    hass.states.async_set("switch.relay_a", "off")
+    hass.states.async_set("switch.relay_b", "off")
+
+    assert await hass.config_entries.async_setup(config_entry.entry_id)
+    await hass.async_block_till_done()
+
+    called = {call.data["entity_id"] for call in turn_on_calls}
+    assert called == {"switch.relay_a", "switch.relay_b"}
 
 
 async def test_notification_uses_notify_entity(

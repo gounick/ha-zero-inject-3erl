@@ -21,6 +21,7 @@ All notable changes to this project will be documented in this file.
 - New sensor `Daily PRE+ weighted by PRD3 (3ERL)` exposing the `PREP_Profile_Num` API field.
 - New optional `consumption_power_entity` setting: the curtailed-power estimate integrates `production − consumption` during curtailment instead of production alone, making the gain estimate reflect the surplus that would have been injected.
 - `pv_power_entity` now accepts several production sensors; their power values are summed so multiple sources (for example an Envoy plus a second array) can be combined. Entries created with a single sensor keep working.
+- `relay_entity` now accepts several relay switches; each listed relay is aligned with the computed state so several production sources can be curtailed independently. Entries created with a single relay keep working.
 - Explanation of the daily PRE+ calculation, in English and French (`docs/explanation/daily-prep-estimate.md`).
 - YAML package example (`docs/examples/package-3erl.yaml` and `view.yaml`) for users who prefer a pure-YAML setup.
 - Entity name translations: entities use English `translation_key`s with French names in `translations/fr.json`.

@@ -35,7 +35,7 @@ The integration currently supports a generic PV production power sensor. Auto-de
 ## Requirements
 
 - Home Assistant 2026.9.3 or newer.
-- A switch entity that controls the zero-injection relay (e.g. a Zigbee dry-contact relay).
+- One or more switch entities controlling the zero-injection relays (e.g. a Zigbee dry-contact relay per production source).
 - One or more power sensors that report current PV production in watts (their values are summed).
 
 ## Installation

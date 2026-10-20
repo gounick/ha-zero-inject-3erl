@@ -33,12 +33,12 @@ async def test_user_flow_creates_entry(hass: HomeAssistant, mock_fetch: AsyncMoc
             CONF_API_URL: DEFAULT_API_URL,
             CONF_AGGREGATION_MODE: "aci",
             CONF_PV_POWER_ENTITY: [PV_POWER_ENTITY],
-            CONF_RELAY_ENTITY: RELAY_ENTITY,
+            CONF_RELAY_ENTITY: [RELAY_ENTITY],
         },
     )
 
     assert result["type"] is FlowResultType.CREATE_ENTRY
-    assert result["data"][CONF_RELAY_ENTITY] == RELAY_ENTITY
+    assert result["data"][CONF_RELAY_ENTITY] == [RELAY_ENTITY]
 
 
 async def test_user_flow_cannot_connect(hass: HomeAssistant, mock_fetch: AsyncMock) -> None:
@@ -52,7 +52,7 @@ async def test_user_flow_cannot_connect(hass: HomeAssistant, mock_fetch: AsyncMo
             CONF_API_URL: DEFAULT_API_URL,
             CONF_AGGREGATION_MODE: "aci",
             CONF_PV_POWER_ENTITY: [PV_POWER_ENTITY],
-            CONF_RELAY_ENTITY: RELAY_ENTITY,
+            CONF_RELAY_ENTITY: [RELAY_ENTITY],
         },
     )
 
@@ -85,7 +85,7 @@ async def test_options_flow_clears_notify_service(
             CONF_API_URL: DEFAULT_API_URL,
             CONF_AGGREGATION_MODE: "aci",
             CONF_PV_POWER_ENTITY: [PV_POWER_ENTITY],
-            CONF_RELAY_ENTITY: RELAY_ENTITY,
+            CONF_RELAY_ENTITY: [RELAY_ENTITY],
         },
     )
 

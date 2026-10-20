@@ -41,7 +41,7 @@ For a more accurate estimate, also fill the optional **Home consumption power se
    | 3ERL API URL | Leave the default `https://3erl.fr/api.json`. |
    | Self-consumption contract type | `aci` uses the `Bridage` signal, `acc` uses `Bridage_CDC`. See [ACI vs ACC](../explanation/concepts.md#aci-vs-acc). |
    | PV production power sensors | The power sensor(s) chosen above. |
-   | Zero-injection relay switch | The `switch.*` entity of your dry-contact relay. |
+   | Zero-injection relay switches | The `switch.*` entity of your dry-contact relay; select several when each production source has its own relay. |
    | Home consumption power sensor | Optional `sensor.*` reporting home consumption; refines the curtailed-energy estimate. |
    | Notification service | Optional `notify.*` service for state-change notifications. |
    | PRD3 profile day offset | Leave `-2` unless you have a reason to change it. See [daily PRE+ estimate](../explanation/daily-prep-estimate.md). |

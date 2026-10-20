@@ -6,7 +6,7 @@
           "api_url": "3ERL API URL",
           "aggregation_mode": "Self-consumption contract type",
           "pv_power_entity": "PV production power sensors",
-          "relay_entity": "Zero-injection relay switch",
+          "relay_entity": "Zero-injection relay switches",
           "consumption_power_entity": "Home consumption power sensor (optional)",
           "notify_service": "Notification entity (optional)",
           "prd3_day_offset": "PRD3 profile day offset (ACI only)"
@@ -27,7 +27,7 @@
           "api_url": "3ERL API URL",
           "aggregation_mode": "Self-consumption contract type",
           "pv_power_entity": "PV production power sensors",
-          "relay_entity": "Zero-injection relay switch",
+          "relay_entity": "Zero-injection relay switches",
           "consumption_power_entity": "Home consumption power sensor (optional)",
           "notify_service": "Notification entity (optional)",
           "prd3_day_offset": "PRD3 profile day offset (ACI only)"
