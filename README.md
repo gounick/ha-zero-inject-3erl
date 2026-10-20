@@ -18,7 +18,7 @@ Home Assistant custom integration that monitors the French [3ERL](https://3erl.f
 
 - Polls the public 3ERL API (`https://3erl.fr/api.json`) for curtailment signals.
 - Supports both self-consumption contract types: **ACI** (`Bridage` signal) and **ACC** (`Bridage_CDC` signal).
-- Available as a HACS custom integration or as a pure-YAML package (see [docs/examples/package-3erl.yaml](docs/examples/package-3erl.yaml)).
+- Available as a HACS custom integration.
 - Creates sensors for all 3ERL fields: `Bridage`, `Bridage_CDC`, `Dernier_PREP`, `PRD4`, `PREP_Profile`, `Heure_Update`, `Bridage_Long_Terme`, and more.
 - Controls a Home Assistant switch/relay in three modes:
   - **Auto** — relay follows the 3ERL curtailment signal.

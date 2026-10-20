@@ -26,7 +26,6 @@ All notable changes to this project will be documented in this file.
 - `relay_entity` now accepts several relay switches; each listed relay is aligned with the computed state so several production sources can be curtailed independently. Entries created with a single relay keep working.
 - `notify_service` now accepts several notification entities so state changes can be pushed on different channels. Entries created with a single entity keep working.
 - Explanation of the daily PRE+ calculation, in English and French (`docs/explanation/daily-prep-estimate.md`).
-- YAML package example (`docs/examples/package-3erl.yaml` and `view.yaml`) for users who prefer a pure-YAML setup.
 - Entity name translations: entities use English `translation_key`s with French names in `translations/fr.json`.
 - Tests for the config and options flows, setup and unload, the relay controller, sensors and binary sensors.
 - `reset_counters` now validates its fields: non-numeric or negative values are rejected instead of corrupting the counters.
