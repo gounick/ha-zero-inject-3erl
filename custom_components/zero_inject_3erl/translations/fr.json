@@ -202,6 +202,17 @@
           }
         }
       },
+      "cumulative_energy": {
+        "name": "Énergie bridée cumulée",
+        "state_attributes": {
+          "description": {
+            "name": "À propos",
+            "state": {
+              "cumulative_energy": "Énergie bridée estimée totale accumulée pendant le bridage. Persistée entre les redémarrages ; réinitialisable avec l'action reset_counters."
+            }
+          }
+        }
+      },
       "cumulative_gain": {
         "name": "Gain cumulé",
         "state_attributes": {

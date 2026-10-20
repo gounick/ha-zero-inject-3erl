@@ -18,6 +18,8 @@ All notable changes to this project will be documented in this file.
 - Full documentation restructure following Diátaxis: explanation, how-to guides, reference and troubleshooting sections with precise Mermaid diagrams.
 - Improved remuneration estimation using RTE PRE+ data and Enedis PRD3 profile, with contract-type specific logic (ACI daily average, ACC current quarter-hour).
 - New sensors for current PRE+ and estimated daily PRE+.
+- New `Curtailed energy` sensor (`sensor.3erl_zero_injection_curtailed_energy`) exposing the cumulative curtailed-energy counter in kWh.
+- Ready-made Lovelace view example targeting the integration entities (`docs/examples/view.yaml`).
 - Translated `description` attribute on every entity, visible under More info → Attributes.
 - `reset_counters` accepts optional `energy_kwh` and `gain_eur` fields to seed the counters, e.g. from the 3ERL dashboard.
 - New sensor `Daily PRE+ weighted by PRD3 (3ERL)` exposing the `PREP_Profile_Num` API field.

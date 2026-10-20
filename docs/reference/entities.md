@@ -21,6 +21,7 @@ Every entity exposes a translated `description` attribute (visible under **More 
 | `sensor.3erl_zero_injection_comments` | — | `Commentaires` | Operator comments published by 3ERL. |
 | `sensor.3erl_zero_injection_curtailable_power` | W | computed | Measured power during curtailment, 0 otherwise. |
 | `sensor.3erl_zero_injection_gain_rate` | €/h | computed | Current estimated remuneration rate. |
+| `sensor.3erl_zero_injection_curtailed_energy` | kWh | computed | Cumulative estimated curtailed energy. Persisted across restarts. |
 | `sensor.3erl_zero_injection_cumulative_gain` | EUR | computed | Cumulative estimated gain at 70 % of PRE+. Persisted across restarts. |
 
 ## Binary sensors

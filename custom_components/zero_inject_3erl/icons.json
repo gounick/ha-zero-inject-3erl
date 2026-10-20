@@ -34,6 +34,9 @@
       "comments": {
         "default": "mdi:comment-text-outline"
       },
+      "cumulative_energy": {
+        "default": "mdi:lightning-bolt"
+      },
       "gain_rate": {
         "default": "mdi:cash-clock"
       },

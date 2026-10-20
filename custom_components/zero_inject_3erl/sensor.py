@@ -12,7 +12,7 @@ from homeassistant.components.sensor import (
     SensorEntityDescription,
     SensorStateClass,
 )
-from homeassistant.const import EntityCategory, UnitOfPower
+from homeassistant.const import EntityCategory, UnitOfEnergy, UnitOfPower
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
@@ -149,6 +149,14 @@ SENSORS: tuple[ThreeERLSensorEntityDescription, ...] = (
         native_unit_of_measurement="€/h",
         state_class=SensorStateClass.MEASUREMENT,
         value_fn=_computed("puissance_gain"),
+    ),
+    ThreeERLSensorEntityDescription(
+        key="energie_bridage_kwh",
+        translation_key="cumulative_energy",
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL,
+        value_fn=_computed("energie_bridage_kwh"),
     ),
     ThreeERLSensorEntityDescription(
         key="gain_cumule_eur",

@@ -4,6 +4,8 @@ Goal: add Lovelace cards for the 3ERL Zero-Injection entities.
 
 Replace the entity IDs below with the ones generated on your Home Assistant instance. The full list is in the [entities reference](../reference/entities.md).
 
+A ready-made view combining all these cards is available in [examples/view.yaml](../examples/view.yaml).
+
 ## Overview tiles
 
 ```yaml
@@ -53,6 +55,10 @@ type: grid
 columns: 2
 square: false
 cards:
+  - type: tile
+    entity: sensor.3erl_zero_injection_curtailed_energy
+    name: Énergie bridée
+    icon: mdi:lightning-bolt
   - type: tile
     entity: sensor.3erl_zero_injection_cumulative_gain
     name: Gain cumulé

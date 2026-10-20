@@ -202,6 +202,17 @@
           }
         }
       },
+      "cumulative_energy": {
+        "name": "Curtailed energy",
+        "state_attributes": {
+          "description": {
+            "name": "About",
+            "state": {
+              "cumulative_energy": "Total estimated curtailed energy accumulated while curtailment is active. Persisted across restarts; resettable with the reset_counters action."
+            }
+          }
+        }
+      },
       "cumulative_gain": {
         "name": "Cumulative gain",
         "state_attributes": {

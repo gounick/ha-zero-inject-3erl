@@ -26,6 +26,7 @@ flowchart TD
 | Wire a dry-contact relay to the Envoy DRM port | [how-to/wire-the-relay.md](how-to/wire-the-relay.md) |
 | Install and configure the integration in Home Assistant | [how-to/install-and-configure.md](how-to/install-and-configure.md) |
 | Add dashboard cards | [how-to/build-a-dashboard.md](how-to/build-a-dashboard.md) |
+| Import a ready-made dashboard view | [examples/view.yaml](examples/view.yaml) |
 | Look up configuration fields | [reference/configuration-options.md](reference/configuration-options.md) |
 | Look up the created entities | [reference/entities.md](reference/entities.md) |
 | Look up the 3ERL API fields | [reference/api-fields.md](reference/api-fields.md) |
