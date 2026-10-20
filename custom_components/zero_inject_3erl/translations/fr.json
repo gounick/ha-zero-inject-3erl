@@ -192,7 +192,7 @@
         }
       },
       "gain_rate": {
-        "name": "Puissance gain",
+        "name": "Gain horaire estimé",
         "state_attributes": {
           "description": {
             "name": "À propos",
