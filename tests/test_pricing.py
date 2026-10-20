@@ -126,6 +126,22 @@ async def test_prd3_profile_is_fetched_once_per_day() -> None:
     assert session.get.call_count == 2
 
 
+async def test_enedis_json_is_parsed_despite_html_mimetype() -> None:
+    """Test that the PRD3 body is decoded even with a text/html Content-Type."""
+    now = datetime(2026, 10, 4, 14, 20, tzinfo=ZoneInfo("Europe/Paris"))
+    rte_base = datetime(2026, 10, 4, 0, 0, tzinfo=ZoneInfo("Europe/Paris"))
+    prd3_base = datetime(2026, 10, 2, 0, 0, tzinfo=ZoneInfo("Europe/Paris"))
+    post_resp = _mock_response(json_data=_enedis_response(prd3_base))
+    session = _mock_session(_mock_response(json_data=_rte_response(rte_base)), post_resp)
+
+    with patch("custom_components.zero_inject_3erl.pricing.dt_now", return_value=now):
+        manager = PricingDataManager(session)
+        await manager.async_update()
+
+    post_resp.json.assert_awaited_with(content_type=None)
+    assert manager.estimated_daily_prep is not None
+
+
 async def test_prd3_is_fetched_when_rte_fails() -> None:
     """Test that an RTE failure is raised without preventing the PRD3 fetch."""
     now = datetime(2026, 10, 4, 14, 20, tzinfo=ZoneInfo("Europe/Paris"))

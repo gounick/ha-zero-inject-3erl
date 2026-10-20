@@ -140,7 +140,7 @@ class PricingDataManager:
                 response.raise_for_status()
                 data = await response.json()
         except (aiohttp.ClientError, TimeoutError, ValueError) as err:
-            raise PricingDataError(f"Failed to fetch RTE pricing data: {err}") from err
+            raise PricingDataError(f"Failed to fetch RTE pricing data: {err!r}") from err
 
         values = data.get("values", []) if isinstance(data, dict) else []
         result: dict[datetime, float] = {}
@@ -194,9 +194,10 @@ class PricingDataManager:
                 self._enedis_url, data=payload, timeout=REQUEST_TIMEOUT
             ) as response:
                 response.raise_for_status()
-                data = await response.json()
+                # Enedis answers with a text/html Content-Type on valid JSON.
+                data = await response.json(content_type=None)
         except (aiohttp.ClientError, TimeoutError, ValueError) as err:
-            raise PricingDataError(f"Failed to fetch Enedis PRD3 data: {err}") from err
+            raise PricingDataError(f"Failed to fetch Enedis PRD3 data: {err!r}") from err
 
         if not isinstance(data, list):
             raise PricingDataError("Unexpected Enedis PRD3 response format")
