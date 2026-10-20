@@ -107,18 +107,51 @@ async def test_update_falls_back_when_no_prd3_data() -> None:
         assert manager.current_prep() is not None
 
 
-async def test_rte_fetch_error_raises() -> None:
-    """Test that a network error during RTE fetch raises PricingDataError."""
+async def test_prd3_profile_is_fetched_once_per_day() -> None:
+    """Test that the PRD3 profile is cached for the selected day."""
     now = datetime(2026, 10, 4, 14, 20, tzinfo=ZoneInfo("Europe/Paris"))
+    rte_base = datetime(2026, 10, 4, 0, 0, tzinfo=ZoneInfo("Europe/Paris"))
+    prd3_base = datetime(2026, 10, 2, 0, 0, tzinfo=ZoneInfo("Europe/Paris"))
+    session = _mock_session(
+        _mock_response(json_data=_rte_response(rte_base)),
+        _mock_response(json_data=_enedis_response(prd3_base)),
+    )
 
-    get_cm = AsyncMock()
-    get_cm.__aenter__ = AsyncMock(side_effect=aiohttp.ClientError("Connection failed"))
-    get_cm.__aexit__ = AsyncMock(return_value=False)
+    with patch("custom_components.zero_inject_3erl.pricing.dt_now", return_value=now):
+        manager = PricingDataManager(session)
+        await manager.async_update()
+        await manager.async_update()
 
-    session = MagicMock()
-    session.get.return_value = get_cm
+    assert session.post.call_count == 1
+    assert session.get.call_count == 2
+
+
+async def test_prd3_is_fetched_when_rte_fails() -> None:
+    """Test that an RTE failure is raised without preventing the PRD3 fetch."""
+    now = datetime(2026, 10, 4, 14, 20, tzinfo=ZoneInfo("Europe/Paris"))
+    prd3_base = datetime(2026, 10, 2, 0, 0, tzinfo=ZoneInfo("Europe/Paris"))
+    session = _mock_session(
+        _mock_response(json_data=None),
+        _mock_response(json_data=_enedis_response(prd3_base)),
+    )
+    session.get.return_value.__aenter__ = AsyncMock(side_effect=aiohttp.ClientError("down"))
 
     with patch("custom_components.zero_inject_3erl.pricing.dt_now", return_value=now):
         manager = PricingDataManager(session)
         with pytest.raises(PricingDataError, match="Failed to fetch RTE"):
             await manager.async_update()
+
+    assert session.post.call_count == 1
+    assert manager._prd3_values
+
+
+async def test_requests_use_client_timeout() -> None:
+    """Test that requests pass an aiohttp ClientTimeout."""
+    now = datetime(2026, 10, 4, 14, 20, tzinfo=ZoneInfo("Europe/Paris"))
+    session = _mock_session(_mock_response(json_data={"values": []}), _mock_response(json_data=[]))
+
+    with patch("custom_components.zero_inject_3erl.pricing.dt_now", return_value=now):
+        await PricingDataManager(session).async_update()
+
+    assert isinstance(session.get.call_args.kwargs["timeout"], aiohttp.ClientTimeout)
+    assert isinstance(session.post.call_args.kwargs["timeout"], aiohttp.ClientTimeout)

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
 from typing import Any
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from homeassistant.core import HomeAssistant
@@ -12,9 +12,8 @@ from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.zero_inject_3erl.api import ThreeERLApiClient
 from custom_components.zero_inject_3erl.const import (
+    CONF_CONSUMPTION_POWER_ENTITY,
     CONF_PV_POWER_ENTITY,
-    CONF_UPDATE_INTERVAL,
-    DEFAULT_UPDATE_INTERVAL_MINUTES,
     DOMAIN,
 )
 from custom_components.zero_inject_3erl.coordinator import ThreeERLUpdateCoordinator
@@ -40,7 +39,6 @@ def coordinator(hass: HomeAssistant) -> ThreeERLUpdateCoordinator:
         domain=DOMAIN,
         data={
             CONF_PV_POWER_ENTITY: "sensor.pv_power",
-            CONF_UPDATE_INTERVAL: DEFAULT_UPDATE_INTERVAL_MINUTES,
         },
         entry_id="test_entry",
     )
@@ -108,3 +106,54 @@ async def test_accumulate_energy(
     assert coordinator._cumulative_energy_kwh == pytest.approx(1.0, rel=1e-6)
     # 1 kWh * 150 EUR/MWh * 0.7 / 1000 = 0.105 EUR
     assert coordinator._cumulative_gain_eur == pytest.approx(0.105, rel=1e-6)
+
+
+async def test_accumulate_energy_subtracts_consumption(
+    hass: HomeAssistant,
+) -> None:
+    """Test that the lost surplus subtracts home consumption when configured."""
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={
+            CONF_PV_POWER_ENTITY: "sensor.pv_power",
+            CONF_CONSUMPTION_POWER_ENTITY: "sensor.home_power",
+        },
+        entry_id="test_entry",
+    )
+    entry.add_to_hass(hass)
+    api = AsyncMock(spec=ThreeERLApiClient)
+    coordinator = ThreeERLUpdateCoordinator(hass, api, AsyncMock(), entry)
+
+    hass.states.async_set("sensor.pv_power", "1000")
+    hass.states.async_set("sensor.home_power", "300")
+    await hass.async_block_till_done()
+
+    now = datetime.now(UTC)
+    coordinator._last_update_time = now - timedelta(hours=1)
+    coordinator._accumulate_from_power_sensor(now, _sample_api_response())
+
+    # (1000 W - 300 W) * 1 h / 1000 = 0.7 kWh
+    assert coordinator._cumulative_energy_kwh == pytest.approx(0.7, rel=1e-6)
+
+
+async def test_accumulation_writes_are_batched(
+    hass: HomeAssistant, coordinator: ThreeERLUpdateCoordinator
+) -> None:
+    """Test that accumulation defers disk writes and flushes on shutdown."""
+    hass.states.async_set("sensor.pv_power", "1000")
+    await hass.async_block_till_done()
+    start = datetime.now(UTC)
+    coordinator._last_update_time = start
+
+    with patch.object(coordinator._store, "async_save") as save:
+        for minute in range(1, 6):
+            coordinator._accumulate_from_power_sensor(
+                start + timedelta(minutes=minute), _sample_api_response()
+            )
+        await hass.async_block_till_done()
+        save.assert_not_called()
+
+        await coordinator.async_shutdown()
+
+    save.assert_awaited_once()
+    assert save.await_args.args[0]["energy_kwh"] == pytest.approx(1000 * 5 / 60 / 1000)

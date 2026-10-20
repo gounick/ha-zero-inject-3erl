@@ -1,0 +1,66 @@
+{
+  "entity": {
+    "sensor": {
+      "latest_prep": {
+        "default": "mdi:currency-eur"
+      },
+      "prd4": {
+        "default": "mdi:chart-line"
+      },
+      "prep_profile_num": {
+        "default": "mdi:chart-bell-curve"
+      },
+      "current_prep": {
+        "default": "mdi:currency-eur"
+      },
+      "estimated_daily_prep": {
+        "default": "mdi:chart-bell-curve"
+      },
+      "daily_trend": {
+        "default": "mdi:trending-up"
+      },
+      "last_update": {
+        "default": "mdi:clock-outline"
+      },
+      "long_term_curtailment": {
+        "default": "mdi:clock-alert-outline"
+      },
+      "degraded_mode": {
+        "default": "mdi:alert-outline"
+      },
+      "rte_unavailable_since": {
+        "default": "mdi:cloud-off-outline"
+      },
+      "comments": {
+        "default": "mdi:comment-text-outline"
+      },
+      "gain_rate": {
+        "default": "mdi:cash-clock"
+      },
+      "cumulative_gain": {
+        "default": "mdi:cash-multiple"
+      }
+    },
+    "binary_sensor": {
+      "curtailment_requested": {
+        "default": "mdi:car-speed-limiter"
+      },
+      "cdc_curtailment_requested": {
+        "default": "mdi:car-speed-limiter"
+      },
+      "zero_inject_active": {
+        "default": "mdi:flash-off"
+      }
+    },
+    "select": {
+      "mode": {
+        "default": "mdi:tune"
+      }
+    }
+  },
+  "services": {
+    "reset_counters": {
+      "service": "mdi:counter"
+    }
+  }
+}

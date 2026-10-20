@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime
 from typing import Any
 
 import aiohttp
@@ -12,27 +12,32 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.event import async_track_state_change_event
 from homeassistant.helpers.storage import Store
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
+from homeassistant.util import dt as dt_util
 
 from .api import ThreeERLApiClient, ThreeERLApiError
 from .const import (
     AGGREGATION_MODE_ACC,
+    API_FALLBACK_INTERVAL,
+    API_RETRY_INTERVAL,
+    API_TIMEZONE,
     CONF_AGGREGATION_MODE,
+    CONF_CONSUMPTION_POWER_ENTITY,
     CONF_PRD3_DAY_OFFSET,
     CONF_PV_POWER_ENTITY,
-    CONF_UPDATE_INTERVAL,
     DEFAULT_AGGREGATION_MODE,
     DEFAULT_PRD3_DAY_OFFSET,
-    DEFAULT_UPDATE_INTERVAL_MINUTES,
     DOMAIN,
     MEGAWATT_HOURS_PER_KILOWATT_HOUR,
     POWER_UPDATE_INTERVAL,
     REMUNERATION_RATE,
     SECONDS_PER_HOUR,
     SENSOR_KEY_DERNIER_PREP,
+    SENSOR_KEY_HEURE_UPDATE,
     STORAGE_KEY,
+    STORE_SAVE_DELAY_SECONDS,
     WATTS_PER_KILOWATT,
 )
-from .helpers import is_bridage_active
+from .helpers import entry_settings, is_bridage_active, next_poll_delay
 from .pricing import PricingDataError, PricingDataManager
 
 _LOGGER = logging.getLogger(__name__)
@@ -41,10 +46,10 @@ _LOGGER = logging.getLogger(__name__)
 class ThreeERLUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     """Coordinator that polls the 3ERL API and tracks curtailed energy.
 
-    The coordinator polls the public 3ERL API on a configurable interval and
-    also reacts to changes of the configured PV production power sensor. When
-    curtailment is active it accumulates the energy that would have been
-    injected and the estimated 3ERL remuneration.
+    The coordinator polls the public 3ERL API when new data is expected (see
+    ``helpers.next_poll_delay``) and also reacts to changes of the configured
+    PV production power sensor. When curtailment is active it accumulates the
+    energy that would have been injected and the estimated 3ERL remuneration.
 
     :param hass: Home Assistant instance.
     :type hass: HomeAssistant
@@ -62,36 +67,25 @@ class ThreeERLUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         entry: ConfigEntry,
     ) -> None:
         """Initialize the coordinator."""
+        settings = entry_settings(entry)
         self._api_client = api_client
         self._entry = entry
-        self._pv_power_entity = entry.options.get(
-            CONF_PV_POWER_ENTITY, entry.data[CONF_PV_POWER_ENTITY]
-        )
-        self._aggregation_mode = entry.options.get(
-            CONF_AGGREGATION_MODE,
-            entry.data.get(CONF_AGGREGATION_MODE, DEFAULT_AGGREGATION_MODE),
-        )
-        prd3_offset = entry.options.get(
-            CONF_PRD3_DAY_OFFSET,
-            entry.data.get(CONF_PRD3_DAY_OFFSET, DEFAULT_PRD3_DAY_OFFSET),
-        )
+        self._pv_power_entity = settings[CONF_PV_POWER_ENTITY]
+        self._consumption_entity = settings.get(CONF_CONSUMPTION_POWER_ENTITY)
+        self._aggregation_mode = settings.get(CONF_AGGREGATION_MODE, DEFAULT_AGGREGATION_MODE)
+        prd3_offset = settings.get(CONF_PRD3_DAY_OFFSET, DEFAULT_PRD3_DAY_OFFSET)
         self._pricing = PricingDataManager(session, prd3_offset)
         self._cumulative_energy_kwh = 0.0
         self._cumulative_gain_eur = 0.0
         self._last_update_time: datetime | None = None
         self._store = Store(hass, 1, f"{STORAGE_KEY}_{entry.entry_id}")
 
-        update_minutes = entry.options.get(
-            CONF_UPDATE_INTERVAL,
-            entry.data.get(CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL_MINUTES),
-        )
-        update_interval = timedelta(minutes=update_minutes)
-
         super().__init__(
             hass,
             _LOGGER,
+            config_entry=entry,
             name=DOMAIN,
-            update_interval=update_interval,
+            update_interval=API_FALLBACK_INTERVAL,
         )
 
         self._unsub_power = async_track_state_change_event(
@@ -108,6 +102,22 @@ class ThreeERLUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         :rtype: str
         """
         return self._aggregation_mode
+
+    @property
+    def curtailment_requested(self) -> bool:
+        """Return whether the latest API data requests curtailment.
+
+        :return: True when the signal of the configured contract type is set.
+        :rtype: bool
+        """
+        api_data = self.data.get("api_data", {}) if self.data else {}
+        return is_bridage_active(api_data, self._aggregation_mode)
+
+    async def async_shutdown(self) -> None:
+        """Stop tracking the PV power sensor, flush counters and shut down."""
+        self._unsub_power()
+        await self._store_cumulative_data()
+        await super().async_shutdown()
 
     async def async_load_cumulative_data(self) -> None:
         """Restore cumulative energy and gain values from storage."""
@@ -131,7 +141,11 @@ class ThreeERLUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         try:
             api_data = await self._api_client.fetch()
         except ThreeERLApiError as err:
+            self.update_interval = API_RETRY_INTERVAL
             raise UpdateFailed(f"Failed to fetch 3ERL data: {err}") from err
+        self.update_interval = next_poll_delay(
+            api_data.get(SENSOR_KEY_HEURE_UPDATE), dt_util.now(API_TIMEZONE)
+        )
 
         try:
             await self._pricing.async_update()
@@ -151,8 +165,18 @@ class ThreeERLUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             if delta < POWER_UPDATE_INTERVAL:
                 return
         self._accumulate_from_power_sensor(now)
+        self._async_push_computed_data()
+
+    @callback
+    def _async_push_computed_data(self) -> None:
+        """Recompute derived values and notify listeners.
+
+        Unlike ``async_set_updated_data``, this keeps the scheduled API poll.
+        Frequent PV power changes would otherwise postpone it forever.
+        """
         api_data = self.data.get("api_data", {}) if self.data else {}
-        self.async_set_updated_data(self._build_data(api_data))
+        self.data = self._build_data(api_data)
+        self.async_update_listeners()
 
     def _accumulate_from_power_sensor(
         self,
@@ -177,8 +201,7 @@ class ThreeERLUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         if delta_hours <= 0:
             return
 
-        power_state = self.hass.states.get(self._pv_power_entity)
-        power_w = self._numeric_state(power_state)
+        power_w = self._curtailable_power()
         if power_w is None:
             self._last_update_time = now
             return
@@ -201,11 +224,30 @@ class ThreeERLUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 )
                 self._cumulative_gain_eur += gain_delta_eur
 
-            self.hass.async_create_background_task(
-                self._store_cumulative_data(), name=f"{DOMAIN}_store_cumulative"
-            )
+            self._store.async_delay_save(self._cumulative_data, STORE_SAVE_DELAY_SECONDS)
 
         self._last_update_time = now
+
+    def _curtailable_power(self) -> float | None:
+        """Return the power lost to curtailment, in watts.
+
+        Without a consumption sensor this is the raw PV production, an upper
+        bound of the surplus that would have been injected. With one, it is
+        production minus home consumption, clipped at zero. If the configured
+        consumption sensor is unreadable, production is used as a fallback.
+
+        :return: Curtailable power in watts, or None if the PV sensor is down.
+        :rtype: float | None
+        """
+        power_w = self._numeric_state(self.hass.states.get(self._pv_power_entity))
+        if power_w is None:
+            return None
+        if not self._consumption_entity:
+            return power_w
+        consumption_w = self._numeric_state(self.hass.states.get(self._consumption_entity))
+        if consumption_w is None:
+            return power_w
+        return max(power_w - consumption_w, 0.0)
 
     def _current_price(self, api_data: dict[str, Any]) -> float | None:
         """Return the price to use for the current remuneration estimate.
@@ -236,8 +278,8 @@ class ThreeERLUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         :return: Combined data used by sensor entities.
         :rtype: dict[str, Any]
         """
-        power_state = self.hass.states.get(self._pv_power_entity)
-        power_w = self._numeric_state(power_state) or 0.0
+        pv_power_w = self._numeric_state(self.hass.states.get(self._pv_power_entity)) or 0.0
+        power_w = self._curtailable_power() or 0.0
         bridage_active = is_bridage_active(api_data, self._aggregation_mode)
         current_price = self._current_price(api_data) or 0.0
 
@@ -249,7 +291,7 @@ class ThreeERLUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "api_data": api_data,
             "timestamp": datetime.now(UTC).isoformat(),
             "aggregation_mode": self._aggregation_mode,
-            "pv_power_w": power_w,
+            "pv_power_w": pv_power_w,
             "current_prep": self._pricing.current_prep(),
             "estimated_daily_prep": self._pricing.estimated_daily_prep,
             "puissance_bridable": puissance_bridable,
@@ -258,22 +300,28 @@ class ThreeERLUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "gain_cumule_eur": round(self._cumulative_gain_eur, 4),
         }
 
+    @callback
+    def _cumulative_data(self) -> dict[str, float]:
+        """Return the cumulative values to persist.
+
+        :return: Cumulative energy and gain.
+        :rtype: dict[str, float]
+        """
+        return {
+            "energy_kwh": self._cumulative_energy_kwh,
+            "gain_eur": self._cumulative_gain_eur,
+        }
+
     async def _store_cumulative_data(self) -> None:
-        """Persist cumulative energy and gain values."""
-        await self._store.async_save(
-            {
-                "energy_kwh": self._cumulative_energy_kwh,
-                "gain_eur": self._cumulative_gain_eur,
-            }
-        )
+        """Persist cumulative energy and gain values now."""
+        await self._store.async_save(self._cumulative_data())
 
     async def async_reset_counters(self) -> None:
         """Reset cumulative energy and gain values to zero."""
         self._cumulative_energy_kwh = 0.0
         self._cumulative_gain_eur = 0.0
         await self._store_cumulative_data()
-        api_data = self.data.get("api_data", {}) if self.data else {}
-        self.async_set_updated_data(self._build_data(api_data))
+        self._async_push_computed_data()
         _LOGGER.info("Reset 3ERL cumulative energy and gain counters")
 
     @staticmethod

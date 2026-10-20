@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from typing import Any
 
 import aiohttp
@@ -19,8 +19,8 @@ from .const import (
 
 _LOGGER = logging.getLogger(__name__)
 
-SLOTS_PER_DAY = 96
 MINUTES_PER_SLOT = 15
+REQUEST_TIMEOUT = aiohttp.ClientTimeout(total=API_TIMEOUT_SECONDS)
 
 
 class PricingDataError(Exception):
@@ -57,6 +57,7 @@ class PricingDataManager:
 
         self._prep_values: dict[datetime, float] = {}
         self._prd3_values: dict[datetime, float] = {}
+        self._prd3_day: date | None = None
         self._estimated_daily_prep: float | None = None
 
     @property
@@ -80,9 +81,27 @@ class PricingDataManager:
         return self._prep_values.get(slot)
 
     async def async_update(self) -> None:
-        """Fetch RTE and Enedis data and refresh the price estimates."""
-        self._prep_values = await self._fetch_rte_prep()
-        self._prd3_values = await self._fetch_prd3_profile()
+        """Fetch RTE and Enedis data and refresh the price estimates.
+
+        Both sources are fetched independently. The PRD3 profile is fetched
+        once per selected day. Errors are raised after both attempts.
+
+        :raises PricingDataError: If at least one source failed.
+        """
+        errors: list[str] = []
+        try:
+            self._prep_values = await self._fetch_rte_prep()
+        except PricingDataError as err:
+            errors.append(str(err))
+
+        target_day = dt_now().date() + timedelta(days=self._prd3_day_offset)
+        if target_day != self._prd3_day or not self._prd3_values:
+            try:
+                self._prd3_values = await self._fetch_prd3_profile(target_day)
+                self._prd3_day = target_day
+            except PricingDataError as err:
+                errors.append(str(err))
+
         self._estimated_daily_prep = self._compute_estimated_daily_prep()
 
         _LOGGER.debug(
@@ -91,6 +110,8 @@ class PricingDataManager:
             len(self._prd3_values),
             self._estimated_daily_prep,
         )
+        if errors:
+            raise PricingDataError("; ".join(errors))
 
     def _current_slot(self) -> datetime:
         """Return the start of the current quarter-hour slot in Europe/Paris.
@@ -114,14 +135,12 @@ class PricingDataManager:
 
         try:
             async with self._session.get(
-                self._rte_url, params=params, timeout=API_TIMEOUT_SECONDS
+                self._rte_url, params=params, timeout=REQUEST_TIMEOUT
             ) as response:
                 response.raise_for_status()
                 data = await response.json()
-        except aiohttp.ClientError as err:
+        except (aiohttp.ClientError, TimeoutError, ValueError) as err:
             raise PricingDataError(f"Failed to fetch RTE pricing data: {err}") from err
-        except Exception as err:
-            raise PricingDataError(f"Unexpected error fetching RTE data: {err}") from err
 
         values = data.get("values", []) if isinstance(data, dict) else []
         result: dict[datetime, float] = {}
@@ -141,14 +160,15 @@ class PricingDataManager:
                 continue
         return result
 
-    async def _fetch_prd3_profile(self) -> dict[datetime, float]:
-        """Fetch the PRD3 profile coefficients from Enedis for the selected day.
+    async def _fetch_prd3_profile(self, target_day: date) -> dict[datetime, float]:
+        """Fetch the PRD3 profile coefficients from Enedis for the given day.
 
+        :param target_day: Day of the PRD3 profile to fetch.
+        :type target_day: date
         :return: Mapping from slot start datetime to PRD3 coefficient.
         :rtype: dict[datetime, float]
         :raises PricingDataError: If the request or parsing fails.
         """
-        target_day = dt_now().date() + timedelta(days=self._prd3_day_offset)
         start = datetime.combine(target_day, datetime.min.time())
         end = start + timedelta(days=1, minutes=-MINUTES_PER_SLOT)
 
@@ -171,14 +191,12 @@ class PricingDataManager:
 
         try:
             async with self._session.post(
-                self._enedis_url, data=payload, timeout=API_TIMEOUT_SECONDS
+                self._enedis_url, data=payload, timeout=REQUEST_TIMEOUT
             ) as response:
                 response.raise_for_status()
                 data = await response.json()
-        except aiohttp.ClientError as err:
+        except (aiohttp.ClientError, TimeoutError, ValueError) as err:
             raise PricingDataError(f"Failed to fetch Enedis PRD3 data: {err}") from err
-        except Exception as err:
-            raise PricingDataError(f"Unexpected error fetching PRD3 data: {err}") from err
 
         if not isinstance(data, list):
             raise PricingDataError("Unexpected Enedis PRD3 response format")

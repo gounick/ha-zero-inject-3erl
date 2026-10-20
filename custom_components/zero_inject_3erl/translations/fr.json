@@ -4,12 +4,11 @@
       "user": {
         "data": {
           "api_url": "URL de l'API 3ERL",
-          "update_interval": "Intervalle de mise à jour (minutes)",
-          "pv_system_type": "Type de système photovoltaïque",
           "aggregation_mode": "Type de contrat d'autoconsommation",
           "pv_power_entity": "Capteur de puissance de production PV",
           "relay_entity": "Interrupteur du relais de limitation d'injection",
-          "notify_service": "Service de notification (optionnel)",
+          "consumption_power_entity": "Capteur de puissance consommée par la maison (optionnel)",
+          "notify_service": "Entité de notification (optionnel)",
           "prd3_day_offset": "Décalage du profil PRD3 (ACI uniquement)"
         },
         "description": "Configurez le bridage zéro-injection 3ERL. L'intégration interroge l'API 3ERL et commande un relais pour limiter l'injection photovoltaïque sur demande. Choisissez 'aci' pour l'autoconsommation individuelle ou 'acc' pour l'autoconsommation collective. Le décalage PRD3 sert à estimer le prix journalier ACI quand Enedis n'a pas encore publié le profil du jour.",
@@ -26,16 +25,20 @@
       "init": {
         "data": {
           "api_url": "URL de l'API 3ERL",
-          "update_interval": "Intervalle de mise à jour (minutes)",
           "aggregation_mode": "Type de contrat d'autoconsommation",
           "pv_power_entity": "Capteur de puissance de production PV",
           "relay_entity": "Interrupteur du relais de limitation d'injection",
-          "notify_service": "Service de notification (optionnel)",
+          "consumption_power_entity": "Capteur de puissance consommée par la maison (optionnel)",
+          "notify_service": "Entité de notification (optionnel)",
           "prd3_day_offset": "Décalage du profil PRD3 (ACI uniquement)"
         },
         "description": "Mettez à jour les paramètres du bridage 3ERL.",
         "title": "3ERL Zero-Injection"
       }
+    },
+    "error": {
+      "cannot_connect": "Connexion à l'API 3ERL impossible. Vérifiez l'URL et le réseau.",
+      "unknown": "Erreur inattendue."
     }
   },
   "selector": {
@@ -44,6 +47,77 @@
         "aci": "ACI - Autoconsommation individuelle (signal Bridage)",
         "acc": "ACC - Autoconsommation collective (signal Bridage_CDC)"
       }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "latest_prep": {
+        "name": "Dernier PRE+"
+      },
+      "prd4": {
+        "name": "Estimation jour PRD4"
+      },
+      "prep_profile_num": {
+        "name": "PRE+ jour pondéré PRD3 (3ERL)"
+      },
+      "current_prep": {
+        "name": "PRE+ actuel"
+      },
+      "estimated_daily_prep": {
+        "name": "PRE+ journalier estimé"
+      },
+      "daily_trend": {
+        "name": "Tendance du jour"
+      },
+      "last_update": {
+        "name": "Heure update"
+      },
+      "long_term_curtailment": {
+        "name": "Bridage long terme"
+      },
+      "degraded_mode": {
+        "name": "Mode degrade"
+      },
+      "rte_unavailable_since": {
+        "name": "RTE indispo depuis"
+      },
+      "comments": {
+        "name": "Commentaires"
+      },
+      "curtailable_power": {
+        "name": "Puissance bridable"
+      },
+      "gain_rate": {
+        "name": "Puissance gain"
+      },
+      "curtailed_energy": {
+        "name": "Énergie bridée estimée"
+      },
+      "cumulative_gain": {
+        "name": "Gain cumulé"
+      }
+    },
+    "binary_sensor": {
+      "curtailment_requested": {
+        "name": "Bridage demandé"
+      },
+      "cdc_curtailment_requested": {
+        "name": "Bridage CDC demandé"
+      },
+      "zero_inject_active": {
+        "name": "Zero-Inject actif"
+      }
+    },
+    "select": {
+      "mode": {
+        "name": "Mode zero-inject"
+      }
+    }
+  },
+  "services": {
+    "reset_counters": {
+      "name": "Réinitialiser les compteurs",
+      "description": "Remet à zéro les compteurs cumulés d'énergie bridée et de gain estimé de toutes les entrées 3ERL."
     }
   }
 }
