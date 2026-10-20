@@ -1,6 +1,57 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:recommended"],
+  "extends": [
+    "config:recommended",
+    ":dependencyDashboard",
+    "helpers:pinGitHubActionDigests",
+    ":maintainLockFilesWeekly"
+  ],
+  "timezone": "Europe/Paris",
+  "schedule": ["before 6am on monday"],
   "labels": ["dependencies"],
-  "automerge": false
+  "automerge": false,
+  "minimumReleaseAge": "7 days",
+  "internalChecksFilter": "strict",
+  "packageRules": [
+    {
+      "description": "One weekly PR for non-major GitHub Actions updates.",
+      "matchManagers": ["github-actions"],
+      "matchUpdateTypes": ["minor", "patch", "digest", "pinDigest"],
+      "groupName": "GitHub Actions"
+    },
+    {
+      "description": "Home Assistant and its test harness pin each other; update them together.",
+      "matchPackageNames": ["homeassistant", "pytest-homeassistant-custom-component"],
+      "groupName": "Home Assistant"
+    },
+    {
+      "description": "One weekly PR for non-major Python dev tool updates.",
+      "matchManagers": ["pep621"],
+      "matchDepTypes": ["project.optional-dependencies"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "Python dev dependencies"
+    },
+    {
+      "description": "Python follows the version supported by Home Assistant; bump it by hand.",
+      "matchDepNames": ["python"],
+      "matchUpdateTypes": ["major", "minor"],
+      "enabled": false
+    },
+    {
+      "description": "One weekly PR for prek hook updates.",
+      "matchFileNames": ["prek.toml"],
+      "groupName": "prek hooks"
+    }
+  ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Update hook revisions in prek.toml (no native Renovate manager yet).",
+      "managerFilePatterns": ["/(^|/)prek\\.toml$/"],
+      "matchStrings": [
+        "repo = \"https://github\\.com/(?<depName>[^\"]+)\"\\s+rev = \"(?<currentValue>[^\"]+)\""
+      ],
+      "datasourceTemplate": "github-tags"
+    }
+  ]
 }

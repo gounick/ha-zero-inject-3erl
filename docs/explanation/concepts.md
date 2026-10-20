@@ -6,7 +6,7 @@ This page explains the concepts behind the integration. If you want to set up th
 
 [3ERL](https://3erl.fr) is a French association acting as a balance responsible party (Responsable d'Équilibre). It lets self-consumers sell their surplus solar power at the spot market price instead of a fixed feed-in tariff. When market prices go negative, injecting power into the grid costs money instead of earning it. 3ERL then asks its members to stop injecting.
 
-The association publishes a public API at `https://3erl.fr/api.json`, refreshed every 15 minutes. Two fields carry the curtailment signal:
+The association publishes a public API at `https://3erl.fr/api.json`, refreshed at minutes 3, 18, 33 and 48 of each hour. Two fields carry the curtailment signal:
 
 - `Bridage` — applies to individual self-consumption contracts (ACI).
 - `Bridage_CDC` — applies to collective self-consumption contracts (ACC).
@@ -55,7 +55,7 @@ The integration integrates the estimate over time instead of multiplying a cumul
 
 The price used depends on the contract type:
 
-- **ACI**: estimated daily PRE+ computed from RTE quarter-hourly PRE+ values weighted by the Enedis PRD3 profile. Because Enedis only publishes the current day's PRD3 profile after the day is over, the integration uses the profile from a configurable past day (default `-2`) as an estimate.
+- **ACI**: estimated daily PRE+ computed from RTE quarter-hourly PRE+ values weighted by the Enedis PRD3 profile. Because Enedis only publishes the current day's PRD3 profile after the day is over, the integration uses the profile from a configurable past day (default `-2`) as an estimate. See [How the daily PRE+ is calculated](daily-prep-estimate.md) for the full walkthrough.
 
   ```text
   estimated_daily_PREP = sum(PREP × PRD3_factor) / sum(PRD3_factor)
@@ -70,7 +70,7 @@ The price used depends on the contract type:
 
 If the external RTE or Enedis sources are unavailable, the integration falls back to the latest `Dernier_PREP` from the 3ERL API.
 
-Curtailed energy is an upper bound. It equals the measured injection power integrated over curtailment periods, which is why a grid-side sensor that sees every injection source (PV, wind, battery) gives the most faithful estimate.
+Curtailed energy is an estimate of the surplus that would have been injected. The integration integrates `production − consumption` during curtailment periods when a consumption sensor is configured, and production alone otherwise (an upper bound). A grid-side injection sensor cannot be used for this counter because measured injection falls to about zero while curtailment is applied.
 
 ## Related pages
 

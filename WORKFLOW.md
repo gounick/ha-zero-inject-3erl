@@ -33,7 +33,7 @@ flowchart TB
     INVERTER["PV Inverter (Envoy DRM port)"]
     PV_POWER["Injection Power Sensor"]
 
-    API -->|polls every N minutes| COORD
+    API -->|scheduled polls| COORD
     PV_POWER -->|state changes| COORD
     COORD --> SENS
     SENS --> CTRL
@@ -51,7 +51,7 @@ sequenceDiagram
     participant HA as Home Assistant
 
     U->>CF: Add integration
-    CF->>U: Ask for API URL, interval, contract type, PV power sensor, relay, notify service
+    CF->>U: Ask for API URL, contract type, PV power sensor, relay, notify service
     U->>CF: Submit configuration
     CF->>API: GET /api.json
     API-->>CF: JSON response
@@ -79,7 +79,7 @@ flowchart LR
 
 ## Zero-injection state machine
 
-The controller re-evaluates whenever the mode select or the curtailment signal changes.
+The controller re-evaluates on every coordinator update and whenever the mode select or the relay changes. It compares the computed state with the real relay state, so a failed call or a manual toggle is corrected. It sends nothing while the relay is unavailable and drives it as soon as it comes back. Notifications are sent only when the computed state changes, never at startup.
 
 ```mermaid
 stateDiagram-v2
@@ -118,13 +118,14 @@ flowchart LR
 ## Operational workflow
 
 1. The user installs the integration via HACS or manual copy, then configures it through the Home Assistant UI.
-2. The coordinator fetches the 3ERL API at the configured interval.
+2. The coordinator fetches the 3ERL API on the published update schedule: about 18 minutes after each `Heure_Update`, with a 1-minute retry when fresh data is late.
 3. Each time the configured injection power sensor changes, the coordinator computes the energy curtailed since the last update.
-4. The controller listens to coordinator updates and mode-select changes, then decides whether to turn the relay on or off.
+4. The controller listens to coordinator updates, mode-select changes and relay changes, then aligns the relay with the computed state.
 5. While curtailment is active, the coordinator accumulates the estimated gain using the latest PRE+ value and the 70% remuneration rule.
-6. Cumulative energy and gain counters are saved to Home Assistant storage and restored on restart.
+6. Cumulative energy and gain counters are saved to Home Assistant storage at most once a minute, flushed on unload, and restored on restart.
+7. The mode select restores its last value after a restart or reload.
 
 ## Maintenance workflow
 
 - To reset counters, call the service `zero_inject_3erl.reset_counters` from **Developer Tools → Services**.
-- To change the relay, PV sensor, contract type or polling interval, use **Settings → Devices & services → 3ERL Zero-Injection → Configure**.
+- To change the relay, PV sensor, contract type or notification entity, use **Settings → Devices & services → 3ERL Zero-Injection → Configure**.

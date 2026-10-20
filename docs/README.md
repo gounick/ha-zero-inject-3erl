@@ -21,6 +21,7 @@ flowchart TD
 | Need | Go to |
 |---|---|
 | Understand 3ERL, curtailment, ACI vs ACC and how the relay stops export | [explanation/concepts.md](explanation/concepts.md) |
+| Understand how the daily remuneration price (PRE+) is computed | [explanation/daily-prep-estimate.md](explanation/daily-prep-estimate.md) ([FR](explanation/daily-prep-estimate.fr.md)) |
 | Get Installer access on Enphase and configure the DRM relay levels | [how-to/configure-envoy-drm.md](how-to/configure-envoy-drm.md) |
 | Wire a dry-contact relay to the Envoy DRM port | [how-to/wire-the-relay.md](how-to/wire-the-relay.md) |
 | Install and configure the integration in Home Assistant | [how-to/install-and-configure.md](how-to/install-and-configure.md) |

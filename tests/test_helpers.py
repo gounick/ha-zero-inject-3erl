@@ -2,15 +2,19 @@
 
 from __future__ import annotations
 
+from datetime import datetime, timedelta
 from unittest.mock import MagicMock
+from zoneinfo import ZoneInfo
 
 import pytest
 
 from custom_components.zero_inject_3erl.helpers import (
     compute_zero_inject_active,
     curtailment_signal_key,
+    entry_settings,
     get_current_mode,
     is_bridage_active,
+    next_poll_delay,
 )
 
 
@@ -81,6 +85,46 @@ def test_get_current_mode_invalid_state() -> None:
     state.state = "Invalid"
     hass.states.get.return_value = state
     assert get_current_mode(hass, "select.zero_inject_3erl_mode") == "Auto"
+
+
+PARIS = ZoneInfo("Europe/Paris")
+
+
+def test_next_poll_waits_for_next_publication() -> None:
+    """Test that polling waits 18 minutes after Heure_Update plus a margin."""
+    now = datetime(2026, 10, 13, 15, 58, 29, tzinfo=PARIS)
+    delay = next_poll_delay("13/10/2026 15:45", now)
+    assert delay == timedelta(hours=16, minutes=3, seconds=20) - timedelta(
+        hours=15, minutes=58, seconds=29
+    )
+
+
+def test_next_poll_retries_every_minute_when_stale() -> None:
+    """Test that a stale Heure_Update triggers a one-minute retry."""
+    now = datetime(2026, 10, 13, 16, 10, tzinfo=PARIS)
+    assert next_poll_delay("13/10/2026 15:45", now) == timedelta(minutes=1)
+
+
+@pytest.mark.parametrize("value", [None, "", "not a date", 42])
+def test_next_poll_falls_back_when_unparseable(value: object) -> None:
+    """Test the fallback interval when Heure_Update cannot be parsed."""
+    now = datetime(2026, 10, 13, 16, 10, tzinfo=PARIS)
+    assert next_poll_delay(value, now) == timedelta(minutes=15)
+
+
+def test_entry_settings_uses_data_without_options() -> None:
+    """Test that the initial data is used before any options are saved."""
+    entry = MagicMock(data={"notify_service": "notify.phone"}, options={})
+    assert entry_settings(entry) == {"notify_service": "notify.phone"}
+
+
+def test_entry_settings_options_replace_data() -> None:
+    """Test that a field cleared in the options does not fall back to data."""
+    entry = MagicMock(
+        data={"notify_service": "notify.phone", "relay_entity": "switch.a"},
+        options={"relay_entity": "switch.b"},
+    )
+    assert entry_settings(entry) == {"relay_entity": "switch.b"}
 
 
 @pytest.mark.parametrize(

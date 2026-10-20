@@ -18,17 +18,26 @@ test = [
 ]
 
 [tool.ruff]
-target-version = "py312"
+# py313 keeps parenthesized exception tuples; PEP 758 bare tuples read like Python 2.
+target-version = "py313"
 line-length = 100
 
 [tool.ruff.lint]
 select = [
+    "ASYNC",
+    "B",
+    "BLE",
     "E",
     "F",
     "I",
     "N",
+    "S",
     "W",
 ]
+
+[tool.ruff.lint.per-file-ignores]
+# pytest relies on plain assert statements.
+"tests/**" = ["S101"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

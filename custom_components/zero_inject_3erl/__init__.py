@@ -3,119 +3,157 @@
 from __future__ import annotations
 
 import logging
+from dataclasses import dataclass
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
-from homeassistant.core import HomeAssistant, ServiceCall
-from homeassistant.exceptions import ConfigEntryNotReady
+from homeassistant.core import HomeAssistant, ServiceCall, callback
+from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.helpers.typing import ConfigType
 
-from .api import ThreeERLApiClient, ThreeERLApiError
-from .const import CONF_API_URL, DEFAULT_API_URL, DOMAIN, SERVICE_RESET_COUNTERS
+from .api import ThreeERLApiClient
+from .const import (
+    CONF_API_URL,
+    DEFAULT_API_URL,
+    DOMAIN,
+    MODE_UNIQUE_ID_SUFFIX,
+    SERVICE_RESET_COUNTERS,
+)
 from .controller import ZeroInjectController
 from .coordinator import ThreeERLUpdateCoordinator
+from .helpers import entry_settings
 
 _LOGGER = logging.getLogger(__name__)
+
+CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
 PLATFORMS: list[Platform] = [
     Platform.BINARY_SENSOR,
     Platform.SELECT,
     Platform.SENSOR,
 ]
+# The mode select is set up first so other entities can resolve its entity id.
+DEPENDENT_PLATFORMS = [platform for platform in PLATFORMS if platform is not Platform.SELECT]
 
 
-async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+@dataclass
+class ThreeERLRuntimeData:
+    """Objects owned by a loaded config entry."""
+
+    coordinator: ThreeERLUpdateCoordinator
+    controller: ZeroInjectController
+
+
+type ThreeERLConfigEntry = ConfigEntry[ThreeERLRuntimeData]
+
+
+async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
+    """Register the integration services.
+
+    :param hass: Home Assistant instance.
+    :type hass: HomeAssistant
+    :param config: YAML configuration (unused, config entries only).
+    :type config: ConfigType
+    :return: True.
+    :rtype: bool
+    """
+
+    async def async_handle_reset_counters(call: ServiceCall) -> None:
+        """Reset the counters of every loaded config entry.
+
+        :param call: Service call data.
+        :type call: ServiceCall
+        """
+        entries: list[ThreeERLConfigEntry] = hass.config_entries.async_loaded_entries(DOMAIN)
+        for entry in entries:
+            await entry.runtime_data.coordinator.async_reset_counters()
+
+    hass.services.async_register(DOMAIN, SERVICE_RESET_COUNTERS, async_handle_reset_counters)
+    return True
+
+
+async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    """Migrate a config entry to the current version.
+
+    Minor version 2 prefixes the mode select unique id with the domain, like
+    every other entity of the integration.
+
+    :param hass: Home Assistant instance.
+    :type hass: HomeAssistant
+    :param entry: Config entry to migrate.
+    :type entry: ConfigEntry
+    :return: True when the entry is at the current version.
+    :rtype: bool
+    """
+    if entry.version > 1:
+        return False
+    if entry.minor_version < 2:
+        legacy_unique_id = f"{entry.entry_id}_{MODE_UNIQUE_ID_SUFFIX}"
+
+        @callback
+        def _migrate_unique_id(entity: er.RegistryEntry) -> dict[str, str] | None:
+            if entity.domain == Platform.SELECT and entity.unique_id == legacy_unique_id:
+                return {"new_unique_id": f"{DOMAIN}_{legacy_unique_id}"}
+            return None
+
+        await er.async_migrate_entries(hass, entry.entry_id, _migrate_unique_id)
+        hass.config_entries.async_update_entry(entry, minor_version=2)
+    return True
+
+
+async def async_setup_entry(hass: HomeAssistant, entry: ThreeERLConfigEntry) -> bool:
     """Set up 3ERL Zero-Injection from a config entry.
 
     :param hass: Home Assistant instance.
     :type hass: HomeAssistant
     :param entry: Config entry being set up.
-    :type entry: ConfigEntry
+    :type entry: ThreeERLConfigEntry
     :return: True if setup succeeded.
     :rtype: bool
     """
     session = async_get_clientsession(hass)
-    api_url = entry.data.get(CONF_API_URL, DEFAULT_API_URL)
-    api = ThreeERLApiClient(session, api_url)
-
-    coordinator = ThreeERLUpdateCoordinator(hass, api, session, entry)
-    try:
-        await coordinator.async_load_cumulative_data()
-        await coordinator.async_config_entry_first_refresh()
-    except ConfigEntryNotReady:
-        raise
-    except ThreeERLApiError as err:
-        raise ConfigEntryNotReady(f"Unable to connect to 3ERL API: {err}") from err
-
-    hass.data.setdefault(DOMAIN, {})[entry.entry_id] = {
-        "coordinator": coordinator,
-        "entry": entry,
-    }
-
-    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    api_url = entry_settings(entry).get(CONF_API_URL, DEFAULT_API_URL)
+    coordinator = ThreeERLUpdateCoordinator(
+        hass, ThreeERLApiClient(session, api_url), session, entry
+    )
+    await coordinator.async_load_cumulative_data()
+    await coordinator.async_config_entry_first_refresh()
 
     controller = ZeroInjectController(hass, entry, coordinator)
+    entry.runtime_data = ThreeERLRuntimeData(coordinator, controller)
+
+    await hass.config_entries.async_forward_entry_setups(entry, [Platform.SELECT])
+    await hass.config_entries.async_forward_entry_setups(entry, DEPENDENT_PLATFORMS)
+
     await controller.async_setup()
-    hass.data[DOMAIN][entry.entry_id]["controller"] = controller
-
-    _register_services(hass)
-
     entry.async_on_unload(entry.add_update_listener(_async_update_listener))
-
     return True
 
 
-def _register_services(hass: HomeAssistant) -> None:
-    """Register integration-wide services.
-
-    :param hass: Home Assistant instance.
-    :type hass: HomeAssistant
-    """
-
-    async def async_handle_reset_counters(call: ServiceCall) -> None:
-        """Handle the reset_counters service.
-
-        :param call: Service call data.
-        :type call: ServiceCall
-        """
-        for entry_data in hass.data.get(DOMAIN, {}).values():
-            coordinator = entry_data.get("coordinator")
-            if isinstance(coordinator, ThreeERLUpdateCoordinator):
-                await coordinator.async_reset_counters()
-
-    if not hass.services.has_service(DOMAIN, SERVICE_RESET_COUNTERS):
-        hass.services.async_register(
-            DOMAIN,
-            SERVICE_RESET_COUNTERS,
-            async_handle_reset_counters,
-        )
-
-
-async def _async_update_listener(hass: HomeAssistant, entry: ConfigEntry) -> None:
+async def _async_update_listener(hass: HomeAssistant, entry: ThreeERLConfigEntry) -> None:
     """Reload the config entry when options change.
 
     :param hass: Home Assistant instance.
     :type hass: HomeAssistant
     :param entry: Updated config entry.
-    :type entry: ConfigEntry
+    :type entry: ThreeERLConfigEntry
     """
     await hass.config_entries.async_reload(entry.entry_id)
 
 
-async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+async def async_unload_entry(hass: HomeAssistant, entry: ThreeERLConfigEntry) -> bool:
     """Unload a config entry.
 
     :param hass: Home Assistant instance.
     :type hass: HomeAssistant
     :param entry: Config entry being unloaded.
-    :type entry: ConfigEntry
+    :type entry: ThreeERLConfigEntry
     :return: True if unload succeeded.
     :rtype: bool
     """
     unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
     if unload_ok:
-        controller = hass.data[DOMAIN][entry.entry_id].get("controller")
-        if controller is not None:
-            await controller.async_shutdown()
-        hass.data[DOMAIN].pop(entry.entry_id, None)
+        await entry.runtime_data.controller.async_shutdown()
     return unload_ok

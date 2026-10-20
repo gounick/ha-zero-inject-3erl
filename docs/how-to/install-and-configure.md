@@ -11,10 +11,11 @@ Goal: install `zero_inject_3erl` in Home Assistant and connect it to your relay 
 
 ## Choose the power sensor
 
-The integration estimates curtailed energy from this sensor during curtailment periods. Two cases:
+The integration estimates the energy lost to curtailment by integrating this sensor during curtailment periods. Choose a **production** power sensor, such as the Envoy `current_power_production` entity — the energy that would have been injected can only be derived from what was being generated at the time.
 
-- **PV only**: a production power sensor such as the Envoy `current_power_production` entity works.
-- **Multiple injection sources** (PV, wind, a battery injecting through a VPP service like Nexen-VPP): use a **grid-side sensor** that sees total injection, for example a [ZLinky TIC](https://www.zigbee2mqtt.io/devices/ZLinky_TIC.html) module on the Linky meter. Its instantaneous injected power entity aggregates all sources; a PV-only sensor would miss battery injection.
+Do not pick a grid-side injection sensor for this field: when the relay cuts export, measured injection falls to about zero and the counter stops counting.
+
+For a more accurate estimate, also fill the optional **Home consumption power sensor**. The counter then integrates `production − consumption` during curtailment, which is closer to the surplus that would actually have been injected. Without it, the counter is an upper bound that includes your base load.
 
 ## Install
 
@@ -38,12 +39,12 @@ The integration estimates curtailed energy from this sensor during curtailment p
    | Field | What to enter |
    |---|---|
    | 3ERL API URL | Leave the default `https://3erl.fr/api.json`. |
-   | Update interval | Polling interval in minutes (default 15, matching the API refresh). |
-   | PV system type | **Generic**; reserved for future auto-detection. |
    | Self-consumption contract type | `aci` uses the `Bridage` signal, `acc` uses `Bridage_CDC`. See [ACI vs ACC](../explanation/concepts.md#aci-vs-acc). |
    | PV production power sensor | The power sensor chosen above. |
    | Zero-injection relay switch | The `switch.*` entity of your dry-contact relay. |
+   | Home consumption power sensor | Optional `sensor.*` reporting home consumption; refines the curtailed-energy estimate. |
    | Notification service | Optional `notify.*` service for state-change notifications. |
+   | PRD3 profile day offset | Leave `-2` unless you have a reason to change it. See [daily PRE+ estimate](../explanation/daily-prep-estimate.md). |
 
 3. Submit. The integration validates the API URL and creates the entities listed in the [entities reference](../reference/entities.md).
 
@@ -53,13 +54,13 @@ All fields remain editable later under **Settings → Devices & services → 3ER
 
 ```mermaid
 flowchart LR
-    A["sensor.3erl_dernier_pre<br/>shows a price"] --> B["binary_sensor.3erl_bridage_demande<br/>follows the API"]
+    A["sensor.3erl_zero_injection_latest_pre<br/>shows a price"] --> B["binary_sensor.3erl_zero_injection_curtailment_requested<br/>follows the API"]
     B --> C["Set mode to On:<br/>relay switch turns on"]
     C --> D["Envoy export drops<br/>to Level 2"]
     D --> E["Set mode back to Auto"]
 ```
 
-1. Check that `sensor.zero_inject_3erl_dernier_pre` reports a value after the first poll.
+1. Check that `sensor.3erl_zero_injection_latest_pre` reports a value after the first poll.
 2. Set the mode select to **On**: the relay closes and export stops.
 3. Set the mode back to **Auto**: the relay opens.
 

@@ -1,51 +1,39 @@
+---
 name: Update changelog and manifest on release
 
-on:
+"on":
   release:
     types: [published]
 
-permissions:
-  contents: write
+permissions: {}
+
+concurrency:
+  group: release
+  cancel-in-progress: false
 
 jobs:
   update-changelog:
     name: Update CHANGELOG.md and manifest.json
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ github.event.release.target_commitish }}
+          # The job pushes the version bump with the workflow token.
+          persist-credentials: true # zizmor: ignore[artipacked]
 
       - name: Update CHANGELOG.md and manifest.json
-        run: |
-          python3 <<'PY'
-          import json
-          import re
-          from datetime import datetime, timezone
-          from pathlib import Path
-
-          version = "${{ github.event.release.tag_name }}".lstrip("v")
-          today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-
-          changelog = Path("CHANGELOG.md")
-          text = changelog.read_text(encoding="utf-8")
-          text = text.replace(
-              "## [Unreleased]",
-              f"## [Unreleased]\n\n## [{version}] - {today}",
-              1,
-          )
-          changelog.write_text(text, encoding="utf-8")
-
-          for manifest in Path("custom_components").glob("*/manifest.json"):
-              data = json.loads(manifest.read_text(encoding="utf-8"))
-              data["version"] = version
-              manifest.write_text(
-                  json.dumps(data, indent=2) + "\n", encoding="utf-8"
-              )
-          PY
+        id: bump
+        env:
+          RELEASE_VERSION: ${{ github.event.release.tag_name }}
+        run: python3 .github/scripts/bump_version.py
 
       - name: Commit and push
+        env:
+          TAG_NAME: v${{ steps.bump.outputs.version }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -54,5 +42,5 @@ jobs:
             echo "No changes to commit"
             exit 0
           fi
-          git commit -m "chore(release): bump manifest and changelog for ${{ github.event.release.tag_name }}"
+          git commit -m "chore(release): bump manifest and changelog for ${TAG_NAME}"
           git push
