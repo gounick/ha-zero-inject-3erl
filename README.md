@@ -30,7 +30,7 @@ Home Assistant custom integration that monitors the French [3ERL](https://3erl.f
 
 ## Supported PV systems
 
-The integration currently supports a generic PV production power sensor. The `PV system type` field is reserved for future auto-discovery of specific inverter brands (Enphase, SMA, Fronius, etc.). Contributions for other systems are welcome.
+The integration currently supports a generic PV production power sensor. Auto-detection of specific inverter brands (Enphase, SMA, Fronius, etc.) may come later through provider modules; contributions for other systems are welcome.
 
 ## Requirements
 

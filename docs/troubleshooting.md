@@ -15,7 +15,7 @@
 ## Relay does not turn on
 
 - Confirm the relay switch entity ID entered in the config flow is correct.
-- Test the relay manually from **Developer Tools → Services** using `switch.turn_on`.
+- Test the relay by setting the mode select to `On`. Do not toggle the switch directly: the integration puts it back in the computed state within seconds.
 - Check that the controller can call the service in the Home Assistant logs.
 - If using a Zigbee relay, verify it is online and paired.
 
@@ -29,7 +29,7 @@
 ## Energy and gain counters stay at zero
 
 - Confirm the configured PV production power sensor reports watts and updates regularly.
-- Check that `binary_sensor.zero_inject_3erl_bridage_demande` is `on` during a curtailment event.
+- Check that `binary_sensor.3erl_zero_injection_curtailment_requested` is `on` during a curtailment event.
 - The counters are updated every time the power sensor changes and during each API poll. They start accumulating as soon as a curtailment period begins.
 
 ## Counters look too high or too low

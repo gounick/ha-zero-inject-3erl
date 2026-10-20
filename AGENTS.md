@@ -27,8 +27,10 @@ This file provides guidance to compatible agentic tools when generating or revie
 - Never duplicate logic. Reuse or extend existing functions before writing new ones.
 - Extract shared logic into helpers when the same pattern appears twice.
 - Examples of shared concepts:
-  - Curtailment decision (`is_curtailment_active`) lives in the coordinator.
-  - Mode resolution uses the select entity state; prefer reading it once and propagating the result.
+  - Curtailment decision: `ThreeERLUpdateCoordinator.curtailment_requested`, built on `helpers.is_bridage_active`.
+  - Mode resolution: `helpers.get_mode_entity_id` and `helpers.get_current_mode`.
+  - Active settings of a config entry: `helpers.entry_settings` (options replace data once saved).
+  - Device info shared by all entities: `helpers.build_device_info`.
 
 ### KISS — Keep It Simple, Stupid
 
@@ -73,6 +75,8 @@ custom_components/zero_inject_3erl/
 ├── config_flow.py    # UI configuration flow + options flow
 ├── api.py            # 3ERL REST API client
 ├── coordinator.py    # DataUpdateCoordinator, energy/gain accumulation
+├── pricing.py        # RTE PRE+ and Enedis PRD3 fetching, price estimates
+├── helpers.py        # Shared decision, settings and entity helpers
 ├── controller.py     # Relay control logic (Auto / On / Off)
 ├── sensor.py         # API + computed sensors
 ├── binary_sensor.py  # Bridage demandé, Bridage CDC, Zero-Inject actif
@@ -83,7 +87,9 @@ custom_components/zero_inject_3erl/
 
 - `ThreeERLApiClient` owns all HTTP calls to `https://3erl.fr/api.json`.
 - `ThreeERLUpdateCoordinator` polls the API and accumulates curtailed energy/gain from the configured PV power sensor.
-- `ZeroInjectController` listens to coordinator updates and mode changes, then turns the relay on or off.
+- `ZeroInjectController` listens to coordinator updates, mode changes and relay changes, then aligns the relay with the computed state.
+- The mode select platform is set up before the other platforms so they can resolve its entity id.
+- Tests live in `tests/`. `tests/conftest.py` provides `config_entry` and `mock_fetch` (patches the 3ERL API and pricing sources) for full setup tests.
 - `sensor.py` and `binary_sensor.py` must not call the API directly; they read `coordinator.data`.
 
 ### Extensibility for other PV systems
