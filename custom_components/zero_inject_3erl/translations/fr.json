@@ -12,7 +12,11 @@
           "prd3_day_offset": "Décalage du profil PRD3 (ACI uniquement)"
         },
         "description": "Configurez le bridage zéro-injection 3ERL. L'intégration interroge l'API 3ERL et commande un relais pour limiter l'injection photovoltaïque sur demande. Choisissez 'aci' pour l'autoconsommation individuelle ou 'acc' pour l'autoconsommation collective. Le décalage PRD3 sert à estimer le prix journalier ACI quand Enedis n'a pas encore publié le profil du jour.",
-        "title": "3ERL Zero-Injection"
+        "title": "3ERL Zero-Injection",
+        "data_description": {
+          "pv_power_entity": "Capteur(s) remontant la production PV instantanée en watts. Avec plusieurs sources de production, sélectionnez-les toutes : les valeurs sont additionnées.",
+          "consumption_power_entity": "Capteur remontant la consommation instantanée de la maison en watts. Une fois renseigné, l'estimation de la puissance bridée utilise production moins consommation au lieu de la seule production."
+        }
       }
     },
     "error": {
@@ -33,7 +37,11 @@
           "prd3_day_offset": "Décalage du profil PRD3 (ACI uniquement)"
         },
         "description": "Mettez à jour les paramètres du bridage 3ERL.",
-        "title": "3ERL Zero-Injection"
+        "title": "3ERL Zero-Injection",
+        "data_description": {
+          "pv_power_entity": "Capteur(s) remontant la production PV instantanée en watts. Avec plusieurs sources de production, sélectionnez-les toutes : les valeurs sont additionnées.",
+          "consumption_power_entity": "Capteur remontant la consommation instantanée de la maison en watts. Une fois renseigné, l'estimation de la puissance bridée utilise production moins consommation au lieu de la seule production."
+        }
       }
     },
     "error": {

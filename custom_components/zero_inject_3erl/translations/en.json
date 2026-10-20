@@ -12,7 +12,11 @@
           "prd3_day_offset": "PRD3 profile day offset (ACI only)"
         },
         "description": "Set up 3ERL zero-injection curtailment. The integration polls the 3ERL API and controls a relay to limit PV export when requested. Choose 'aci' for individual self-consumption or 'acc' for collective self-consumption. The PRD3 day offset is used to estimate the daily ACI price when Enedis has not yet published today's profile.",
-        "title": "3ERL Zero-Injection"
+        "title": "3ERL Zero-Injection",
+        "data_description": {
+          "pv_power_entity": "Sensor(s) reporting current PV production in watts. With several production sources, select all of them: values are summed.",
+          "consumption_power_entity": "Sensor reporting current home consumption in watts. When set, the curtailed-power estimate uses production minus consumption instead of production alone."
+        }
       }
     },
     "error": {
@@ -33,7 +37,11 @@
           "prd3_day_offset": "PRD3 profile day offset (ACI only)"
         },
         "description": "Update the 3ERL zero-injection settings.",
-        "title": "3ERL Zero-Injection"
+        "title": "3ERL Zero-Injection",
+        "data_description": {
+          "pv_power_entity": "Sensor(s) reporting current PV production in watts. With several production sources, select all of them: values are summed.",
+          "consumption_power_entity": "Sensor reporting current home consumption in watts. When set, the curtailed-power estimate uses production minus consumption instead of production alone."
+        }
       }
     },
     "error": {
