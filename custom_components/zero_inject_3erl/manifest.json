@@ -1,7 +1,9 @@
 {
   "domain": "zero_inject_3erl",
   "name": "3ERL Zero-Injection",
-  "codeowners": ["@gounick"],
+  "codeowners": [
+    "@gounick"
+  ],
   "config_flow": true,
   "documentation": "https://github.com/gounick/ha-zero-inject-3erl",
   "integration_type": "service",
