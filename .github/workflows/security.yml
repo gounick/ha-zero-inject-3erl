@@ -9,6 +9,11 @@ name: Security scans
 
 permissions: {}
 
+# Renovate cannot compute the checksum: update both values together by hand.
+env:
+  KINGFISHER_VERSION: v2.9.1
+  KINGFISHER_SHA256: b5aa6b38a301d17ec3c7bd5d4fcc7609f79ca47816ea3ae7bfb47057a4f894a7
+
 jobs:
   gitleaks:
     name: Gitleaks secret scan
@@ -17,11 +22,12 @@ jobs:
       contents: read
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+          persist-credentials: false
       - name: Run Gitleaks
-        uses: gitleaks/gitleaks-action@v3
+        uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e # v3.0.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -33,19 +39,24 @@ jobs:
       security-events: write
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+          persist-credentials: false
       - name: Install Kingfisher
         run: |
-          INSTALLER="https://raw.githubusercontent.com/mongodb/kingfisher/main/scripts/install-kingfisher.sh"
-          curl --silent --location "${INSTALLER}" | bash
-          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          url="https://github.com/mongodb/kingfisher/releases/download/${KINGFISHER_VERSION}/kingfisher-linux-x64.tgz"
+          curl --silent --show-error --fail --location --output kingfisher.tgz "${url}"
+          echo "${KINGFISHER_SHA256}  kingfisher.tgz" | sha256sum --check --strict
+          mkdir -p "${HOME}/.local/bin"
+          tar -xzf kingfisher.tgz -C "${HOME}/.local/bin" kingfisher
+          rm kingfisher.tgz
+          echo "${HOME}/.local/bin" >> "${GITHUB_PATH}"
       - name: Run Kingfisher
-        run: |
-          kingfisher scan . --format sarif --output kingfisher-results.sarif
+        run: kingfisher scan . --format sarif --output kingfisher-results.sarif
       - name: Upload Kingfisher SARIF
         if: always()
-        uses: github/codeql-action/upload-sarif@v4
+        uses: github/codeql-action/upload-sarif@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4.38.2
         with:
           sarif_file: kingfisher-results.sarif
+          category: kingfisher
