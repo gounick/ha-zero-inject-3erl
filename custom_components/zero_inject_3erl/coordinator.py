@@ -8,6 +8,7 @@ from typing import Any
 
 import aiohttp
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import UnitOfPower
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.event import async_track_state_change_event
 from homeassistant.helpers.storage import Store
@@ -19,6 +20,7 @@ from .const import (
     AGGREGATION_MODE_ACC,
     API_FALLBACK_INTERVAL,
     API_RETRY_INTERVAL,
+    API_STALE_AFTER,
     API_TIMEZONE,
     CONF_AGGREGATION_MODE,
     CONF_CONSUMPTION_POWER_ENTITY,
@@ -36,7 +38,13 @@ from .const import (
     STORE_SAVE_DELAY_SECONDS,
     WATTS_PER_KILOWATT,
 )
-from .helpers import entry_settings, is_bridage_active, next_poll_delay, pv_power_entities
+from .helpers import (
+    entry_settings,
+    is_bridage_active,
+    next_poll_delay,
+    parse_heure_update,
+    pv_power_entities,
+)
 from .pricing import PricingDataError, PricingDataManager
 
 _LOGGER = logging.getLogger(__name__)
@@ -79,6 +87,8 @@ class ThreeERLUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self._last_update_time: datetime | None = None
         self._store = Store(hass, 1, f"{STORAGE_KEY}_{entry.entry_id}")
         self._unsub_power: Any = None
+        self._pricing_ok = True
+        self._unit_warnings: set[str] = set()
 
         super().__init__(
             hass,
@@ -162,8 +172,15 @@ class ThreeERLUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
         try:
             await self._pricing.async_update()
+            if not self._pricing_ok:
+                _LOGGER.info("Pricing data refresh recovered")
+            self._pricing_ok = True
         except PricingDataError as err:
-            _LOGGER.warning("Pricing data refresh failed: %s", err)
+            if self._pricing_ok:
+                _LOGGER.warning("Pricing data refresh failed: %s", err)
+            else:
+                _LOGGER.debug("Pricing data still unavailable: %s", err)
+            self._pricing_ok = False
 
         self._accumulate_from_power_sensor()
 
@@ -257,7 +274,7 @@ class ThreeERLUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             return None
         if not self._consumption_entity:
             return power_w
-        consumption_w = self._numeric_state(self.hass.states.get(self._consumption_entity))
+        consumption_w = self._power_w(self._consumption_entity)
         if consumption_w is None:
             return power_w
         return max(power_w - consumption_w, 0.0)
@@ -275,11 +292,37 @@ class ThreeERLUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         values = [
             power
             for entity_id in self._pv_power_entities
-            if (power := self._numeric_state(self.hass.states.get(entity_id))) is not None
+            if (power := self._power_w(entity_id)) is not None
         ]
         if not values:
             return None
         return sum(values)
+
+    def _power_w(self, entity_id: str) -> float | None:
+        """Return the state of a power sensor in watts, checking its unit.
+
+        A sensor declared with a unit other than watts (for example kW) is
+        still read as-is, but a warning is logged once so a misconfigured
+        unit does not silently skew the energy counters.
+
+        :param entity_id: Entity id of the power sensor.
+        :type entity_id: str
+        :return: Power in watts, or None if unreadable.
+        :rtype: float | None
+        """
+        state = self.hass.states.get(entity_id)
+        value = self._numeric_state(state)
+        if value is None or entity_id in self._unit_warnings:
+            return value
+        unit = state.attributes.get("unit_of_measurement")
+        if unit is not None and unit != UnitOfPower.WATT:
+            self._unit_warnings.add(entity_id)
+            _LOGGER.warning(
+                "Power sensor %s reports %s; values are treated as watts",
+                entity_id,
+                unit,
+            )
+        return value
 
     def _current_price(self, api_data: dict[str, Any]) -> float | None:
         """Return the price to use for the current remuneration estimate.
@@ -319,6 +362,15 @@ class ThreeERLUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         gain_per_mwh = REMUNERATION_RATE / MEGAWATT_HOURS_PER_KILOWATT_HOUR
         puissance_gain = puissance_bridable * current_price * gain_per_mwh / WATTS_PER_KILOWATT
 
+        published_at = parse_heure_update(api_data.get(SENSOR_KEY_HEURE_UPDATE))
+        now_paris = dt_util.now(API_TIMEZONE)
+        data_age_minutes = (
+            round((now_paris - published_at).total_seconds() / 60, 1)
+            if published_at is not None
+            else None
+        )
+        data_stale = data_age_minutes is None or now_paris - published_at > API_STALE_AFTER
+
         return {
             "api_data": api_data,
             "timestamp": datetime.now(UTC).isoformat(),
@@ -326,6 +378,9 @@ class ThreeERLUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "pv_power_w": pv_power_w,
             "current_prep": self._pricing.current_prep(),
             "estimated_daily_prep": self._pricing.estimated_daily_prep,
+            "estimated_daily_prep_coverage": self._pricing.estimated_daily_prep_coverage,
+            "data_age_minutes": data_age_minutes,
+            "data_stale": data_stale,
             "puissance_bridable": puissance_bridable,
             "puissance_gain": round(puissance_gain, 6),
             "energie_bridage_kwh": round(self._cumulative_energy_kwh, 4),

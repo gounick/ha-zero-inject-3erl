@@ -14,7 +14,7 @@ All fields are set during the config flow and remain editable under **Settings â
 
 ## Single instance
 
-Only one config entry can be created: the 3ERL API is a single shared endpoint, so a second entry would poll the same data. Adding the integration again aborts with `already_configured`.
+Only one config entry can be created: a household holds either an ACI or an ACC contract, never both, and the 3ERL API is a single shared endpoint â€” a second entry would poll the same data. Adding the integration again aborts with `already_configured`.
 
 ## Polling
 

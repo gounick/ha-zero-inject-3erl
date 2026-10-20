@@ -37,6 +37,8 @@
 - The integration estimates energy as `power (W) × time (h) / 1000`. This is an approximation of the energy that would have been injected, not a measured value.
 - If the PV sensor reports apparent power, production power, or a smoothed average, the estimate will be affected.
 - The gain uses the latest PRE+ value from the API. The real 3ERL remuneration may use a different time-weighted price.
+- A sensor reporting kilowatts instead of watts inflates the counters by a factor of 1000. Check its `unit_of_measurement` attribute; the integration logs a warning when a configured sensor is not in watts.
+- Energy produced while Home Assistant was down is not counted: the interval between the last update and the shutdown is discarded at restart. Expect a small gap versus the 3ERL dashboard after a restart during a curtailment period.
 
 ## Reset counters
 

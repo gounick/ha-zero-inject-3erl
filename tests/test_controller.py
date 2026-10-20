@@ -173,7 +173,7 @@ async def test_multiple_relays_are_all_driven(
     assert await hass.config_entries.async_setup(config_entry.entry_id)
     await hass.async_block_till_done()
 
-    called = {call.data["entity_id"] for call in turn_on_calls}
+    called = {eid for call in turn_on_calls for eid in call.data["entity_id"]}
     assert called == {"switch.relay_a", "switch.relay_b"}
 
 
@@ -192,7 +192,7 @@ async def test_notification_uses_notify_entity(
 
     assert notify_calls[-1].data["entity_id"] == NOTIFY_ENTITY
     assert "ACTIVE" in notify_calls[-1].data["message"]
-    assert turn_on_calls[-1].data["entity_id"] == RELAY_ENTITY
+    assert RELAY_ENTITY in turn_on_calls[-1].data["entity_id"]
 
 
 async def test_multiple_notify_entities_are_all_called(

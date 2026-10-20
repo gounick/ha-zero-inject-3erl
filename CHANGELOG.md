@@ -33,6 +33,9 @@ All notable changes to this project will be documented in this file.
 - Persisted cumulative data is deleted when the config entry is removed.
 - Raw API text sensors (last update, comments, degraded mode, RTE unavailability, long-term curtailment, daily trend) are now categorized as diagnostic entities.
 - Single-instance limitation documented in the configuration reference.
+- New diagnostic binary sensor `3ERL data stale`: on when the latest 3ERL data is older than two publication cycles, with a `data_age_minutes` attribute.
+- `estimated_daily_prep` now exposes a `slot_coverage` attribute: the number of quarter-hour slots that fed the estimate.
+- A warning is logged once when a configured power sensor does not report watts (e.g. kW), which would skew the counters by 1000x.
 
 ### Changed
 
@@ -44,6 +47,10 @@ All notable changes to this project will be documented in this file.
 - Cumulative counters are written to disk at most once a minute and flushed on unload, instead of on every PV power change.
 - The PV power listener now starts only after the first successful API refresh; a failed setup no longer leaks a listener on retry.
 - Manifest `integration_type` set to `service`, matching the 3ERL cloud service.
+- Pricing computations are anchored to Europe/Paris instead of the Home Assistant server timezone; a non-French HA timezone no longer shifts the RTE day and PRD3 profile selection.
+- Relay commands are grouped into a single service call per domain and state, avoiding concurrent ON/OFF requests to the same relay.
+- Pricing warnings are logged on the failure transition only; a sustained outage no longer spams the log every retry minute.
+- `Bridage`/`Bridage_CDC` string "1" is now recognized as set, and unexpected flag values are logged once instead of silently ignored.
 - `Gain cumulé` now uses the `EUR` unit and the `total` state class. Price sensors (`Dernier PRE+`, `Estimation jour PRD4`, `Current PRE+`, `Estimated daily PRE+`) no longer use the `monetary` device class. Home Assistant may ask to fix the long-term statistics unit once.
 - RTE and Enedis pricing data are fetched independently, so one failing source no longer blocks the other. The daily PRD3 profile is fetched once per day.
 - Entity names moved to translation keys. Fresh installs get English-based entity IDs (for example `sensor.3erl_zero_injection_estimated_curtailed_energy`); existing installs keep their current entity IDs. The mode select unique ID gains a domain prefix through a config entry migration.

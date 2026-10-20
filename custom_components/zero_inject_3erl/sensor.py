@@ -66,7 +66,12 @@ def _computed(key: str) -> DataFn:
     return lambda data: data.get(key)
 
 
-def _price(key: str, translation_key: str, value_fn: DataFn) -> ThreeERLSensorEntityDescription:
+def _price(
+    key: str,
+    translation_key: str,
+    value_fn: DataFn,
+    attributes_fn: Callable[[dict[str, Any]], dict[str, Any]] | None = None,
+) -> ThreeERLSensorEntityDescription:
     """Return the description of a price sensor in EUR/MWh.
 
     :param key: Unique id suffix.
@@ -84,6 +89,7 @@ def _price(key: str, translation_key: str, value_fn: DataFn) -> ThreeERLSensorEn
         native_unit_of_measurement=PRICE_UNIT,
         state_class=SensorStateClass.MEASUREMENT,
         value_fn=value_fn,
+        attributes_fn=attributes_fn,
     )
 
 
@@ -111,7 +117,12 @@ SENSORS: tuple[ThreeERLSensorEntityDescription, ...] = (
     _price(SENSOR_KEY_PRD4, "prd4", _api(SENSOR_KEY_PRD4)),
     _price(SENSOR_KEY_PREP_PROFILE_NUM, "prep_profile_num", _api(SENSOR_KEY_PREP_PROFILE_NUM)),
     _price("current_prep", "current_prep", _computed("current_prep")),
-    _price("estimated_daily_prep", "estimated_daily_prep", _computed("estimated_daily_prep")),
+    _price(
+        "estimated_daily_prep",
+        "estimated_daily_prep",
+        _computed("estimated_daily_prep"),
+        attributes_fn=lambda data: {"slot_coverage": data.get("estimated_daily_prep_coverage")},
+    ),
     _text(
         SENSOR_KEY_PREP_PROFILE,
         "daily_trend",

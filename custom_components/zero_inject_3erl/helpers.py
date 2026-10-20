@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Mapping
 from datetime import datetime, timedelta
 from typing import Any
@@ -29,6 +30,12 @@ from .const import (
     SENSOR_KEY_BRIDAGE_CDC,
     ZERO_INJECT_MODES,
 )
+
+_LOGGER = logging.getLogger(__name__)
+
+# Flag values seen so far that did not match a known pattern. Logged once
+# per distinct value to avoid spamming the log on every poll cycle.
+_REPORTED_FLAG_VALUES: set[Any] = set()
 
 
 def entry_settings(entry: ConfigEntry) -> Mapping[str, Any]:
@@ -138,12 +145,26 @@ def is_bridage_active(
 def is_flag_set(value: Any) -> bool:
     """Return whether a 3ERL API boolean flag is set.
 
+    Known truthy values are 1, "1" and true/on/yes; known falsy values are
+    0, "0", None and false/off/no. Any other value is treated as unset and
+    logged once to help diagnose an API format change.
+
     :param value: Raw flag value from the API.
     :type value: Any
     :return: True for 1 or a truthy string (true, on, yes).
     :rtype: bool
     """
-    return value == 1 or str(value).lower() in ("true", "on", "yes")
+    if value is None or value is False:
+        return False
+    lowered = str(value).lower()
+    if value == 1 or lowered in ("1", "true", "on", "yes"):
+        return True
+    if value == 0 or lowered in ("0", "false", "off", "no", ""):
+        return False
+    if value not in _REPORTED_FLAG_VALUES:
+        _REPORTED_FLAG_VALUES.add(value)
+        _LOGGER.warning("Unexpected 3ERL flag value %r, treated as unset", value)
+    return False
 
 
 def get_mode_entity_id(hass: HomeAssistant, entry_id: str) -> str | None:
@@ -170,6 +191,20 @@ def mode_unique_id(entry_id: str) -> str:
     return f"{DOMAIN}_{entry_id}_{MODE_UNIQUE_ID_SUFFIX}"
 
 
+def parse_heure_update(heure_update: Any) -> datetime | None:
+    """Parse the ``Heure_Update`` field of the 3ERL API.
+
+    :param heure_update: ``Heure_Update`` value (dd/mm/YYYY HH:MM, Paris time).
+    :type heure_update: Any
+    :return: Aware publication time, or None when unparseable.
+    :rtype: datetime | None
+    """
+    try:
+        return datetime.strptime(heure_update, API_TIME_FORMAT).replace(tzinfo=API_TIMEZONE)
+    except TypeError, ValueError:
+        return None
+
+
 def next_poll_delay(heure_update: Any, now: datetime) -> timedelta:
     """Return the delay before the next 3ERL API poll.
 
@@ -184,9 +219,8 @@ def next_poll_delay(heure_update: Any, now: datetime) -> timedelta:
         data is late, or the fallback interval when the value is unparseable.
     :rtype: timedelta
     """
-    try:
-        published = datetime.strptime(heure_update, API_TIME_FORMAT).replace(tzinfo=API_TIMEZONE)
-    except TypeError, ValueError:
+    published = parse_heure_update(heure_update)
+    if published is None:
         return API_FALLBACK_INTERVAL
     next_publication = published + API_PUBLICATION_DELAY + API_POLL_MARGIN
     if next_publication <= now:

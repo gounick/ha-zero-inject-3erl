@@ -237,6 +237,17 @@
           }
         }
       },
+      "data_stale": {
+        "name": "Données 3ERL périmées",
+        "state_attributes": {
+          "description": {
+            "name": "À propos",
+            "state": {
+              "data_stale": "Actif quand les dernières données 3ERL ont plus de deux cycles de publication. Le relais continue de suivre le dernier signal connu jusqu'à l'arrivée de données fraîches."
+            }
+          }
+        }
+      },
       "zero_inject_active": {
         "name": "Zero-Inject actif",
         "state_attributes": {

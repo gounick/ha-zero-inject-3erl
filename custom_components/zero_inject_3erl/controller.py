@@ -140,31 +140,35 @@ class ZeroInjectController:
         if self._last_active_state is not None and self._last_active_state != active:
             self._maybe_notify(active)
         self._last_active_state = active
+        self._align_relays(active)
 
-        for relay_entity in self._relay_entities:
-            self._align_relay(relay_entity, active)
+    def _align_relays(self, active: bool) -> None:
+        """Align every relay with the desired state.
 
-    def _align_relay(self, relay_entity: str, active: bool) -> None:
-        """Align one relay with the desired state.
+        Misaligned relays are grouped per (domain, service) and driven by a
+        single service call each, which avoids concurrent ON/OFF requests to
+        the same relay.
 
-        :param relay_entity: Entity id of the relay switch.
-        :type relay_entity: str
         :param active: Whether zero-injection should be active.
         :type active: bool
         """
-        relay_state = self._hass.states.get(relay_entity)
-        if relay_state is None or relay_state.state not in (STATE_ON, STATE_OFF):
-            return
-        if (relay_state.state == STATE_ON) == active:
-            return
+        calls: dict[tuple[str, str], list[str]] = {}
+        for relay_entity in self._relay_entities:
+            relay_state = self._hass.states.get(relay_entity)
+            if relay_state is None or relay_state.state not in (STATE_ON, STATE_OFF):
+                continue
+            if (relay_state.state == STATE_ON) == active:
+                continue
+            domain = relay_entity.split(".", 1)[0]
+            service = SERVICE_TURN_ON if active else SERVICE_TURN_OFF
+            calls.setdefault((domain, service), []).append(relay_entity)
 
-        domain = relay_entity.split(".", 1)[0]
-        service = SERVICE_TURN_ON if active else SERVICE_TURN_OFF
-        _LOGGER.debug("Calling %s.%s on %s", domain, service, relay_entity)
-        self._hass.async_create_background_task(
-            self._async_call_service(domain, service, {ATTR_ENTITY_ID: relay_entity}),
-            name=f"{DOMAIN}_relay_control",
-        )
+        for (domain, service), entity_ids in calls.items():
+            _LOGGER.debug("Calling %s.%s on %s", domain, service, entity_ids)
+            self._hass.async_create_background_task(
+                self._async_call_service(domain, service, {ATTR_ENTITY_ID: entity_ids}),
+                name=f"{DOMAIN}_relay_control",
+            )
 
     async def _async_call_service(
         self, domain: str, service: str, service_data: dict[str, Any]

@@ -9,6 +9,7 @@ from homeassistant.components.binary_sensor import (
     BinarySensorEntity,
     BinarySensorEntityDescription,
 )
+from homeassistant.const import EntityCategory
 from homeassistant.core import Event, HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.event import async_track_state_change_event
@@ -37,6 +38,13 @@ ACTIVE_DESCRIPTION = BinarySensorEntityDescription(
     device_class=BinarySensorDeviceClass.RUNNING,
 )
 
+STALE_DESCRIPTION = BinarySensorEntityDescription(
+    key="data_stale",
+    translation_key="data_stale",
+    device_class=BinarySensorDeviceClass.PROBLEM,
+    entity_category=EntityCategory.DIAGNOSTIC,
+)
+
 
 async def async_setup_entry(
     hass: HomeAssistant,
@@ -57,6 +65,7 @@ async def async_setup_entry(
         ThreeERLApiBinarySensor(coordinator, description) for description in API_FLAGS
     ]
     entities.append(ThreeERLActiveBinarySensor(coordinator))
+    entities.append(ThreeERLStaleBinarySensor(coordinator))
     async_add_entities(entities)
 
 
@@ -120,3 +129,31 @@ class ThreeERLActiveBinarySensor(ThreeERLEntity, BinarySensorEntity):
             reason = "Curtailment active - 3ERL signal"
 
         return {"mode": mode, "reason": reason, "description": "zero_inject_active"}
+
+
+class ThreeERLStaleBinarySensor(ThreeERLEntity, BinarySensorEntity):
+    """Binary sensor flagging 3ERL data older than two publication cycles.
+
+    A stale signal may no longer reflect the current curtailment demand; the
+    relay keeps following the last known state until fresh data arrives.
+    """
+
+    def __init__(self, coordinator: ThreeERLUpdateCoordinator) -> None:
+        """Initialize the stale data binary sensor."""
+        super().__init__(coordinator, STALE_DESCRIPTION)
+
+    @property
+    def is_on(self) -> bool | None:
+        """Return True when the API data is stale."""
+        if not self.coordinator.data:
+            return None
+        return self.coordinator.data.get("data_stale")
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Return the data age and the description slug."""
+        data = self.coordinator.data or {}
+        return {
+            "data_age_minutes": data.get("data_age_minutes"),
+            "description": "data_stale",
+        }

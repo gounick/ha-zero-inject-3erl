@@ -50,6 +50,9 @@
       },
       "zero_inject_active": {
         "default": "mdi:flash-off"
+      },
+      "data_stale": {
+        "default": "mdi:cloud-alert-outline"
       }
     },
     "select": {

@@ -7,7 +7,7 @@ from datetime import date, datetime, timedelta
 from typing import Any
 
 import aiohttp
-from homeassistant.util.dt import now as dt_now
+from homeassistant.util import dt as dt_util
 
 from .const import (
     API_TIMEOUT_SECONDS,
@@ -22,6 +22,18 @@ _LOGGER = logging.getLogger(__name__)
 
 MINUTES_PER_SLOT = 15
 REQUEST_TIMEOUT = aiohttp.ClientTimeout(total=API_TIMEOUT_SECONDS)
+
+
+def dt_now() -> datetime:
+    """Return the current time in Europe/Paris.
+
+    The RTE and Enedis datasets are aligned on French market days, regardless
+    of the timezone configured on the Home Assistant server.
+
+    :return: Current time, aware, in Europe/Paris.
+    :rtype: datetime
+    """
+    return dt_util.now(API_TIMEZONE)
 
 
 class PricingDataError(Exception):
@@ -60,6 +72,7 @@ class PricingDataManager:
         self._prd3_values: dict[datetime, float] = {}
         self._prd3_day: date | None = None
         self._estimated_daily_prep: float | None = None
+        self._estimated_daily_prep_coverage: int | None = None
 
     @property
     def estimated_daily_prep(self) -> float | None:
@@ -69,6 +82,18 @@ class PricingDataManager:
         :rtype: float | None
         """
         return self._estimated_daily_prep
+
+    @property
+    def estimated_daily_prep_coverage(self) -> int | None:
+        """Return how many PRE+ slots fed the daily estimate.
+
+        Low values mean the estimate is based on a partial day and should be
+        read as a rough indication rather than a settled price.
+
+        :return: Number of quarter-hour slots used, or None if not computed.
+        :rtype: int | None
+        """
+        return self._estimated_daily_prep_coverage
 
     def current_prep(self) -> float | None:
         """Return the most recent published PRE+ value.
@@ -237,6 +262,7 @@ class PricingDataManager:
         :rtype: float | None
         """
         if not self._prep_values or not self._prd3_values:
+            self._estimated_daily_prep_coverage = None
             return None
 
         prd3_by_time: dict[tuple[int, int], float] = {
@@ -245,13 +271,16 @@ class PricingDataManager:
 
         weighted_sum = 0.0
         factor_sum = 0.0
+        used_slots = 0
         for slot, prep in self._prep_values.items():
             factor = prd3_by_time.get((slot.hour, slot.minute))
             if factor is None or factor <= 0:
                 continue
             weighted_sum += prep * factor
             factor_sum += factor
+            used_slots += 1
 
+        self._estimated_daily_prep_coverage = used_slots
         if factor_sum <= 0:
             return None
         return weighted_sum / factor_sum

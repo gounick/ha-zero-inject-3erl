@@ -204,3 +204,11 @@ def test_parse_datetime_defaults_naive_values_to_paris() -> None:
     assert parsed is not None
     assert parsed.tzinfo is not None
     assert parsed.utcoffset() is not None
+
+
+def test_dt_now_returns_paris_time() -> None:
+    """Test that pricing timestamps are anchored to Europe/Paris."""
+    from custom_components.zero_inject_3erl.pricing import dt_now
+
+    assert dt_now().tzinfo is not None
+    assert dt_now().tzname() in ("CET", "CEST")

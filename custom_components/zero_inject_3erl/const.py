@@ -54,6 +54,9 @@ API_POLL_MARGIN = timedelta(seconds=20)
 API_RETRY_INTERVAL = timedelta(minutes=1)
 API_FALLBACK_INTERVAL = timedelta(minutes=15)
 
+# Data older than twice the 15-minute publication cycle is reported as stale.
+API_STALE_AFTER = timedelta(minutes=30)
+
 # Minimum interval between two production-power based energy updates.
 POWER_UPDATE_INTERVAL = timedelta(seconds=10)
 

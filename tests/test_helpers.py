@@ -22,7 +22,7 @@ from custom_components.zero_inject_3erl.helpers import (
     ("value", "expected"),
     [
         (1, True),
-        ("1", False),
+        ("1", True),
         ("true", True),
         ("True", True),
         ("on", True),

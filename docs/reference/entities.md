@@ -29,7 +29,10 @@ Every entity exposes a translated `description` attribute (visible under **More 
 |---|---|---|
 | `binary_sensor.3erl_zero_injection_curtailment_requested` | `Bridage` | True when the ACI curtailment signal is active. |
 | `binary_sensor.3erl_zero_injection_cdc_curtailment_requested` | `Bridage_CDC` | True when the ACC curtailment signal is active. |
-| `binary_sensor.3erl_zero_injection_zero_injection_active` | computed | True when zero-injection is currently applied. Attributes: `mode`, `reason`. |
+| `binary_sensor.3erl_zero_injection_zero_injection_active` | computed | True when zero-injection should be applied. Attributes: `mode`, `reason`. |
+| `binary_sensor.3erl_zero_injection_3erl_data_stale` | computed | True when the latest 3ERL data is older than two publication cycles. Attribute: `data_age_minutes`. |
+
+`zero_injection_active` — and the notifications sent on its transitions — reflect the **intended** state, not the confirmed relay state. If a relay is unavailable during a transition, the notification is still sent and the relay is realigned when it comes back. See [troubleshooting](../troubleshooting.md).
 
 ## Select
 

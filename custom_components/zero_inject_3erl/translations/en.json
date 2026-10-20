@@ -237,6 +237,17 @@
           }
         }
       },
+      "data_stale": {
+        "name": "3ERL data stale",
+        "state_attributes": {
+          "description": {
+            "name": "About",
+            "state": {
+              "data_stale": "On when the latest 3ERL data is older than two publication cycles. The relay keeps following the last known signal until fresh data arrives."
+            }
+          }
+        }
+      },
       "zero_inject_active": {
         "name": "Zero-injection active",
         "state_attributes": {

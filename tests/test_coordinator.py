@@ -5,6 +5,7 @@ from __future__ import annotations
 from datetime import UTC, datetime, timedelta
 from typing import Any
 from unittest.mock import AsyncMock, patch
+from zoneinfo import ZoneInfo
 
 import pytest
 from homeassistant.core import HomeAssistant
@@ -178,6 +179,66 @@ async def test_multiple_pv_sensors_are_summed(
 
     # (1000 W + 500 W) * 1 h / 1000 = 1.5 kWh
     assert coordinator._cumulative_energy_kwh == pytest.approx(1.5, rel=1e-6)
+
+
+async def test_accumulation_attributes_intervals_to_current_signal(
+    hass: HomeAssistant, coordinator: ThreeERLUpdateCoordinator
+) -> None:
+    """Test that each interval is counted under the signal in effect then."""
+    hass.states.async_set("sensor.pv_power", "1000")
+    await hass.async_block_till_done()
+
+    start = datetime.now(UTC)
+    coordinator._last_update_time = start
+
+    active = _sample_api_response()
+    inactive = {**_sample_api_response(), "Bridage": 0}
+
+    # 1 h of curtailment counts, the following hour off-signal does not.
+    coordinator._accumulate_from_power_sensor(start + timedelta(hours=1), active)
+    coordinator._accumulate_from_power_sensor(start + timedelta(hours=2), inactive)
+
+    assert coordinator._cumulative_energy_kwh == pytest.approx(1.0, rel=1e-6)
+
+
+async def test_old_api_data_is_flagged_stale(
+    hass: HomeAssistant, coordinator: ThreeERLUpdateCoordinator
+) -> None:
+    """Test that data older than two publication cycles is marked stale."""
+    api_data = {**_sample_api_response(), "Heure_Update": "01/01/2020 00:00"}
+
+    data = coordinator._build_data(api_data)
+
+    assert data["data_stale"] is True
+    assert data["data_age_minutes"] > 30
+
+
+async def test_fresh_api_data_is_not_stale(
+    hass: HomeAssistant, coordinator: ThreeERLUpdateCoordinator
+) -> None:
+    """Test that a recent Heure_Update is not marked stale."""
+    recent = (datetime.now(ZoneInfo("Europe/Paris")) - timedelta(minutes=10)).strftime(
+        "%d/%m/%Y %H:%M"
+    )
+    api_data = {**_sample_api_response(), "Heure_Update": recent}
+
+    data = coordinator._build_data(api_data)
+
+    assert data["data_stale"] is False
+
+
+async def test_non_watt_power_sensor_logs_a_warning(
+    hass: HomeAssistant,
+    coordinator: ThreeERLUpdateCoordinator,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """Test that a sensor in kW is read but reported in the logs."""
+    hass.states.async_set("sensor.pv_power", "1.5", attributes={"unit_of_measurement": "kW"})
+    await hass.async_block_till_done()
+
+    coordinator._pv_power_w()
+
+    assert "reports kW" in caplog.text
 
 
 async def test_accumulation_writes_are_batched(
