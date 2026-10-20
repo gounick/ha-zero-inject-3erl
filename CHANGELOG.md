@@ -52,6 +52,7 @@ All notable changes to this project will be documented in this file.
 - `Zero-Inject actif` did not update when the mode select changed.
 - Entity IDs in the documentation did not match the IDs created by Home Assistant.
 - The select unique-ID migration was never triggered because the config flow did not declare `MINOR_VERSION`.
+- The Enedis PRD3 endpoint answers with a `text/html` Content-Type, so the profile fetch always failed and `Estimated daily PRE+` stayed `unknown`.
 
 ## [0.1.0] - 2026-09-30
 
