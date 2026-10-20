@@ -60,62 +60,208 @@
   "entity": {
     "sensor": {
       "latest_prep": {
-        "name": "Dernier PRE+"
+        "name": "Dernier PRE+",
+        "state_attributes": {
+          "description": {
+            "name": "À propos",
+            "state": {
+              "latest_prep": "Dernier prix de règlement des écarts positif (PRE+) publié par 3ERL, actualisé chaque quart d'heure."
+            }
+          }
+        }
       },
       "prd4": {
-        "name": "Estimation jour PRD4"
+        "name": "Estimation jour PRD4",
+        "state_attributes": {
+          "description": {
+            "name": "À propos",
+            "state": {
+              "prd4": "Moyenne journalière pondérée du PRE+ publiée par 3ERL pour le jour en cours."
+            }
+          }
+        }
       },
       "prep_profile_num": {
-        "name": "PRE+ jour pondéré PRD3 (3ERL)"
+        "name": "PRE+ jour pondéré PRD3 (3ERL)",
+        "state_attributes": {
+          "description": {
+            "name": "À propos",
+            "state": {
+              "prep_profile_num": "PRE+ journalier pondéré par le profil PRD3, tel que calculé par 3ERL."
+            }
+          }
+        }
       },
       "current_prep": {
-        "name": "PRE+ actuel"
+        "name": "PRE+ actuel",
+        "state_attributes": {
+          "description": {
+            "name": "À propos",
+            "state": {
+              "current_prep": "Dernier PRE+ quart-horaire publié par RTE. Sert à l'estimation du gain en contrat ACC."
+            }
+          }
+        }
       },
       "estimated_daily_prep": {
-        "name": "PRE+ journalier estimé"
+        "name": "PRE+ journalier estimé",
+        "state_attributes": {
+          "description": {
+            "name": "À propos",
+            "state": {
+              "estimated_daily_prep": "PRE+ journalier estimé pour l'ACI, pondéré par le profil PRD3 Enedis du jour ciblé."
+            }
+          }
+        }
       },
       "daily_trend": {
-        "name": "Tendance du jour"
+        "name": "Tendance du jour",
+        "state_attributes": {
+          "description": {
+            "name": "À propos",
+            "state": {
+              "daily_trend": "Tendance des prix publiée par 3ERL pour la journée."
+            }
+          }
+        }
       },
       "last_update": {
-        "name": "Heure update"
+        "name": "Heure update",
+        "state_attributes": {
+          "description": {
+            "name": "À propos",
+            "state": {
+              "last_update": "Horodatage de la dernière actualisation des données de l'API 3ERL. La prochaine interrogation a lieu environ 18 minutes après cette heure."
+            }
+          }
+        }
       },
       "long_term_curtailment": {
-        "name": "Bridage long terme"
+        "name": "Bridage long terme",
+        "state_attributes": {
+          "description": {
+            "name": "À propos",
+            "state": {
+              "long_term_curtailment": "Heure jusqu'à laquelle un bridage long terme s'applique, lorsqu'il est annoncé par 3ERL."
+            }
+          }
+        }
       },
       "degraded_mode": {
-        "name": "Mode degrade"
+        "name": "Mode degrade",
+        "state_attributes": {
+          "description": {
+            "name": "À propos",
+            "state": {
+              "degraded_mode": "Indicateur brut de mode dégradé 3ERL."
+            }
+          }
+        }
       },
       "rte_unavailable_since": {
-        "name": "RTE indispo depuis"
+        "name": "RTE indispo depuis",
+        "state_attributes": {
+          "description": {
+            "name": "À propos",
+            "state": {
+              "rte_unavailable_since": "Horodatage depuis lequel les prix RTE sont indisponibles, tel que rapporté par 3ERL."
+            }
+          }
+        }
       },
       "comments": {
-        "name": "Commentaires"
+        "name": "Commentaires",
+        "state_attributes": {
+          "description": {
+            "name": "À propos",
+            "state": {
+              "comments": "Commentaires libres de l'opérateur publiés par 3ERL."
+            }
+          }
+        }
       },
       "curtailable_power": {
-        "name": "Puissance bridable"
+        "name": "Puissance bridable",
+        "state_attributes": {
+          "description": {
+            "name": "À propos",
+            "state": {
+              "curtailable_power": "Puissance de surplus estimée bridée pendant le zéro-injection : production moins consommation si un capteur de consommation est configuré, production sinon."
+            }
+          }
+        }
       },
       "gain_rate": {
-        "name": "Puissance gain"
+        "name": "Puissance gain",
+        "state_attributes": {
+          "description": {
+            "name": "À propos",
+            "state": {
+              "gain_rate": "Taux de rémunération estimé du surplus bridé à 70 % du PRE+."
+            }
+          }
+        }
       },
       "cumulative_gain": {
-        "name": "Gain cumulé"
+        "name": "Gain cumulé",
+        "state_attributes": {
+          "description": {
+            "name": "À propos",
+            "state": {
+              "cumulative_gain": "Gain estimé total accumulé pendant le bridage. Persisté entre les redémarrages ; réinitialisable avec l'action reset_counters."
+            }
+          }
+        }
       }
     },
     "binary_sensor": {
       "curtailment_requested": {
-        "name": "Bridage demandé"
+        "name": "Bridage demandé",
+        "state_attributes": {
+          "description": {
+            "name": "À propos",
+            "state": {
+              "curtailment_requested": "Actif quand le signal de bridage ACI 3ERL (Bridage) est actif."
+            }
+          }
+        }
       },
       "cdc_curtailment_requested": {
-        "name": "Bridage CDC demandé"
+        "name": "Bridage CDC demandé",
+        "state_attributes": {
+          "description": {
+            "name": "À propos",
+            "state": {
+              "cdc_curtailment_requested": "Actif quand le signal de bridage collectif 3ERL (Bridage_CDC) est actif."
+            }
+          }
+        }
       },
       "zero_inject_active": {
-        "name": "Zero-Inject actif"
+        "name": "Zero-Inject actif",
+        "state_attributes": {
+          "description": {
+            "name": "À propos",
+            "state": {
+              "zero_inject_active": "Actif pendant que le zéro-injection est appliqué au(x) relais. Voir les attributs mode et reason pour le détail."
+            }
+          }
+        }
       }
     },
     "select": {
       "mode": {
-        "name": "Mode zero-inject"
+        "name": "Mode zero-inject",
+        "state_attributes": {
+          "description": {
+            "name": "À propos",
+            "state": {
+              "mode_auto": "Le relais suit le signal de bridage 3ERL.",
+              "mode_on": "Relais forcé ON - zéro-injection toujours actif.",
+              "mode_off": "Relais forcé OFF - zéro-injection désactivé."
+            }
+          }
+        }
       }
     }
   },

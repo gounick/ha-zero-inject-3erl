@@ -71,6 +71,11 @@ class ThreeERLApiBinarySensor(ThreeERLEntity, BinarySensorEntity):
         api_data = self.coordinator.data.get("api_data", {})
         return is_flag_set(api_data.get(self.entity_description.key))
 
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Return the description slug of the sensor."""
+        return {"description": self.entity_description.translation_key}
+
 
 class ThreeERLActiveBinarySensor(ThreeERLEntity, BinarySensorEntity):
     """Binary sensor reflecting whether zero-injection is currently active."""
@@ -114,4 +119,4 @@ class ThreeERLActiveBinarySensor(ThreeERLEntity, BinarySensorEntity):
         elif self.coordinator.curtailment_requested:
             reason = "Curtailment active - 3ERL signal"
 
-        return {"mode": mode, "reason": reason}
+        return {"mode": mode, "reason": reason, "description": "zero_inject_active"}

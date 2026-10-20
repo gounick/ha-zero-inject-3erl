@@ -60,62 +60,208 @@
   "entity": {
     "sensor": {
       "latest_prep": {
-        "name": "Latest PRE+"
+        "name": "Latest PRE+",
+        "state_attributes": {
+          "description": {
+            "name": "About",
+            "state": {
+              "latest_prep": "Latest positive imbalance settlement price (PRE+) published by 3ERL, refreshed every quarter-hour."
+            }
+          }
+        }
       },
       "prd4": {
-        "name": "Daily PRE+ average (PRD4)"
+        "name": "Daily PRE+ average (PRD4)",
+        "state_attributes": {
+          "description": {
+            "name": "About",
+            "state": {
+              "prd4": "Daily weighted average PRE+ published by 3ERL for the current day."
+            }
+          }
+        }
       },
       "prep_profile_num": {
-        "name": "Daily PRE+ weighted by PRD3 (3ERL)"
+        "name": "Daily PRE+ weighted by PRD3 (3ERL)",
+        "state_attributes": {
+          "description": {
+            "name": "About",
+            "state": {
+              "prep_profile_num": "Daily PRE+ weighted by the PRD3 profile, as computed by 3ERL."
+            }
+          }
+        }
       },
       "current_prep": {
-        "name": "Current PRE+"
+        "name": "Current PRE+",
+        "state_attributes": {
+          "description": {
+            "name": "About",
+            "state": {
+              "current_prep": "Latest quarter-hour PRE+ published by RTE. Used for the gain estimate under ACC contracts."
+            }
+          }
+        }
       },
       "estimated_daily_prep": {
-        "name": "Estimated daily PRE+"
+        "name": "Estimated daily PRE+",
+        "state_attributes": {
+          "description": {
+            "name": "About",
+            "state": {
+              "estimated_daily_prep": "Estimated daily PRE+ for ACI, weighted by the Enedis PRD3 profile of the target day."
+            }
+          }
+        }
       },
       "daily_trend": {
-        "name": "Daily trend"
+        "name": "Daily trend",
+        "state_attributes": {
+          "description": {
+            "name": "About",
+            "state": {
+              "daily_trend": "Price trend published by 3ERL for the day."
+            }
+          }
+        }
       },
       "last_update": {
-        "name": "Last RTE update"
+        "name": "Last RTE update",
+        "state_attributes": {
+          "description": {
+            "name": "About",
+            "state": {
+              "last_update": "Timestamp of the latest 3ERL API data refresh. The next poll runs about 18 minutes after this time."
+            }
+          }
+        }
       },
       "long_term_curtailment": {
-        "name": "Long-term curtailment until"
+        "name": "Long-term curtailment until",
+        "state_attributes": {
+          "description": {
+            "name": "About",
+            "state": {
+              "long_term_curtailment": "Time until which a long-term curtailment applies, when announced by 3ERL."
+            }
+          }
+        }
       },
       "degraded_mode": {
-        "name": "Degraded mode"
+        "name": "Degraded mode",
+        "state_attributes": {
+          "description": {
+            "name": "About",
+            "state": {
+              "degraded_mode": "Raw 3ERL degraded-mode indicator."
+            }
+          }
+        }
       },
       "rte_unavailable_since": {
-        "name": "RTE unavailable since"
+        "name": "RTE unavailable since",
+        "state_attributes": {
+          "description": {
+            "name": "About",
+            "state": {
+              "rte_unavailable_since": "Timestamp since which RTE price data is unavailable, as reported by 3ERL."
+            }
+          }
+        }
       },
       "comments": {
-        "name": "Comments"
+        "name": "Comments",
+        "state_attributes": {
+          "description": {
+            "name": "About",
+            "state": {
+              "comments": "Free-text operator comments published by 3ERL."
+            }
+          }
+        }
       },
       "curtailable_power": {
-        "name": "Curtailable power"
+        "name": "Curtailable power",
+        "state_attributes": {
+          "description": {
+            "name": "About",
+            "state": {
+              "curtailable_power": "Estimated surplus power curtailed while zero-injection is active: production minus consumption when a consumption sensor is configured, production otherwise."
+            }
+          }
+        }
       },
       "gain_rate": {
-        "name": "Gain rate"
+        "name": "Gain rate",
+        "state_attributes": {
+          "description": {
+            "name": "About",
+            "state": {
+              "gain_rate": "Estimated remuneration rate of the curtailed surplus at 70% of PRE+."
+            }
+          }
+        }
       },
       "cumulative_gain": {
-        "name": "Cumulative gain"
+        "name": "Cumulative gain",
+        "state_attributes": {
+          "description": {
+            "name": "About",
+            "state": {
+              "cumulative_gain": "Total estimated gain accumulated while curtailment is active. Persisted across restarts; resettable with the reset_counters action."
+            }
+          }
+        }
       }
     },
     "binary_sensor": {
       "curtailment_requested": {
-        "name": "Curtailment requested"
+        "name": "Curtailment requested",
+        "state_attributes": {
+          "description": {
+            "name": "About",
+            "state": {
+              "curtailment_requested": "On when the 3ERL ACI curtailment signal (Bridage) is active."
+            }
+          }
+        }
       },
       "cdc_curtailment_requested": {
-        "name": "CDC curtailment requested"
+        "name": "CDC curtailment requested",
+        "state_attributes": {
+          "description": {
+            "name": "About",
+            "state": {
+              "cdc_curtailment_requested": "On when the 3ERL collective curtailment signal (Bridage_CDC) is active."
+            }
+          }
+        }
       },
       "zero_inject_active": {
-        "name": "Zero-injection active"
+        "name": "Zero-injection active",
+        "state_attributes": {
+          "description": {
+            "name": "About",
+            "state": {
+              "zero_inject_active": "On while zero-injection is applied to the relay(s). See the mode and reason attributes for details."
+            }
+          }
+        }
       }
     },
     "select": {
       "mode": {
-        "name": "Zero-injection mode"
+        "name": "Zero-injection mode",
+        "state_attributes": {
+          "description": {
+            "name": "About",
+            "state": {
+              "mode_auto": "Relay follows the 3ERL curtailment signal.",
+              "mode_on": "Relay forced ON - zero-injection always active.",
+              "mode_off": "Relay forced OFF - zero-injection disabled."
+            }
+          }
+        }
       }
     }
   },

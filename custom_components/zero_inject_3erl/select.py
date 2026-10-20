@@ -13,10 +13,10 @@ from . import ThreeERLConfigEntry
 from .const import DEFAULT_ZERO_INJECT_MODE, ZERO_INJECT_MODES
 from .helpers import build_device_info, mode_unique_id
 
-MODE_DESCRIPTIONS = {
-    "Auto": "Relay follows the 3ERL curtailment signal.",
-    "On": "Relay forced ON (zero-injection always active).",
-    "Off": "Relay forced OFF (zero-injection disabled).",
+MODE_DESCRIPTION_SLUGS = {
+    "Auto": "mode_auto",
+    "On": "mode_on",
+    "Off": "mode_off",
 }
 
 
@@ -69,4 +69,4 @@ class ThreeERLModeSelect(SelectEntity, RestoreEntity):
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
         """Return descriptive attributes for the current mode."""
-        return {"description": MODE_DESCRIPTIONS.get(self.current_option or "", "")}
+        return {"description": MODE_DESCRIPTION_SLUGS.get(self.current_option or "", "")}

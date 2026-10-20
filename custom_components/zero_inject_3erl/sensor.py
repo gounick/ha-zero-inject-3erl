@@ -176,7 +176,8 @@ class ThreeERLSensor(ThreeERLEntity, SensorEntity):
 
     @property
     def extra_state_attributes(self) -> dict[str, Any] | None:
-        """Return extra attributes when the description defines them."""
-        if self.entity_description.attributes_fn is None:
-            return None
-        return self.entity_description.attributes_fn(self.coordinator.data or {})
+        """Return the description slug plus extra attributes when defined."""
+        attributes: dict[str, Any] = {"description": self.entity_description.translation_key}
+        if self.entity_description.attributes_fn is not None:
+            attributes.update(self.entity_description.attributes_fn(self.coordinator.data or {}))
+        return attributes

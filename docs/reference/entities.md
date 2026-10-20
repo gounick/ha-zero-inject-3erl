@@ -2,6 +2,8 @@
 
 The integration creates the following entities per config entry. Home Assistant builds each entity ID from the device name (`3ERL Zero-Injection`) and the entity name. The table shows the IDs created on a fresh install. Renamed entities keep their custom IDs.
 
+Every entity exposes a translated `description` attribute (visible under **More info → Attributes**) explaining what it measures.
+
 ## Sensors
 
 | Entity | Unit | Source | Description |
