@@ -26,7 +26,7 @@ from .const import (
     DEFAULT_PRD3_DAY_OFFSET,
     DOMAIN,
 )
-from .helpers import pv_power_entities, relay_entities
+from .helpers import entity_id_list, pv_power_entities, relay_entities
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -56,7 +56,7 @@ SETTINGS_SCHEMA = vol.Schema(
             selector.EntitySelectorConfig(domain="sensor", device_class="power")
         ),
         vol.Optional(CONF_NOTIFY_SERVICE): selector.EntitySelector(
-            selector.EntitySelectorConfig(domain="notify")
+            selector.EntitySelectorConfig(domain="notify", multiple=True)
         ),
         vol.Optional(CONF_PRD3_DAY_OFFSET): selector.NumberSelector(
             selector.NumberSelectorConfig(
@@ -145,6 +145,7 @@ class ZeroInject3ERLOptionsFlow(config_entries.OptionsFlow):
         # id string; the selector expects a list.
         current[CONF_PV_POWER_ENTITY] = pv_power_entities(current)
         current[CONF_RELAY_ENTITY] = relay_entities(current)
+        current[CONF_NOTIFY_SERVICE] = entity_id_list(current, CONF_NOTIFY_SERVICE)
         return self.async_show_form(
             step_id="init",
             data_schema=self.add_suggested_values_to_schema(SETTINGS_SCHEMA, user_input or current),

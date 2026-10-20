@@ -43,7 +43,7 @@ For a more accurate estimate, also fill the optional **Home consumption power se
    | PV production power sensors | The power sensor(s) chosen above. |
    | Zero-injection relay switches | The `switch.*` entity of your dry-contact relay; select several when each production source has its own relay. |
    | Home consumption power sensor | Optional `sensor.*` reporting home consumption; refines the curtailed-energy estimate. |
-   | Notification service | Optional `notify.*` service for state-change notifications. |
+   | Notification services | Optional `notify.*` entities for state-change notifications; select several to notify on different channels. |
    | PRD3 profile day offset | Leave `-2` unless you have a reason to change it. See [daily PRE+ estimate](../explanation/daily-prep-estimate.md). |
 
 3. Submit. The integration validates the API URL and creates the entities listed in the [entities reference](../reference/entities.md).

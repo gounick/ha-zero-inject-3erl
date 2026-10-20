@@ -31,6 +31,7 @@ from .const import (
 from .coordinator import ThreeERLUpdateCoordinator
 from .helpers import (
     compute_zero_inject_active,
+    entity_id_list,
     entry_settings,
     get_current_mode,
     get_mode_entity_id,
@@ -71,7 +72,7 @@ class ZeroInjectController:
         self._coordinator = coordinator
         settings = entry_settings(entry)
         self._relay_entities = relay_entities(settings)
-        self._notify_service = settings.get(CONF_NOTIFY_SERVICE)
+        self._notify_services = entity_id_list(settings, CONF_NOTIFY_SERVICE)
         self._mode_entity_id: str | None = None
         self._unsub_coordinator: Any = None
         self._unsub_states: Any = None
@@ -193,7 +194,7 @@ class ZeroInjectController:
         :param active: New zero-injection active state.
         :type active: bool
         """
-        if not self._notify_service:
+        if not self._notify_services:
             return
 
         message = (
@@ -201,15 +202,16 @@ class ZeroInjectController:
             if active
             else "3ERL zero-injection is now INACTIVE."
         )
-        self._hass.async_create_background_task(
-            self._async_call_service(
-                NOTIFY_DOMAIN,
-                SERVICE_SEND_MESSAGE,
-                {
-                    ATTR_ENTITY_ID: self._notify_service,
-                    ATTR_MESSAGE: message,
-                    ATTR_TITLE: "3ERL Zero-Injection",
-                },
-            ),
-            name=f"{DOMAIN}_notify",
-        )
+        for notify_service in self._notify_services:
+            self._hass.async_create_background_task(
+                self._async_call_service(
+                    NOTIFY_DOMAIN,
+                    SERVICE_SEND_MESSAGE,
+                    {
+                        ATTR_ENTITY_ID: notify_service,
+                        ATTR_MESSAGE: message,
+                        ATTR_TITLE: "3ERL Zero-Injection",
+                    },
+                ),
+                name=f"{DOMAIN}_notify",
+            )
