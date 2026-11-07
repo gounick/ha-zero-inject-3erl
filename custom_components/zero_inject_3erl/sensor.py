@@ -12,7 +12,7 @@ from homeassistant.components.sensor import (
     SensorEntityDescription,
     SensorStateClass,
 )
-from homeassistant.const import EntityCategory, UnitOfEnergy, UnitOfPower
+from homeassistant.const import EntityCategory, UnitOfEnergy
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
@@ -29,6 +29,7 @@ from .const import (
     SENSOR_KEY_RTE_INDISPO_DEPUIS,
 )
 from .entity import ThreeERLEntity
+from .helpers import parse_heure_update
 
 PRICE_UNIT = "€/MWh"
 
@@ -129,7 +130,18 @@ SENSORS: tuple[ThreeERLSensorEntityDescription, ...] = (
             "heure_update": data.get("api_data", {}).get(SENSOR_KEY_HEURE_UPDATE)
         },
     ),
-    _text(SENSOR_KEY_HEURE_UPDATE, "last_update"),
+    ThreeERLSensorEntityDescription(
+        key=SENSOR_KEY_HEURE_UPDATE,
+        translation_key="last_update",
+        device_class=SensorDeviceClass.TIMESTAMP,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda data: parse_heure_update(
+            data.get("api_data", {}).get(SENSOR_KEY_HEURE_UPDATE)
+        ),
+        attributes_fn=lambda data: {
+            "raw_value": data.get("api_data", {}).get(SENSOR_KEY_HEURE_UPDATE)
+        },
+    ),
     _text(
         SENSOR_KEY_BRIDAGE_LONG_TERME,
         "long_term_curtailment",
@@ -142,14 +154,6 @@ SENSORS: tuple[ThreeERLSensorEntityDescription, ...] = (
         entity_registry_visible_default=False,
     ),
     _text(SENSOR_KEY_COMMENTAIRES, "comments", entity_registry_visible_default=False),
-    ThreeERLSensorEntityDescription(
-        key="puissance_bridable",
-        translation_key="curtailable_power",
-        native_unit_of_measurement=UnitOfPower.WATT,
-        device_class=SensorDeviceClass.POWER,
-        state_class=SensorStateClass.MEASUREMENT,
-        value_fn=_computed("puissance_bridable"),
-    ),
     ThreeERLSensorEntityDescription(
         key="energie_bridage_kwh",
         translation_key="cumulative_energy",

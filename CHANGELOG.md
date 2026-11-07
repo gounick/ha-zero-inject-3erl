@@ -59,6 +59,7 @@ All notable changes to this project will be documented in this file.
 - Relay commands are grouped into a single service call per domain and state, avoiding concurrent ON/OFF requests to the same relay.
 - Pricing warnings are logged on the failure transition only; a sustained outage no longer spams the log every retry minute.
 - `Bridage`/`Bridage_CDC` string "1" is now recognized as set, and unexpected flag values are logged once instead of silently ignored.
+- `Last RTE update` is now a `timestamp` device-class sensor parsed from the free-text `Heure_Update` field (`unknown` when unparseable) instead of a raw string; the original text remains in the `raw_value` attribute.
 - `Gain cumulé` now uses the `EUR` unit and the `total` state class. Price sensors (`Dernier PRE+`, `Estimation jour PRD4`, `Current PRE+`, `Estimated daily PRE+`) no longer use the `monetary` device class. Home Assistant may ask to fix the long-term statistics unit once.
 - RTE and Enedis pricing data are fetched independently, so one failing source no longer blocks the other. The daily PRD3 profile is fetched once per day.
 - Entity names moved to translation keys. Fresh installs get English-based entity IDs (for example `sensor.3erl_zero_injection_estimated_curtailed_energy`); existing installs keep their current entity IDs. The mode select unique ID gains a domain prefix through a config entry migration.
@@ -66,6 +67,7 @@ All notable changes to this project will be documented in this file.
 
 ### Removed
 
+- `puissance_bridable` (curtailable power) sensor: it showed the measured surplus during curtailment, not the power actually curtailed, and dropped to zero exactly when the estimate mattered. The internal `production − consumption` computation remains and still feeds the cumulative energy counter.
 - Estimated-remuneration sensors (`estimated_hourly_remuneration`, `estimated_cumulative_remuneration`), their coordinator calculations, storage field `gain_eur` and the `gain_eur` field of `reset_counters`. Estimated remuneration is published by 3ERL on <https://dashboard.3erl.fr> and is out of scope for the integration. The stored `energy_kwh` total is preserved. Orphaned registry entries may remain unavailable after deployment.
 - `update_interval` and `pv_system_type` configuration fields (see Changed).
 - `Estimated curtailed energy` sensor: a single power sensor cannot measure the counterfactual lost energy, and the value was misleading. The internal accumulation still feeds `Gain cumulé`.

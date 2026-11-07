@@ -316,11 +316,6 @@ class ThreeERLUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         :rtype: dict[str, Any]
         """
         pv_power_w = self._pv_power_w() or 0.0
-        power_w = self._curtailable_power() or 0.0
-        bridage_active = is_bridage_active(api_data, self._aggregation_mode)
-
-        puissance_bridable = power_w if bridage_active else 0.0
-
         published_at = parse_heure_update(api_data.get(SENSOR_KEY_HEURE_UPDATE))
         now_paris = dt_util.now(API_TIMEZONE)
         data_age_minutes = (
@@ -340,7 +335,6 @@ class ThreeERLUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "estimated_daily_prep_coverage": self._pricing.estimated_daily_prep_coverage,
             "data_age_minutes": data_age_minutes,
             "data_stale": data_stale,
-            "puissance_bridable": puissance_bridable,
             "energie_bridage_kwh": round(self._cumulative_energy_kwh, 4),
         }
 

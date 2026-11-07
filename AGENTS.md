@@ -75,7 +75,7 @@ This file provides guidance to compatible agentic tools when generating or revie
 
 ## Project Architecture
 
-```
+```text
 custom_components/zero_inject_3erl/
 ├── __init__.py       # HA lifecycle, service registration
 ├── manifest.json     # Integration metadata
@@ -87,8 +87,11 @@ custom_components/zero_inject_3erl/
 ├── helpers.py        # Shared decision, settings and entity helpers
 ├── controller.py     # Relay control logic (Auto / On / Off)
 ├── sensor.py         # API + computed sensors
-├── binary_sensor.py  # Bridage demandé, Bridage CDC, Zero-Inject actif
+├── binary_sensor.py  # ACI/ACC demand, commanded limitation, stale-data, supervision wiring
+├── supervision.py    # Relay-control fault and grid-export diagnostics
 ├── select.py         # Mode selector
+├── switch.py         # Persistent manual-bypass switch
+├── visibility.py     # ACI/ACC entity visibility with user overrides
 ├── services.yaml     # Service definitions
 └── translations/     # UI translations
 ```
@@ -139,7 +142,7 @@ uv run python3 -m py_compile <modified_files>
 
 ## Self-Check Before Submitting
 
-```
+```text
 □ Is there an existing function that already handles this logic?
 □ Am I duplicating code that exists elsewhere in the project?
 □ Is this the simplest solution that works?

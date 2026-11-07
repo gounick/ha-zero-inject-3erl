@@ -113,7 +113,7 @@ stateDiagram-v2
 
 ```mermaid
 flowchart LR
-    A["3ERL API<br/>curtailment signal = 1"] --> B["Injection power sensor<br/>W"]
+    A["3ERL API<br/>curtailment signal = 1"] --> B["PV production power sensor<br/>W"]
     B --> C["Energy delta<br/>kWh"]
     C --> G["Cumulative counter<br/>persisted in Store"]
 ```

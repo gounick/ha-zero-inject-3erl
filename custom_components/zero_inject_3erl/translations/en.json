@@ -188,17 +188,6 @@
           }
         }
       },
-      "curtailable_power": {
-        "name": "Curtailable power",
-        "state_attributes": {
-          "description": {
-            "name": "About",
-            "state": {
-              "curtailable_power": "Estimated surplus power curtailed while zero-injection is active: production minus consumption when a consumption sensor is configured, production otherwise."
-            }
-          }
-        }
-      },
       "cumulative_energy": {
         "name": "Curtailed energy",
         "state_attributes": {

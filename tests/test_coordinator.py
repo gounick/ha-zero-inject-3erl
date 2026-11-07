@@ -75,7 +75,7 @@ async def test_build_data_no_power(
 
     data = coordinator._build_data(_sample_api_response())
 
-    assert data["puissance_bridable"] == 0.0
+    assert data["pv_power_w"] == 0.0
     assert data["energie_bridage_kwh"] == 0.0
 
 
@@ -88,7 +88,7 @@ async def test_build_data_curtailment_active(
 
     data = coordinator._build_data(_sample_api_response())
 
-    assert data["puissance_bridable"] == 2000.0
+    assert data["pv_power_w"] == 2000.0
 
 
 async def test_build_data_no_curtailment(
@@ -101,7 +101,7 @@ async def test_build_data_no_curtailment(
     api_data = {**_sample_api_response(), "Bridage": 0}
     data = coordinator._build_data(api_data)
 
-    assert data["puissance_bridable"] == 0.0
+    assert data["pv_power_w"] == 2000.0
 
 
 async def test_accumulate_energy(

@@ -188,17 +188,6 @@
           }
         }
       },
-      "curtailable_power": {
-        "name": "Puissance bridable",
-        "state_attributes": {
-          "description": {
-            "name": "À propos",
-            "state": {
-              "curtailable_power": "Puissance de surplus estimée bridée pendant le zéro-injection : production moins consommation si un capteur de consommation est configuré, production sinon."
-            }
-          }
-        }
-      },
       "cumulative_energy": {
         "name": "Énergie bridée cumulée",
         "state_attributes": {

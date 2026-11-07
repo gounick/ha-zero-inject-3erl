@@ -14,12 +14,11 @@ API and computed entities expose a translated `description` attribute under **Mo
 | `sensor.3erl_zero_injection_current_pre` | €/MWh | computed | Current quarter-hour PRE+ from RTE (used for ACC). |
 | `sensor.3erl_zero_injection_estimated_daily_pre` | €/MWh | computed | Estimated daily PRE+ for ACI, computed with the Enedis PRD3 profile. |
 | `sensor.3erl_zero_injection_daily_trend` | — | `PREP_Profile` | Daily price trend. Attribute `heure_update` carries the API timestamp. |
-| `sensor.3erl_zero_injection_last_rte_update` | — | `Heure_Update` | Timestamp of the last API data update. |
+| `sensor.3erl_zero_injection_last_rte_update` | timestamp | `Heure_Update` | Timestamp of the last API data update (`timestamp` device class; `unknown` when the free-text field is unparseable). Attribute `raw_value` carries the original string. |
 | `sensor.3erl_zero_injection_long_term_curtailment_until` | — | `Bridage_Long_Terme` | Long-term curtailment indicator. |
 | `sensor.3erl_zero_injection_degraded_mode` | — | `mode_degrade` | API degraded-mode flag. |
 | `sensor.3erl_zero_injection_rte_unavailable_since` | — | `rte_indispo_depuis` | Timestamp since which RTE data is unavailable, if any. |
 | `sensor.3erl_zero_injection_comments` | — | `Commentaires` | Operator comments published by 3ERL. |
-| `sensor.3erl_zero_injection_curtailable_power` | W | computed | Measured power during curtailment, 0 otherwise. |
 | `sensor.3erl_zero_injection_curtailed_energy` | kWh | computed | Cumulative estimated curtailed energy. Persisted across restarts. |
 
 ## Binary sensors

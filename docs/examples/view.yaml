@@ -43,9 +43,6 @@ sections:
 
       # Live figures
       - type: tile
-        entity: sensor.3erl_zero_injection_curtailable_power
-        name: Curtailable power
-      - type: tile
         entity: sensor.3erl_zero_injection_current_pre
         name: Current PRE+
         # ACI contract? Use sensor.3erl_zero_injection_estimated_daily_pre
@@ -101,9 +98,3 @@ sections:
             name: Current
           - entity: sensor.3erl_zero_injection_latest_pre
             name: Latest (3ERL)
-      - type: history-graph
-        title: Curtailable power — last 24 h
-        hours_to_show: 24
-        entities:
-          - entity: sensor.3erl_zero_injection_curtailable_power
-            name: Power (W)
