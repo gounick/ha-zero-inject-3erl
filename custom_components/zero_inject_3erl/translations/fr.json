@@ -9,7 +9,11 @@
           "relay_entity": "Interrupteurs des relais de limitation d'injection",
           "consumption_power_entity": "Capteur de puissance consommée par la maison (optionnel)",
           "notify_service": "Entités de notification (optionnel)",
-          "prd3_day_offset": "Décalage du profil PRD3 (ACI uniquement)"
+          "prd3_day_offset": "Décalage du profil PRD3 (ACI uniquement)",
+          "injection_power_entity": "Capteur d'injection réseau (optionnel, W/kW ou VA/kVA)",
+          "injection_threshold": "Seuil d'injection (W ou VA selon la source)",
+          "injection_delay": "Durée de confirmation de l'injection (secondes)",
+          "injection_max_age": "Âge maximal de la mesure d'injection (secondes)"
         },
         "description": "Configurez le bridage zéro-injection 3ERL. L'intégration interroge l'API 3ERL et commande un relais pour limiter l'injection photovoltaïque sur demande. Choisissez 'aci' pour l'autoconsommation individuelle ou 'acc' pour l'autoconsommation collective. Le décalage PRD3 sert à estimer le prix journalier ACI quand Enedis n'a pas encore publié le profil du jour.",
         "title": "3ERL Zero-Injection",
@@ -34,7 +38,11 @@
           "relay_entity": "Interrupteurs des relais de limitation d'injection",
           "consumption_power_entity": "Capteur de puissance consommée par la maison (optionnel)",
           "notify_service": "Entités de notification (optionnel)",
-          "prd3_day_offset": "Décalage du profil PRD3 (ACI uniquement)"
+          "prd3_day_offset": "Décalage du profil PRD3 (ACI uniquement)",
+          "injection_power_entity": "Capteur d'injection réseau (optionnel, W/kW ou VA/kVA)",
+          "injection_threshold": "Seuil d'injection (W ou VA selon la source)",
+          "injection_delay": "Durée de confirmation de l'injection (secondes)",
+          "injection_max_age": "Âge maximal de la mesure d'injection (secondes)"
         },
         "description": "Mettez à jour les paramètres du bridage 3ERL.",
         "title": "3ERL Zero-Injection",
@@ -98,7 +106,7 @@
           "description": {
             "name": "À propos",
             "state": {
-              "current_prep": "Dernier PRE+ quart-horaire publié par RTE. Sert à l'estimation du gain en contrat ACC."
+              "current_prep": "Dernier PRE+ quart-horaire publié par RTE, pertinent en contrat ACC."
             }
           }
         }
@@ -191,17 +199,6 @@
           }
         }
       },
-      "gain_rate": {
-        "name": "Gain horaire estimé",
-        "state_attributes": {
-          "description": {
-            "name": "À propos",
-            "state": {
-              "gain_rate": "Taux de rémunération estimé du surplus bridé à 70 % du PRE+."
-            }
-          }
-        }
-      },
       "cumulative_energy": {
         "name": "Énergie bridée cumulée",
         "state_attributes": {
@@ -212,20 +209,20 @@
             }
           }
         }
-      },
-      "cumulative_gain": {
-        "name": "Gain cumulé",
-        "state_attributes": {
-          "description": {
-            "name": "À propos",
-            "state": {
-              "cumulative_gain": "Gain estimé total accumulé pendant le bridage. Persisté entre les redémarrages ; réinitialisable avec l'action reset_counters."
-            }
-          }
-        }
+      }
+    },
+    "switch": {
+      "manual_bypass": {
+        "name": "Bypass manuel"
       }
     },
     "binary_sensor": {
+      "relay_control_fault": {
+        "name": "Défaut de pilotage des relais"
+      },
+      "injection_during_limitation": {
+        "name": "Injection réseau pendant la limitation commandée"
+      },
       "curtailment_requested": {
         "name": "Bridage demandé",
         "state_attributes": {
@@ -259,13 +256,13 @@
           }
         }
       },
-      "zero_inject_active": {
-        "name": "Zero-Inject actif",
+      "commanded_limitation": {
+        "name": "Limitation commandée",
         "state_attributes": {
           "description": {
             "name": "À propos",
             "state": {
-              "zero_inject_active": "Actif pendant que le zéro-injection est appliqué au(x) relais. Voir les attributs mode et reason pour le détail."
+              "commanded_limitation": "Consigne de limitation après application du mode sélectionné. Inactive pendant le bypass manuel. Ne confirme ni le retour d'état du relais ni l'absence d'injection réseau."
             }
           }
         }
@@ -290,15 +287,11 @@
   "services": {
     "reset_counters": {
       "name": "Réinitialiser les compteurs",
-      "description": "Remet à zéro les compteurs d'énergie bridée et de gain estimé de toutes les entrées 3ERL. Renseignez des valeurs pour initialiser les compteurs, par exemple avec les totaux du dashboard 3ERL.",
+      "description": "Remet à zéro le compteur d'énergie bridée de toutes les entrées 3ERL. Renseignez une valeur pour initialiser le compteur, par exemple avec le total du dashboard 3ERL.",
       "fields": {
         "energy_kwh": {
           "name": "Énergie bridée",
           "description": "Valeur initiale optionnelle du compteur d'énergie bridée, en kWh."
-        },
-        "gain_eur": {
-          "name": "Gain cumulé",
-          "description": "Valeur initiale optionnelle du compteur de gain cumulé, en EUR."
         }
       }
     }

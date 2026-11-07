@@ -31,8 +31,8 @@ sections:
           - state
           - last_changed
       - type: tile
-        entity: binary_sensor.3erl_zero_injection_zero_injection_active
-        name: Zero-injection active
+        entity: binary_sensor.3erl_zero_injection_commanded_limitation
+        name: Commanded limitation
         state_content:
           - state
           - last_changed
@@ -50,9 +50,6 @@ sections:
         name: Current PRE+
         # ACI contract? Use sensor.3erl_zero_injection_estimated_daily_pre
       - type: tile
-        entity: sensor.3erl_zero_injection_gain_rate
-        name: Estimated hourly gain
-      - type: tile
         entity: sensor.3erl_zero_injection_daily_trend
         name: Daily trend
 
@@ -61,8 +58,14 @@ sections:
         entity: sensor.3erl_zero_injection_curtailed_energy
         name: Curtailed energy
       - type: tile
-        entity: sensor.3erl_zero_injection_cumulative_gain
-        name: Cumulative gain
+        entity: switch.3erl_zero_injection_manual_bypass
+        name: Manual bypass
+      - type: tile
+        entity: binary_sensor.3erl_zero_injection_relay_control_fault
+        name: Relay control fault
+      - type: tile
+        entity: binary_sensor.3erl_zero_injection_grid_export_during_commanded_limitation
+        name: Observed export during command
       - type: tile
         entity: switch.your_relay_switch
         name: Relay
@@ -77,17 +80,16 @@ sections:
         entities:
           - entity: binary_sensor.3erl_zero_injection_curtailment_requested
             name: Requested
-          - entity: binary_sensor.3erl_zero_injection_zero_injection_active
+          - entity: binary_sensor.3erl_zero_injection_commanded_limitation
             name: Active
       - type: statistics-graph
-        title: Curtailed energy and gain
+        title: Curtailed energy
         days_to_show: 30
         chart_type: bar
         stat_types:
           - change
         entities:
           - sensor.3erl_zero_injection_curtailed_energy
-          - sensor.3erl_zero_injection_cumulative_gain
 
   - type: grid
     cards:

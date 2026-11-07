@@ -8,6 +8,7 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 from homeassistant.core import HomeAssistant
+from homeassistant.setup import async_setup_component
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.zero_inject_3erl.const import (
@@ -45,6 +46,11 @@ def sample_api_response(bridage: int = 0) -> dict[str, Any]:
 @pytest.fixture(autouse=True)
 def auto_enable_custom_integrations(enable_custom_integrations: None) -> None:
     """Enable loading the custom integration in every test."""
+
+
+@pytest.fixture(autouse=True)
+async def setup_switch_domain(hass: HomeAssistant) -> None:
+    await async_setup_component(hass, "switch", {})
 
 
 @pytest.fixture

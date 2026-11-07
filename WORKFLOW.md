@@ -79,7 +79,13 @@ flowchart LR
 
 ## Zero-injection state machine
 
-The controller re-evaluates on every coordinator update and whenever the mode select or the relay changes. It compares the computed state with the real relay state, so a failed call or a manual toggle is corrected. It sends nothing while the relay is unavailable and drives it as soon as it comes back. Notifications are sent only when the computed state changes, never at startup.
+The controller re-evaluates on every coordinator update and whenever the mode select, bypass switch or a relay changes. It compares the computed state with the reported relay state. It sends nothing while the relay is unavailable and realigns it as soon as it returns, using the current command. There is no dedicated one-minute command retry timer. Notifications describe command transitions, not relay acknowledgement or measured effects, and are not sent at startup.
+
+Manual bypass takes precedence over Auto/On/Off and suspends all relay commands. It persists across reloads and restarts. Disabling it resumes the selected mode, potentially switching the relay immediately. Before a first successful API response, Auto leaves relays unchanged; forced modes and bypass remain usable. API failures do not unload these local controls. After a successful response, Auto continues to use the last known signal during an outage, unless bypass is enabled.
+
+`ThreeERLSupervisionSensor` independently listens to relay, mode, bypass and export-measurement changes, coordinator updates, and a five-second local timer. It reports unavailable relays immediately and mismatches after 30 seconds. Grid export above the configured threshold during commanded limitation must persist for the configured confirmation duration. Missing, stale, negative, non-finite or unsupported measurements are unknown. The timer supervises diagnostics only; it does not issue relay commands or network requests.
+
+Contract visibility uses entity-registry APIs and per-entity options to preserve explicit user overrides. The commanded-limitation entity uses a new entity ID and unique ID suffix, and the estimated-remuneration sensors were removed. This is a breaking development change without legacy entity migration; consumers must use the new identifiers. The active entity is now named commanded limitation; the original switches supply relay state, and the optional export diagnostic supplies a separate observation.
 
 ```mermaid
 stateDiagram-v2
@@ -103,17 +109,16 @@ stateDiagram-v2
     Active --> Inactive
 ```
 
-## Curtailment and remuneration calculation
+## Curtailment and energy calculation
 
 ```mermaid
 flowchart LR
     A["3ERL API<br/>curtailment signal = 1"] --> B["Injection power sensor<br/>W"]
     B --> C["Energy delta<br/>kWh"]
-    D["Dernier PRE+<br/>EUR/MWh"] --> E["Remuneration rate<br/>70% of PRE+"]
-    C --> F["Estimated gain<br/>EUR"]
-    E --> F
-    F --> G["Cumulative counters<br/>persisted in Store"]
+    C --> G["Cumulative counter<br/>persisted in Store"]
 ```
+
+Estimated remuneration is out of scope: 3ERL publishes it on <https://dashboard.3erl.fr>.
 
 ## Operational workflow
 
@@ -121,8 +126,8 @@ flowchart LR
 2. The coordinator fetches the 3ERL API on the published update schedule: about 18 minutes after each `Heure_Update`, with a 1-minute retry when fresh data is late.
 3. Each time the configured injection power sensor changes, the coordinator computes the energy curtailed since the last update.
 4. The controller listens to coordinator updates, mode-select changes and relay changes, then aligns the relay with the computed state.
-5. While curtailment is active, the coordinator accumulates the estimated gain using the latest PRE+ value and the 70% remuneration rule.
-6. Cumulative energy and gain counters are saved to Home Assistant storage at most once a minute, flushed on unload, and restored on restart.
+5. While curtailment is active, the coordinator accumulates the estimated curtailed energy.
+6. The cumulative energy counter is saved to Home Assistant storage at most once a minute, flushed on unload, and restored on restart.
 7. The mode select restores its last value after a restart or reload.
 
 ## Maintenance workflow

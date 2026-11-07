@@ -6,6 +6,13 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Persistent manual-bypass switch: suspends all relay commands, including forced modes, so relays can be operated directly during frozen signals or API outages.
+- Relay-control fault diagnostic with immediate unavailability reporting and a 30-second mismatch grace period, including per-relay state attributes.
+- Optional grid-export supervision with configurable threshold, confirmation duration and measurement freshness. Supports W/kW and VA/kVA without treating apparent power as active power.
+- Contract-aware ACI/ACC entity visibility with persistent user overrides and unchanged existing entity IDs.
+- Local control and diagnostics remain loaded when the initial 3ERL request fails; Auto leaves relays unchanged until a first signal arrives. Options can be saved without a working API.
+- Breaking development change: renamed the remuneration and commanded-limitation entities, their unique ID suffixes, coordinator data keys, translation keys and helper names. The three entity IDs now use `estimated_cumulative_remuneration`, `estimated_hourly_remuneration` and `commanded_limitation`. No legacy entity migration is provided; dashboards and automations must be updated. Cumulative storage and reset service fields remain unchanged. Notifications explicitly describe commands, not confirmed effects.
+- Regression tests for bypass restoration, API outages, relay recovery, contract visibility and injection supervision.
 - GitHub Actions workflows: hassfest, HACS validation, security scans, release checks.
 - Security workflows: zizmor (workflow lint), CodeQL, OpenSSF Scorecard and OSV/pip-audit dependency scanning of `uv.lock`.
 - README badges and improved installation instructions.
@@ -21,9 +28,9 @@ All notable changes to this project will be documented in this file.
 - New `Curtailed energy` sensor (`sensor.3erl_zero_injection_curtailed_energy`) exposing the cumulative curtailed-energy counter in kWh.
 - Ready-made Lovelace view example targeting the integration entities (`docs/examples/view.yaml`).
 - Translated `description` attribute on every entity, visible under More info → Attributes.
-- `reset_counters` accepts optional `energy_kwh` and `gain_eur` fields to seed the counters, e.g. from the 3ERL dashboard.
+- `reset_counters` accepts an optional `energy_kwh` field to seed the counter, e.g. from the 3ERL dashboard.
 - New sensor `Daily PRE+ weighted by PRD3 (3ERL)` exposing the `PREP_Profile_Num` API field.
-- New optional `consumption_power_entity` setting: the curtailed-power estimate integrates `production − consumption` during curtailment instead of production alone, making the gain estimate reflect the surplus that would have been injected.
+- New optional `consumption_power_entity` setting: the curtailed-power estimate integrates `production − consumption` during curtailment instead of production alone, making the curtailed-energy estimate reflect the surplus that would have been injected.
 - `pv_power_entity` now accepts several production sensors; their power values are summed so multiple sources (for example an Envoy plus a second array) can be combined. Entries created with a single sensor keep working.
 - `relay_entity` now accepts several relay switches; each listed relay is aligned with the computed state so several production sources can be curtailed independently. Entries created with a single relay keep working.
 - `notify_service` now accepts several notification entities so state changes can be pushed on different channels. Entries created with a single entity keep working.
@@ -59,6 +66,7 @@ All notable changes to this project will be documented in this file.
 
 ### Removed
 
+- Estimated-remuneration sensors (`estimated_hourly_remuneration`, `estimated_cumulative_remuneration`), their coordinator calculations, storage field `gain_eur` and the `gain_eur` field of `reset_counters`. Estimated remuneration is published by 3ERL on <https://dashboard.3erl.fr> and is out of scope for the integration. The stored `energy_kwh` total is preserved. Orphaned registry entries may remain unavailable after deployment.
 - `update_interval` and `pv_system_type` configuration fields (see Changed).
 - `Estimated curtailed energy` sensor: a single power sensor cannot measure the counterfactual lost energy, and the value was misleading. The internal accumulation still feeds `Gain cumulé`.
 

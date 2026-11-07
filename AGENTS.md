@@ -37,6 +37,14 @@ This file provides guidance to compatible agentic tools when generating or revie
 - Prefer the simplest readable solution.
 - Avoid premature abstraction.
 
+### No Dead Code
+
+- Remove code that is never executed: unused functions, unreachable branches, stale constants, orphaned imports and commented-out blocks.
+- When refactoring or replacing a behavior, delete the old implementation in the same change — do not leave fallback paths "just in case".
+- Do not keep compatibility shims, aliases or deprecated entities unless a documented migration requires them; this project is in development and breaking changes are acceptable when they are announced in `CHANGELOG.md`.
+- An entity, option or service that no longer serves a user-facing purpose must be removed together with its translations, tests and documentation references.
+- If unsure whether something is dead, verify with a project-wide search before deleting; if it is genuinely unreachable, remove it.
+
 ### Documentation & Changelog
 
 - Update `README.md` when adding or changing features visible to users.
@@ -74,7 +82,7 @@ custom_components/zero_inject_3erl/
 ├── const.py          # Domain constants, config keys, defaults
 ├── config_flow.py    # UI configuration flow + options flow
 ├── api.py            # 3ERL REST API client
-├── coordinator.py    # DataUpdateCoordinator, energy/gain accumulation
+├── coordinator.py    # DataUpdateCoordinator, energy accumulation
 ├── pricing.py        # RTE PRE+ and Enedis PRD3 fetching, price estimates
 ├── helpers.py        # Shared decision, settings and entity helpers
 ├── controller.py     # Relay control logic (Auto / On / Off)
@@ -86,7 +94,7 @@ custom_components/zero_inject_3erl/
 ```
 
 - `ThreeERLApiClient` owns all HTTP calls to `https://3erl.fr/api.json`.
-- `ThreeERLUpdateCoordinator` polls the API and accumulates curtailed energy/gain from the configured PV power sensor.
+- `ThreeERLUpdateCoordinator` polls the API and accumulates curtailed energy from the configured PV power sensor.
 - `ZeroInjectController` listens to coordinator updates, mode changes and relay changes, then aligns the relay with the computed state.
 - The mode select platform is set up before the other platforms so they can resolve its entity id.
 - Tests live in `tests/`. `tests/conftest.py` provides `config_entry` and `mock_fetch` (patches the 3ERL API and pricing sources) for full setup tests.

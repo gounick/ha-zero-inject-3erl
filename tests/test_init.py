@@ -80,7 +80,7 @@ async def test_reset_counters_service(
 async def test_reset_counters_service_accepts_values(
     hass: HomeAssistant, config_entry: MockConfigEntry, mock_fetch: AsyncMock
 ) -> None:
-    """Test that optional fields set the counters instead of zeroing them."""
+    """Test that the optional field sets the counter instead of zeroing it."""
     assert await hass.config_entries.async_setup(config_entry.entry_id)
     await hass.async_block_till_done()
     coordinator = config_entry.runtime_data.coordinator
@@ -88,12 +88,11 @@ async def test_reset_counters_service_accepts_values(
     await hass.services.async_call(
         DOMAIN,
         SERVICE_RESET_COUNTERS,
-        {"energy_kwh": 12.5, "gain_eur": 3.75},
+        {"energy_kwh": 12.5},
         blocking=True,
     )
 
     assert coordinator.data["energie_bridage_kwh"] == 12.5
-    assert coordinator.data["gain_cumule_eur"] == 3.75
 
 
 async def test_reset_counters_service_rejects_invalid_values(
@@ -114,7 +113,7 @@ async def test_reset_counters_service_rejects_invalid_values(
         await hass.services.async_call(
             DOMAIN,
             SERVICE_RESET_COUNTERS,
-            {"gain_eur": -1},
+            {"energy_kwh": -1},
             blocking=True,
         )
 
@@ -132,7 +131,7 @@ async def test_failed_setup_does_not_leak_power_listener(
             "custom_components.zero_inject_3erl.coordinator.async_track_state_change_event"
         ) as track,
     ):
-        assert not await hass.config_entries.async_setup(config_entry.entry_id)
+        assert await hass.config_entries.async_setup(config_entry.entry_id)
         await hass.async_block_till_done()
 
     track.assert_not_called()
@@ -145,7 +144,7 @@ async def test_remove_entry_deletes_cumulative_storage(
     assert await hass.config_entries.async_setup(config_entry.entry_id)
     await hass.async_block_till_done()
     coordinator = config_entry.runtime_data.coordinator
-    await coordinator.async_reset_counters(energy_kwh=5.0, gain_eur=1.0)
+    await coordinator.async_reset_counters(energy_kwh=5.0)
 
     assert await hass.config_entries.async_remove(config_entry.entry_id)
     await hass.async_block_till_done()

@@ -76,9 +76,7 @@ async def test_build_data_no_power(
     data = coordinator._build_data(_sample_api_response())
 
     assert data["puissance_bridable"] == 0.0
-    assert data["puissance_gain"] == 0.0
     assert data["energie_bridage_kwh"] == 0.0
-    assert data["gain_cumule_eur"] == 0.0
 
 
 async def test_build_data_curtailment_active(
@@ -91,8 +89,6 @@ async def test_build_data_curtailment_active(
     data = coordinator._build_data(_sample_api_response())
 
     assert data["puissance_bridable"] == 2000.0
-    # 2000 W * 150 EUR/MWh * 0.7 / 1_000_000 = 0.21 EUR/h
-    assert data["puissance_gain"] == pytest.approx(0.21, rel=1e-4)
 
 
 async def test_build_data_no_curtailment(
@@ -106,13 +102,12 @@ async def test_build_data_no_curtailment(
     data = coordinator._build_data(api_data)
 
     assert data["puissance_bridable"] == 0.0
-    assert data["puissance_gain"] == 0.0
 
 
 async def test_accumulate_energy(
     hass: HomeAssistant, coordinator: ThreeERLUpdateCoordinator
 ) -> None:
-    """Test energy and gain accumulation during curtailment."""
+    """Test energy accumulation during curtailment."""
     hass.states.async_set("sensor.pv_power", "1000")
     await hass.async_block_till_done()
 
@@ -122,8 +117,6 @@ async def test_accumulate_energy(
 
     # 1000 W * 1 h / 1000 = 1 kWh
     assert coordinator._cumulative_energy_kwh == pytest.approx(1.0, rel=1e-6)
-    # 1 kWh * 150 EUR/MWh * 0.7 / 1000 = 0.105 EUR
-    assert coordinator._cumulative_gain_eur == pytest.approx(0.105, rel=1e-6)
 
 
 async def test_accumulate_energy_subtracts_consumption(

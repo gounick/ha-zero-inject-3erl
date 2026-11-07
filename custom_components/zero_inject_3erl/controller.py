@@ -30,11 +30,13 @@ from .const import (
 )
 from .coordinator import ThreeERLUpdateCoordinator
 from .helpers import (
-    compute_zero_inject_active,
+    compute_commanded_limitation,
     entity_id_list,
     entry_settings,
+    get_bypass_entity_id,
     get_current_mode,
     get_mode_entity_id,
+    is_manual_bypass,
     relay_entities,
 )
 
@@ -77,15 +79,19 @@ class ZeroInjectController:
         self._unsub_coordinator: Any = None
         self._unsub_states: Any = None
         self._last_active_state: bool | None = None
+        self._running = False
 
     async def async_setup(self) -> None:
         """Set up listeners for coordinator, mode select and relay updates."""
         self._mode_entity_id = self._resolve_mode_entity_id()
+        self._running = True
 
         self._unsub_coordinator = self._coordinator.async_add_listener(self._apply_relay_state)
         tracked = list(self._relay_entities)
         if self._mode_entity_id:
             tracked.append(self._mode_entity_id)
+        if bypass_id := get_bypass_entity_id(self._hass, self._entry.entry_id):
+            tracked.append(bypass_id)
         self._unsub_states = async_track_state_change_event(
             self._hass, tracked, self._on_state_change
         )
@@ -94,6 +100,7 @@ class ZeroInjectController:
 
     async def async_shutdown(self) -> None:
         """Remove all listeners."""
+        self._running = False
         for unsub in (self._unsub_coordinator, self._unsub_states):
             if unsub is not None:
                 unsub()
@@ -119,14 +126,26 @@ class ZeroInjectController:
             )
         return entity_id
 
-    def _compute_active_state(self) -> bool:
+    @property
+    def bypassed(self) -> bool:
+        return is_manual_bypass(self._hass, self._entry.entry_id)
+
+    @property
+    def commanded_active(self) -> bool | None:
+        if self.bypassed:
+            return False
+        mode = get_current_mode(self._hass, get_mode_entity_id(self._hass, self._entry.entry_id))
+        if mode == "Auto" and not (self._coordinator.data or {}).get("api_data"):
+            return None
+        return compute_commanded_limitation(mode, self._coordinator.curtailment_requested)
+
+    def _compute_active_state(self) -> bool | None:
         """Compute whether zero-injection should be active.
 
         :return: True when the relay should be turned on.
         :rtype: bool
         """
-        mode = get_current_mode(self._hass, self._mode_entity_id)
-        return compute_zero_inject_active(mode, self._coordinator.curtailment_requested)
+        return self.commanded_active
 
     @callback
     def _apply_relay_state(self) -> None:
@@ -136,7 +155,12 @@ class ZeroInjectController:
         call or a manual toggle is corrected on the next update. Nothing is
         sent while the relay is unavailable; its return triggers a new call.
         """
+        if not self._running:
+            return
         active = self._compute_active_state()
+        if self.bypassed or active is None:
+            self._last_active_state = None
+            return
         if self._last_active_state is not None and self._last_active_state != active:
             self._maybe_notify(active)
         self._last_active_state = active
@@ -182,6 +206,12 @@ class ZeroInjectController:
         :param service_data: Service data.
         :type service_data: dict[str, Any]
         """
+        if not self._running:
+            return
+        if domain != NOTIFY_DOMAIN:
+            active = self.commanded_active
+            if self.bypassed or active is None or (service == SERVICE_TURN_ON) != active:
+                return
         try:
             await self._hass.services.async_call(domain, service, service_data)
         except HomeAssistantError, vol.Invalid:
@@ -202,9 +232,11 @@ class ZeroInjectController:
             return
 
         message = (
-            "3ERL zero-injection is now ACTIVE."
+            "3ERL limitation command is now ACTIVE. "
+            "Relay acknowledgement and grid export must be checked separately."
             if active
-            else "3ERL zero-injection is now INACTIVE."
+            else "3ERL limitation command is now INACTIVE. "
+            "This is a command, not a grid measurement."
         )
         for notify_service in self._notify_services:
             self._hass.async_create_background_task(

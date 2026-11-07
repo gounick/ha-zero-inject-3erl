@@ -1,4 +1,4 @@
-"""Pricing data manager for improved 3ERL remuneration estimation."""
+"""Pricing data manager for RTE PRE+ and Enedis PRD3 estimates."""
 
 from __future__ import annotations
 

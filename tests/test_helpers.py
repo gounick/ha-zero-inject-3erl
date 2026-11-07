@@ -9,7 +9,7 @@ from zoneinfo import ZoneInfo
 import pytest
 
 from custom_components.zero_inject_3erl.helpers import (
-    compute_zero_inject_active,
+    compute_commanded_limitation,
     curtailment_signal_key,
     entry_settings,
     get_current_mode,
@@ -136,6 +136,6 @@ def test_entry_settings_options_replace_data() -> None:
         ("Auto", False, False),
     ],
 )
-def test_compute_zero_inject_active(mode: str, bridage_active: bool, expected: bool) -> None:
+def test_compute_commanded_limitation(mode: str, bridage_active: bool, expected: bool) -> None:
     """Test the active-state decision helper."""
-    assert compute_zero_inject_active(mode, bridage_active) == expected
+    assert compute_commanded_limitation(mode, bridage_active) == expected
