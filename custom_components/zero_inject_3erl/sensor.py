@@ -30,7 +30,6 @@ from .const import (
 )
 from .entity import ThreeERLEntity
 
-CURRENCY_CODE = "EUR"
 PRICE_UNIT = "€/MWh"
 
 DataFn = Callable[[dict[str, Any]], Any]
@@ -131,10 +130,18 @@ SENSORS: tuple[ThreeERLSensorEntityDescription, ...] = (
         },
     ),
     _text(SENSOR_KEY_HEURE_UPDATE, "last_update"),
-    _text(SENSOR_KEY_BRIDAGE_LONG_TERME, "long_term_curtailment"),
+    _text(
+        SENSOR_KEY_BRIDAGE_LONG_TERME,
+        "long_term_curtailment",
+        entity_registry_visible_default=False,
+    ),
     _text(SENSOR_KEY_MODE_DEGRADE, "degraded_mode"),
-    _text(SENSOR_KEY_RTE_INDISPO_DEPUIS, "rte_unavailable_since"),
-    _text(SENSOR_KEY_COMMENTAIRES, "comments"),
+    _text(
+        SENSOR_KEY_RTE_INDISPO_DEPUIS,
+        "rte_unavailable_since",
+        entity_registry_visible_default=False,
+    ),
+    _text(SENSOR_KEY_COMMENTAIRES, "comments", entity_registry_visible_default=False),
     ThreeERLSensorEntityDescription(
         key="puissance_bridable",
         translation_key="curtailable_power",
@@ -144,27 +151,12 @@ SENSORS: tuple[ThreeERLSensorEntityDescription, ...] = (
         value_fn=_computed("puissance_bridable"),
     ),
     ThreeERLSensorEntityDescription(
-        key="puissance_gain",
-        translation_key="gain_rate",
-        native_unit_of_measurement="€/h",
-        state_class=SensorStateClass.MEASUREMENT,
-        value_fn=_computed("puissance_gain"),
-    ),
-    ThreeERLSensorEntityDescription(
         key="energie_bridage_kwh",
         translation_key="cumulative_energy",
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL,
         value_fn=_computed("energie_bridage_kwh"),
-    ),
-    ThreeERLSensorEntityDescription(
-        key="gain_cumule_eur",
-        translation_key="cumulative_gain",
-        native_unit_of_measurement=CURRENCY_CODE,
-        device_class=SensorDeviceClass.MONETARY,
-        state_class=SensorStateClass.TOTAL,
-        value_fn=_computed("gain_cumule_eur"),
     ),
 )
 

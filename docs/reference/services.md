@@ -2,14 +2,13 @@
 
 ## `zero_inject_3erl.reset_counters`
 
-Resets the cumulative curtailed energy and `Gain cumulé` counters to zero and clears the persisted values.
+Resets the cumulative curtailed energy counter to zero and clears the persisted value.
 
-Optional fields seed the counters instead of zeroing them — for example to match the totals shown on the 3ERL dashboard:
+An optional field seeds the counter instead of zeroing it — for example to match the total shown on the 3ERL dashboard:
 
 | Field | Unit | Description |
 |---|---|---|
 | `energy_kwh` | kWh | Starting value of the curtailed energy counter. |
-| `gain_eur` | EUR | Starting value of the cumulative gain counter. |
 
 Example call from **Developer Tools → Actions**:
 
@@ -17,5 +16,4 @@ Example call from **Developer Tools → Actions**:
 action: zero_inject_3erl.reset_counters
 data:
   energy_kwh: 12.5
-  gain_eur: 3.75
 ```

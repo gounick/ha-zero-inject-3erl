@@ -47,28 +47,11 @@ Enphase Envoy gateways expose a digital input that limits production when its co
 
 This arrangement is fail-safe. If the relay, Zigbee network or Home Assistant fails, the contact opens and export returns to normal.
 
-## How remuneration is estimated
+## Remuneration and curtailed energy
 
-3ERL pays 70 % of the positive imbalance settlement price (PRE+) when market prices are positive. The remaining 30 % covers the association's operating costs.
+3ERL pays 70 % of the positive imbalance settlement price (PRE+) when market prices are positive. The remaining 30 % covers the association's operating costs. The integration does not compute that remuneration: 3ERL publishes the estimated and settled amounts on <https://dashboard.3erl.fr>.
 
-The integration integrates the estimate over time instead of multiplying a cumulative energy by the latest price.
-
-The price used depends on the contract type:
-
-- **ACI**: estimated daily PRE+ computed from RTE quarter-hourly PRE+ values weighted by the Enedis PRD3 profile. Because Enedis only publishes the current day's PRD3 profile after the day is over, the integration uses the profile from a configurable past day (default `-2`) as an estimate. See [How the daily PRE+ is calculated](daily-prep-estimate.md) for the full walkthrough.
-
-  ```text
-  estimated_daily_PREP = sum(PREP × PRD3_factor) / sum(PRD3_factor)
-  gain (€) = curtailed_energy (kWh) × estimated_daily_PREP (€/MWh) × 0.7 / 1000
-  ```
-
-- **ACC**: current quarter-hour PRE+ for the active 15-minute slot.
-
-  ```text
-  gain (€) = curtailed_energy (kWh) × current_PREP (€/MWh) × 0.7 / 1000
-  ```
-
-If the external RTE or Enedis sources are unavailable, the integration falls back to the latest `Dernier_PREP` from the 3ERL API.
+The integration still exposes the underlying prices as informational sensors: the current quarter-hour PRE+ (ACC) and an estimated daily PRE+ weighted by the Enedis PRD3 profile (ACI). Because Enedis only publishes the current day's PRD3 profile after the day is over, the estimate uses the profile from a configurable past day (default `-2`). See [How the daily PRE+ is calculated](daily-prep-estimate.md) for the full walkthrough.
 
 Curtailed energy is an estimate of the surplus that would have been injected. The integration integrates `production − consumption` during curtailment periods when a consumption sensor is configured, and production alone otherwise (an upper bound). A grid-side injection sensor cannot be used for this counter because measured injection falls to about zero while curtailment is applied.
 

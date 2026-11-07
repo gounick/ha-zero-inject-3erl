@@ -22,6 +22,15 @@ CONF_RELAY_ENTITY = "relay_entity"
 CONF_NOTIFY_SERVICE = "notify_service"
 CONF_AGGREGATION_MODE = "aggregation_mode"
 CONF_PRD3_DAY_OFFSET = "prd3_day_offset"
+CONF_INJECTION_POWER_ENTITY = "injection_power_entity"
+CONF_INJECTION_THRESHOLD = "injection_threshold"
+CONF_INJECTION_DELAY = "injection_delay"
+CONF_INJECTION_MAX_AGE = "injection_max_age"
+DEFAULT_INJECTION_THRESHOLD = 50.0
+DEFAULT_INJECTION_DELAY = 120
+DEFAULT_INJECTION_MAX_AGE = 300
+RELAY_FAULT_DELAY = timedelta(seconds=30)
+SUPERVISION_INTERVAL = timedelta(seconds=5)
 
 # Self-consumption contract types. ACI (individual) uses the `Bridage` API
 # signal; ACC (collective) uses `Bridage_CDC`.
@@ -33,13 +42,9 @@ DEFAULT_AGGREGATION_MODE = AGGREGATION_MODE_ACI
 ZERO_INJECT_MODES = ["Auto", "On", "Off"]
 MODE_UNIQUE_ID_SUFFIX = "mode"
 
-# 3ERL remuneration: 70% of the positive imbalance settlement price (PRE+).
-REMUNERATION_RATE = 0.7
-
 # Utility constants used for power/energy conversions.
 SECONDS_PER_HOUR = 3600
 WATTS_PER_KILOWATT = 1000
-MEGAWATT_HOURS_PER_KILOWATT_HOUR = 1000
 
 # Default request timeout for the 3ERL public API.
 API_TIMEOUT_SECONDS = 30
@@ -60,7 +65,7 @@ API_STALE_AFTER = timedelta(minutes=30)
 # Minimum interval between two production-power based energy updates.
 POWER_UPDATE_INTERVAL = timedelta(seconds=10)
 
-# Storage key for cumulative energy and gain values.
+# Storage key for the cumulative curtailed energy value.
 STORAGE_KEY = f"{DOMAIN}.cumulative"
 
 # Delay used to batch writes of the cumulative values to disk.

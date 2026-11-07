@@ -27,6 +27,7 @@ from .const import (
 from .controller import ZeroInjectController
 from .coordinator import ThreeERLUpdateCoordinator
 from .helpers import entry_settings
+from .visibility import sync_contract_visibility
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -36,15 +37,15 @@ PLATFORMS: list[Platform] = [
     Platform.BINARY_SENSOR,
     Platform.SELECT,
     Platform.SENSOR,
+    Platform.SWITCH,
 ]
 # The mode select is set up first so other entities can resolve its entity id.
-DEPENDENT_PLATFORMS = [platform for platform in PLATFORMS if platform is not Platform.SELECT]
+DEPENDENT_PLATFORMS = [
+    platform for platform in PLATFORMS if platform not in (Platform.SELECT, Platform.SWITCH)
+]
 
 RESET_COUNTERS_SCHEMA = vol.Schema(
-    {
-        vol.Optional("energy_kwh"): vol.All(vol.Coerce(float), vol.Range(min=0)),
-        vol.Optional("gain_eur"): vol.All(vol.Coerce(float), vol.Range(min=0)),
-    }
+    {vol.Optional("energy_kwh"): vol.All(vol.Coerce(float), vol.Range(min=0))}
 )
 
 
@@ -71,10 +72,10 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """
 
     async def async_handle_reset_counters(call: ServiceCall) -> None:
-        """Reset the counters of every loaded config entry.
+        """Reset the energy counter of every loaded config entry.
 
-        Optional ``energy_kwh`` and ``gain_eur`` fields seed the counters
-        instead of zeroing them, e.g. to match the 3ERL dashboard totals.
+        An optional ``energy_kwh`` field seeds the counter instead of
+        zeroing it, e.g. to match the 3ERL dashboard total.
 
         :param call: Service call data.
         :type call: ServiceCall
@@ -83,7 +84,6 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         for entry in entries:
             await entry.runtime_data.coordinator.async_reset_counters(
                 energy_kwh=call.data.get("energy_kwh"),
-                gain_eur=call.data.get("gain_eur"),
             )
 
     hass.services.async_register(
@@ -140,14 +140,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ThreeERLConfigEntry) -> 
         hass, ThreeERLApiClient(session, api_url), session, entry
     )
     await coordinator.async_load_cumulative_data()
-    await coordinator.async_config_entry_first_refresh()
-    coordinator.start_power_tracking()
+    await coordinator.async_refresh()
 
     controller = ZeroInjectController(hass, entry, coordinator)
     entry.runtime_data = ThreeERLRuntimeData(coordinator, controller)
 
-    await hass.config_entries.async_forward_entry_setups(entry, [Platform.SELECT])
+    await hass.config_entries.async_forward_entry_setups(entry, [Platform.SELECT, Platform.SWITCH])
     await hass.config_entries.async_forward_entry_setups(entry, DEPENDENT_PLATFORMS)
+    sync_contract_visibility(hass, entry, coordinator.aggregation_mode)
 
     await controller.async_setup()
     entry.async_on_unload(entry.add_update_listener(_async_update_listener))
@@ -175,9 +175,10 @@ async def async_unload_entry(hass: HomeAssistant, entry: ThreeERLConfigEntry) ->
     :return: True if unload succeeded.
     :rtype: bool
     """
+    await entry.runtime_data.controller.async_shutdown()
     unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
-    if unload_ok:
-        await entry.runtime_data.controller.async_shutdown()
+    if not unload_ok:
+        await entry.runtime_data.controller.async_setup()
     return unload_ok
 
 

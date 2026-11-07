@@ -32,10 +32,10 @@ async def test_sensor_classes_are_valid(
     assert await hass.config_entries.async_setup(config_entry.entry_id)
     await hass.async_block_till_done()
 
-    gain = _state(hass, config_entry, "gain_cumule_eur")
-    assert gain.attributes["unit_of_measurement"] == "EUR"
-    assert gain.attributes["state_class"] == "total"
-    assert gain.attributes["device_class"] == "monetary"
+    energy = _state(hass, config_entry, "energie_bridage_kwh")
+    assert energy.attributes["unit_of_measurement"] == "kWh"
+    assert energy.attributes["state_class"] == "total"
+    assert energy.attributes["device_class"] == "energy"
 
     price = _state(hass, config_entry, "Dernier_PREP")
     assert price.attributes["unit_of_measurement"] == "€/MWh"

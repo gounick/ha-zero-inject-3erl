@@ -7,10 +7,3 @@ reset_counters:
           min: 0
           mode: box
           unit_of_measurement: kWh
-    gain_eur:
-      required: false
-      selector:
-        number:
-          min: 0
-          mode: box
-          unit_of_measurement: "EUR"

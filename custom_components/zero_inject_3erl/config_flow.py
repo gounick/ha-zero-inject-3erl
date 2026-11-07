@@ -17,12 +17,19 @@ from .const import (
     CONF_AGGREGATION_MODE,
     CONF_API_URL,
     CONF_CONSUMPTION_POWER_ENTITY,
+    CONF_INJECTION_DELAY,
+    CONF_INJECTION_MAX_AGE,
+    CONF_INJECTION_POWER_ENTITY,
+    CONF_INJECTION_THRESHOLD,
     CONF_NOTIFY_SERVICE,
     CONF_PRD3_DAY_OFFSET,
     CONF_PV_POWER_ENTITY,
     CONF_RELAY_ENTITY,
     DEFAULT_AGGREGATION_MODE,
     DEFAULT_API_URL,
+    DEFAULT_INJECTION_DELAY,
+    DEFAULT_INJECTION_MAX_AGE,
+    DEFAULT_INJECTION_THRESHOLD,
     DEFAULT_PRD3_DAY_OFFSET,
     DOMAIN,
 )
@@ -34,6 +41,9 @@ DEFAULT_VALUES: dict[str, Any] = {
     CONF_API_URL: DEFAULT_API_URL,
     CONF_AGGREGATION_MODE: DEFAULT_AGGREGATION_MODE,
     CONF_PRD3_DAY_OFFSET: DEFAULT_PRD3_DAY_OFFSET,
+    CONF_INJECTION_THRESHOLD: DEFAULT_INJECTION_THRESHOLD,
+    CONF_INJECTION_DELAY: DEFAULT_INJECTION_DELAY,
+    CONF_INJECTION_MAX_AGE: DEFAULT_INJECTION_MAX_AGE,
 }
 
 SETTINGS_SCHEMA = vol.Schema(
@@ -54,6 +64,24 @@ SETTINGS_SCHEMA = vol.Schema(
         ),
         vol.Optional(CONF_CONSUMPTION_POWER_ENTITY): selector.EntitySelector(
             selector.EntitySelectorConfig(domain="sensor", device_class="power")
+        ),
+        vol.Optional(CONF_INJECTION_POWER_ENTITY): selector.EntitySelector(
+            selector.EntitySelectorConfig(domain="sensor")
+        ),
+        vol.Optional(CONF_INJECTION_THRESHOLD): selector.NumberSelector(
+            selector.NumberSelectorConfig(
+                min=0, max=10000, step=1, mode=selector.NumberSelectorMode.BOX
+            )
+        ),
+        vol.Optional(CONF_INJECTION_DELAY): selector.NumberSelector(
+            selector.NumberSelectorConfig(
+                min=1, max=3600, step=1, mode=selector.NumberSelectorMode.BOX
+            )
+        ),
+        vol.Optional(CONF_INJECTION_MAX_AGE): selector.NumberSelector(
+            selector.NumberSelectorConfig(
+                min=1, max=3600, step=1, mode=selector.NumberSelectorMode.BOX
+            )
         ),
         vol.Optional(CONF_NOTIFY_SERVICE): selector.EntitySelector(
             selector.EntitySelectorConfig(domain="notify", multiple=True)
@@ -136,9 +164,7 @@ class ZeroInject3ERLOptionsFlow(config_entries.OptionsFlow):
         errors: dict[str, str] = {}
 
         if user_input is not None:
-            errors = await _async_validate_api(self.hass, user_input[CONF_API_URL])
-            if not errors:
-                return self.async_create_entry(data=user_input)
+            return self.async_create_entry(data=user_input)
 
         current = {**DEFAULT_VALUES, **self.config_entry.data, **self.config_entry.options}
         # Entries created before multi-sensor support store a single entity

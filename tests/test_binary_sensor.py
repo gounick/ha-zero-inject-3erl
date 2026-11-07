@@ -22,7 +22,7 @@ async def test_active_sensor_follows_mode_select(
 
     registry = er.async_get(hass)
     active_id = registry.async_get_entity_id(
-        "binary_sensor", DOMAIN, f"{DOMAIN}_{config_entry.entry_id}_zero_inject_active"
+        "binary_sensor", DOMAIN, f"{DOMAIN}_{config_entry.entry_id}_commanded_limitation"
     )
     mode_id = registry.async_get_entity_id(
         "select", DOMAIN, f"{DOMAIN}_{config_entry.entry_id}_mode"

@@ -180,6 +180,17 @@ def get_mode_entity_id(hass: HomeAssistant, entry_id: str) -> str | None:
     return er.async_get(hass).async_get_entity_id("select", DOMAIN, mode_unique_id(entry_id))
 
 
+def get_bypass_entity_id(hass: HomeAssistant, entry_id: str) -> str | None:
+    return er.async_get(hass).async_get_entity_id(
+        "switch", DOMAIN, f"{DOMAIN}_{entry_id}_manual_bypass"
+    )
+
+
+def is_manual_bypass(hass: HomeAssistant, entry_id: str) -> bool:
+    entity_id = get_bypass_entity_id(hass, entry_id)
+    return entity_id is not None and hass.states.is_state(entity_id, "on")
+
+
 def mode_unique_id(entry_id: str) -> str:
     """Return the unique id of the mode select of a config entry.
 
@@ -246,7 +257,7 @@ def get_current_mode(hass: HomeAssistant, mode_entity_id: str | None) -> str:
     return state.state
 
 
-def compute_zero_inject_active(mode: str, bridage_active: bool) -> bool:
+def compute_commanded_limitation(mode: str, bridage_active: bool) -> bool:
     """Return whether zero-injection should be active.
 
     :param mode: Current zero-injection mode.

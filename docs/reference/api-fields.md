@@ -6,7 +6,7 @@ The integration polls `https://3erl.fr/api.json` and exposes the following field
 |---|---|---|
 | `Bridage` | 0 / 1 | ACI curtailment signal. Drives the relay when the contract type is `aci`. |
 | `Bridage_CDC` | 0 / 1 | ACC curtailment signal. Drives the relay when the contract type is `acc`. |
-| `Dernier_PREP` | €/MWh | Latest positive imbalance settlement price (PRE+). Fallback in the gain estimate when the RTE/Enedis sources are unavailable. |
+| `Dernier_PREP` | €/MWh | Latest positive imbalance settlement price (PRE+). |
 | `PRD4` | €/MWh | Daily weighted average PRE+ as published by 3ERL. In ACI, this is the price applied to injected surplus. See [How the daily PRE+ is calculated](../explanation/daily-prep-estimate.md). |
 | `PREP_Profile` | string | Daily price trend indicator. |
 | `PREP_Profile_Num` | €/MWh | Numeric form of the daily price trend. |

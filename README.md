@@ -24,9 +24,12 @@ Home Assistant custom integration that monitors the French [3ERL](https://3erl.f
   - **Auto** — relay follows the 3ERL curtailment signal.
   - **On** — relay forced ON (zero-injection always active).
   - **Off** — relay forced OFF (zero-injection disabled).
-- Tracks curtailed energy and estimates 3ERL remuneration (70% of PRE+).
-- Sends optional notifications when the active state changes.
-- Exposes a service to reset cumulative energy and gain counters.
+- Tracks curtailed energy. Estimated remuneration is published by 3ERL on <https://dashboard.3erl.fr> and is intentionally not computed by the integration.
+- Sends optional notifications when the limitation command changes, without claiming relay acknowledgement or zero grid export.
+- Provides a persistent manual-bypass switch that releases all relay control, even during a 3ERL outage.
+- Separately supervises relay acknowledgement and optional grid-export measurements, including ZLinky W or VA sensors.
+- Hides contract-specific ACI/ACC entities when they do not apply, while preserving manual visibility overrides.
+- Exposes a service to reset the cumulative energy counter.
 
 ## Supported PV systems
 
@@ -68,35 +71,37 @@ One choice matters: pick **Self-consumption contract type** (`aci` or `acc`) to 
 
 ## Entities
 
-The integration creates sensors for the 3ERL API fields, computed sensors for curtailed energy and estimated gain, binary sensors for the curtailment and active states, and an Auto / On / Off mode select. See the [entities reference](docs/reference/entities.md) for the full list.
+The integration creates sensors for the 3ERL API fields, computed sensors for curtailed energy, binary sensors for the curtailment and active states, and an Auto / On / Off mode select. See the [entities reference](docs/reference/entities.md) for the full list.
 
-## How remuneration is estimated
+## Estimated remuneration
 
-3ERL remunerates participants with 70% of the positive imbalance settlement price (PRE+) when market prices are positive.
+The integration does not estimate remuneration. 3ERL publishes the estimated remuneration on its own dashboard at <https://dashboard.3erl.fr>; refer to it for settled or estimated amounts.
 
-The price used depends on the contract type:
+The cumulative curtailed-energy counter is an experimental estimate based on measured production during requested curtailment, not measured lost production. Its calculation is unchanged by manual bypass and relay diagnostics; it still follows the API signal, even if relay control is suspended.
 
-- **ACI**: estimated daily PRE+ computed from RTE quarter-hourly PRE+ values weighted by the Enedis PRD3 profile. If Enedis has not yet published today's profile, the integration uses the profile from a configurable past day (default `-2`).
+## Development entity renames
 
-  ```text
-  gain (€) = curtailed_energy (kWh) × estimated_daily_PREP (€/MWh) × 0.7 / 1000
-  ```
+This development version introduces new entity IDs and unique ID suffixes for commanded limitation, and removes the estimated-remuneration sensors:
 
-- **ACC**: current quarter-hour PRE+ from RTE.
+- `binary_sensor.3erl_zero_injection_commanded_limitation`
+- `sensor.3erl_zero_injection_estimated_cumulative_remuneration` — removed
+- `sensor.3erl_zero_injection_estimated_hourly_remuneration` — removed
 
-  ```text
-  gain (€) = curtailed_energy (kWh) × current_PREP (€/MWh) × 0.7 / 1000
-  ```
+There is no migration or alias for the legacy entities. Update dashboard, automation and script references when deploying. Legacy registry entries may remain unavailable; old history and statistics are not automatically transferred to the new entity IDs. The `reset_counters` action now only accepts `energy_kwh`; the stored cumulative energy total is preserved.
 
-If the external pricing sources are unavailable, the integration falls back to the `Dernier_PREP` value from the 3ERL API.
+## Manual control and supervision
 
-The cumulative values are persisted across Home Assistant restarts.
+Enable **Manual bypass** to suspend all relay commands, including forced On/Off modes. Operate the original relay switch directly. Bypass is restored after a restart or reload. Disabling bypass resumes the selected mode immediately and may switch the relay. A frozen signal alone does not automatically enable bypass.
+
+**Commanded limitation** reports intent only. The relay-control fault diagnostic reports unavailable relays immediately and persistent mismatches after 30 seconds. The optional grid-export diagnostic reports export above the configured threshold during commanded limitation, after a confirmation period. No export observed is not proof of effective curtailment.
+
+Configure a positive grid-export measurement in the integration options. ZLinky active-power measurements in W and apparent-power measurements in VA are supported as distinct quantities. The defaults are a threshold of 50 W or VA, a confirmation duration of 120 seconds, and a maximum measurement age of 300 seconds. Missing, stale, negative or non-finite measurements are unknown, never zero.
 
 ## Services
 
 ### `zero_inject_3erl.reset_counters`
 
-Reset the cumulative curtailed energy and `Gain cumulé` counters to zero, or seed them with optional `energy_kwh` / `gain_eur` values (e.g. from the 3ERL dashboard).
+Reset the cumulative curtailed energy counter to zero, or seed it with an optional `energy_kwh` value (e.g. from the 3ERL dashboard).
 
 ## Dashboard
 

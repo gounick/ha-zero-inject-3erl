@@ -9,7 +9,11 @@
           "relay_entity": "Zero-injection relay switches",
           "consumption_power_entity": "Home consumption power sensor (optional)",
           "notify_service": "Notification entities (optional)",
-          "prd3_day_offset": "PRD3 profile day offset (ACI only)"
+          "prd3_day_offset": "PRD3 profile day offset (ACI only)",
+          "injection_power_entity": "Grid export sensor (optional, W/kW or VA/kVA)",
+          "injection_threshold": "Export threshold (W or VA according to source)",
+          "injection_delay": "Export confirmation duration (seconds)",
+          "injection_max_age": "Maximum export measurement age (seconds)"
         },
         "description": "Set up 3ERL zero-injection curtailment. The integration polls the 3ERL API and controls a relay to limit PV export when requested. Choose 'aci' for individual self-consumption or 'acc' for collective self-consumption. The PRD3 day offset is used to estimate the daily ACI price when Enedis has not yet published today's profile.",
         "title": "3ERL Zero-Injection",
@@ -34,7 +38,11 @@
           "relay_entity": "Zero-injection relay switches",
           "consumption_power_entity": "Home consumption power sensor (optional)",
           "notify_service": "Notification entities (optional)",
-          "prd3_day_offset": "PRD3 profile day offset (ACI only)"
+          "prd3_day_offset": "PRD3 profile day offset (ACI only)",
+          "injection_power_entity": "Grid export sensor (optional, W/kW or VA/kVA)",
+          "injection_threshold": "Export threshold (W or VA according to source)",
+          "injection_delay": "Export confirmation duration (seconds)",
+          "injection_max_age": "Maximum export measurement age (seconds)"
         },
         "description": "Update the 3ERL zero-injection settings.",
         "title": "3ERL Zero-Injection",
@@ -98,7 +106,7 @@
           "description": {
             "name": "About",
             "state": {
-              "current_prep": "Latest quarter-hour PRE+ published by RTE. Used for the gain estimate under ACC contracts."
+              "current_prep": "Latest quarter-hour PRE+ published by RTE, relevant under ACC contracts."
             }
           }
         }
@@ -191,17 +199,6 @@
           }
         }
       },
-      "gain_rate": {
-        "name": "Estimated hourly gain",
-        "state_attributes": {
-          "description": {
-            "name": "About",
-            "state": {
-              "gain_rate": "Estimated remuneration rate of the curtailed surplus at 70% of PRE+."
-            }
-          }
-        }
-      },
       "cumulative_energy": {
         "name": "Curtailed energy",
         "state_attributes": {
@@ -212,20 +209,20 @@
             }
           }
         }
-      },
-      "cumulative_gain": {
-        "name": "Cumulative gain",
-        "state_attributes": {
-          "description": {
-            "name": "About",
-            "state": {
-              "cumulative_gain": "Total estimated gain accumulated while curtailment is active. Persisted across restarts; resettable with the reset_counters action."
-            }
-          }
-        }
+      }
+    },
+    "switch": {
+      "manual_bypass": {
+        "name": "Manual bypass"
       }
     },
     "binary_sensor": {
+      "relay_control_fault": {
+        "name": "Relay control fault"
+      },
+      "injection_during_limitation": {
+        "name": "Grid export during commanded limitation"
+      },
       "curtailment_requested": {
         "name": "Curtailment requested",
         "state_attributes": {
@@ -259,13 +256,13 @@
           }
         }
       },
-      "zero_inject_active": {
-        "name": "Zero-injection active",
+      "commanded_limitation": {
+        "name": "Commanded limitation",
         "state_attributes": {
           "description": {
             "name": "About",
             "state": {
-              "zero_inject_active": "On while zero-injection is applied to the relay(s). See the mode and reason attributes for details."
+              "commanded_limitation": "Limitation command after applying the selected mode. Off during manual bypass. This does not confirm relay acknowledgement or absence of grid export."
             }
           }
         }
@@ -290,15 +287,11 @@
   "services": {
     "reset_counters": {
       "name": "Reset counters",
-      "description": "Reset the cumulative curtailed energy and estimated gain counters for all 3ERL config entries. Pass optional values to seed the counters, e.g. from the 3ERL dashboard totals.",
+      "description": "Reset the cumulative curtailed energy counter for all 3ERL config entries. Pass an optional value to seed the counter, e.g. from the 3ERL dashboard total.",
       "fields": {
         "energy_kwh": {
           "name": "Curtailed energy",
           "description": "Optional starting value of the curtailed energy counter, in kWh."
-        },
-        "gain_eur": {
-          "name": "Cumulative gain",
-          "description": "Optional starting value of the cumulative gain counter, in EUR."
         }
       }
     }

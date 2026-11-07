@@ -36,12 +36,6 @@
       },
       "cumulative_energy": {
         "default": "mdi:lightning-bolt"
-      },
-      "gain_rate": {
-        "default": "mdi:cash-clock"
-      },
-      "cumulative_gain": {
-        "default": "mdi:cash-multiple"
       }
     },
     "binary_sensor": {
@@ -51,7 +45,7 @@
       "cdc_curtailment_requested": {
         "default": "mdi:car-speed-limiter"
       },
-      "zero_inject_active": {
+      "commanded_limitation": {
         "default": "mdi:flash-off"
       },
       "data_stale": {
