@@ -1,0 +1,46 @@
+# Automation keeping the ZLinky SINSTI measurement fresh for the
+# grid-export supervision diagnostic.
+#
+# SINSTI is a manufacturer attribute that the LiXee ZLinky only reports on
+# change. When the injected apparent power is stable (typically 0 VA at
+# night), Home Assistant receives no report and the supervision diagnostic
+# turns unknown once the measurement exceeds `injection_max_age`
+# (default 300 s). Publishing a periodic read on the device's `get` topic
+# refreshes the sensor's `last_reported` timestamp.
+#
+# Adapt the MQTT topic to your device's friendly name and the exposure key
+# shown in Zigbee2MQTT (Exposes tab). Every-minute reads while a limitation
+# is commanded keep the diagnostic responsive during curtailment.
+
+alias: ZLinky SINSTI refresh
+description: >-
+  Force une lecture périodique de SINSTI : toutes les 4 minutes en
+  permanence, toutes les minutes pendant une limitation commandée
+  (âge max 300 s).
+mode: single
+triggers:
+  - trigger: time_pattern
+    id: periodic
+    minutes: "/4"
+  - trigger: time_pattern
+    id: curtailment
+    minutes: "/1"
+actions:
+  - choose:
+      - conditions:
+          - condition: trigger
+            id:
+              - curtailment
+          - condition: state
+            entity_id: binary_sensor.3erl_zero_injection_commanded_limitation
+            state: "on"
+        sequence:
+          - action: mqtt.publish
+            data:
+              topic: zigbee2mqtt/Z2M LIXEE ZLinky TIC/get
+              payload: '{"sinsti":""}'
+    default:
+      - action: mqtt.publish
+        data:
+          topic: zigbee2mqtt/Z2M LIXEE ZLinky TIC/get
+          payload: '{"sinsti":""}'

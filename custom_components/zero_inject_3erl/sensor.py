@@ -153,7 +153,7 @@ SENSORS: tuple[ThreeERLSensorEntityDescription, ...] = (
         "rte_unavailable_since",
         entity_registry_visible_default=False,
     ),
-    _text(SENSOR_KEY_COMMENTAIRES, "comments", entity_registry_visible_default=False),
+    _text(SENSOR_KEY_COMMENTAIRES, "comments", entity_registry_enabled_default=False),
     ThreeERLSensorEntityDescription(
         key="energie_bridage_kwh",
         translation_key="cumulative_energy",

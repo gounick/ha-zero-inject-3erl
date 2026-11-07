@@ -60,6 +60,7 @@ All notable changes to this project will be documented in this file.
 - Pricing warnings are logged on the failure transition only; a sustained outage no longer spams the log every retry minute.
 - `Bridage`/`Bridage_CDC` string "1" is now recognized as set, and unexpected flag values are logged once instead of silently ignored.
 - `Last RTE update` is now a `timestamp` device-class sensor parsed from the free-text `Heure_Update` field (`unknown` when unparseable) instead of a raw string; the original text remains in the `raw_value` attribute.
+- New example automation `docs/examples/zlinky-sinsti-refresh.yaml`: periodic `mqtt.publish` reads keep a report-on-change ZLinky `SINSTI` measurement fresh for the export diagnostic, every 4 minutes normally and every minute during commanded limitation.
 - `Gain cumulé` now uses the `EUR` unit and the `total` state class. Price sensors (`Dernier PRE+`, `Estimation jour PRD4`, `Current PRE+`, `Estimated daily PRE+`) no longer use the `monetary` device class. Home Assistant may ask to fix the long-term statistics unit once.
 - RTE and Enedis pricing data are fetched independently, so one failing source no longer blocks the other. The daily PRD3 profile is fetched once per day.
 - Entity names moved to translation keys. Fresh installs get English-based entity IDs (for example `sensor.3erl_zero_injection_estimated_curtailed_energy`); existing installs keep their current entity IDs. The mode select unique ID gains a domain prefix through a config entry migration.

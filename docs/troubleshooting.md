@@ -36,7 +36,7 @@ Inspect `unavailable_relays`, `misaligned_relays` and `relay_states`. Unavailabi
 
 Select a positive export-only sensor in the integration options. Do not use a cumulative energy index or a signed net-power sensor. For ZLinky, check both the active-power channel in W and the apparent-power channel in VA: the latter is not an active-power measurement. Choose the channel with a reporting cadence suitable for observation, set the threshold in its W/VA base unit, and set the maximum age to match the reporting cadence.
 
-A sample can be numerically unchanged but still need fresh reports. If HA has not received a report within the maximum age, the result is unknown. The diagnostic is observation only: it does not toggle relays, enable bypass or alter the energy counter. A confirmed export condition clears when export drops below the threshold, commanded limitation ends, or bypass is enabled; invalid measurements make it unknown.
+A sample can be numerically unchanged but still need fresh reports. If HA has not received a report within the maximum age, the result is unknown. For a ZLinky `SINSTI` source that only reports on change, [examples/zlinky-sinsti-refresh.yaml](examples/zlinky-sinsti-refresh.yaml) keeps the measurement fresh by publishing a periodic `mqtt.publish` read on the device's `get` topic — every 4 minutes normally, every minute while a limitation is commanded. The diagnostic is observation only: it does not toggle relays, enable bypass or alter the energy counter. A confirmed export condition clears when export drops below the threshold, commanded limitation ends, or bypass is enabled; invalid measurements make it unknown.
 
 ## Export is not limited when relay is on
 
