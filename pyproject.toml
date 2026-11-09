@@ -9,6 +9,12 @@ dependencies = [
     "homeassistant>=2026.9.3",
 ]
 
+[tool.uv]
+# homeassistant pins pillow==12.3.0 which carries ~30 open Dependabot
+# advisories fixed in 13.0.0. Pillow is only needed for the test
+# environment (image platforms); the integration itself does not use it.
+override-dependencies = ["pillow>=13.0.0"]
+
 [project.optional-dependencies]
 test = [
     "pytest>=8.0.0",
