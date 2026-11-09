@@ -27,7 +27,9 @@ PRE+ journalier = SOMME(PRE+ ajustés) / SOMME(coefficients PRD3)
 
 Autrement dit, le PRE+ de chaque quart d'heure ne compte qu'en proportion de la production solaire nationale à cet instant. Les heures creuses de milieu de journée pèsent beaucoup ; les heures du soir ne pèsent presque rien.
 
-## Pourquoi l'intégration affiche une *estimation*
+## Pourquoi le PRE+ journalier est une *estimation*
+
+Cette estimation porte uniquement sur le **prix** : l'intégration n'estime ni la rémunération, publiée par 3ERL sur <https://dashboard.3erl.fr>, ni l'énergie bridée.
 
 Le profil PRD3 du jour n'est connu qu'après coup : Enedis le publie le lendemain matin. Pour afficher une estimation en cours de journée, l'intégration combine donc :
 
@@ -48,12 +50,23 @@ Les pas de temps PRE+ et PRD3 sont alignés sur l'heure de la journée (heure et
 
 La valeur exposée par l'intégration converge vers le chiffre que 3ERL annonce le soir. Des écarts restent possibles, car le calcul réel utilise le profil PRD3 du jour même, et non celui d'un jour passé.
 
+## Tendances saisonnières
+
+Le PRE+ dépend du climat et du contexte économique : aucune année ne ressemble à une autre. L'été 2025 l'illustre bien — la forte demande d'électricité a maintenu les prix plus hauts que ce que les alertes habituelles laissaient prévoir. On ne peut donc en déduire qu'une tendance relative et indicative, jamais une prévision :
+
+- **Hiver :** le PRE+ est généralement élevé, surtout les jours nuageux et pluvieux — mais la production solaire est trop faible pour en profiter.
+- **Été :** de nombreuses journées affichent des prix négatifs et le bridage est fréquemment demandé.
+- **Printemps et automne :** les belles journées sont rentables, mais le résultat est mitigé.
+
+À prendre comme une intuition de fond, pas comme une raison de désactiver l'intégration selon la saison.
+
 ## Contrats ACC
 
 En autoconsommation collective (ACC), il n'y a pas de pondération journalière : chaque quart d'heure de surplus est valorisé au PRE+ de ce même pas. L'intégration expose pour cela le PRE+ quart-horaire courant et n'utilise pas le profil PRD3.
 
 ## Pages liées
 
+- [Graphes d'historique PRE+](https://mathieu.carbou.me/prep/) — 30 derniers jours de PRE+, maintenu par la communauté
 - [Concepts : fonctionnement du zéro-injection 3ERL](concepts.fr.md)
 - [Référence des champs de l'API](../reference/api-fields.fr.md)
 - [Référence des entités](../reference/entities.fr.md)

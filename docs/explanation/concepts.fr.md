@@ -60,3 +60,4 @@ L’intégration ne mesure ni n’estime l’énergie bridée. La production per
 - [Référence des champs API](../reference/api-fields.fr.md)
 - [Configurer le port DRM Envoy](../how-to/configure-envoy-drm.fr.md)
 - [Installer et configurer l’intégration](../how-to/install-and-configure.fr.md)
+- [Groupe Facebook 3ERL-RE](https://www.facebook.com/groups/679015851149112/) — groupe privé réservé aux adhérents 3ERL

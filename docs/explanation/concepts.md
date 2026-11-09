@@ -60,3 +60,4 @@ The integration does not measure or estimate curtailed energy. Lost production i
 - [API field reference](../reference/api-fields.md)
 - [Configure the Envoy DRM port](../how-to/configure-envoy-drm.md)
 - [Install and configure the integration](../how-to/install-and-configure.md)
+- [3ERL-RE Facebook group](https://www.facebook.com/groups/679015851149112/) — private group for 3ERL members
