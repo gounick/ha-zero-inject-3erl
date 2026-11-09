@@ -4,6 +4,7 @@
   <img src="custom_components/zero_inject_3erl/brand/icon.png" alt="3ERL Zero-Injection icon" width="160">
 </p>
 
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/16497/badge)](https://www.bestpractices.dev/projects/16497)
 [![hassfest](https://github.com/gounick/ha-zero-inject-3erl/actions/workflows/hassfest.yaml/badge.svg?branch=main)](https://github.com/gounick/ha-zero-inject-3erl/actions/workflows/hassfest.yaml)
 [![HACS](https://github.com/gounick/ha-zero-inject-3erl/actions/workflows/hacs.yml/badge.svg?branch=main)](https://github.com/gounick/ha-zero-inject-3erl/actions/workflows/hacs.yml)
 [![Tests](https://github.com/gounick/ha-zero-inject-3erl/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/gounick/ha-zero-inject-3erl/actions/workflows/tests.yml)
