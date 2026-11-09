@@ -29,7 +29,10 @@ from custom_components.zero_inject_3erl.helpers import (
         ("yes", True),
         (0, False),
         ("false", False),
-        (None, False),
+        (None, None),
+        ({"value": 1}, None),
+        ([], None),
+        ("unexpected", None),
     ],
 )
 def test_is_bridage_active(value: object, expected: bool) -> None:
@@ -110,6 +113,16 @@ def test_next_poll_falls_back_when_unparseable(value: object) -> None:
     """Test the fallback interval when Heure_Update cannot be parsed."""
     now = datetime(2026, 10, 13, 16, 10, tzinfo=PARIS)
     assert next_poll_delay(value, now) == timedelta(minutes=15)
+
+
+def test_next_poll_retries_for_future_timestamp() -> None:
+    now = datetime(2026, 10, 13, 16, 10, tzinfo=PARIS)
+    assert next_poll_delay("13/10/2027 16:00", now) == timedelta(minutes=1)
+
+
+def test_next_poll_is_bounded() -> None:
+    now = datetime(2026, 10, 13, 16, 0, tzinfo=PARIS)
+    assert next_poll_delay("13/10/2026 16:00", now) <= timedelta(minutes=15)
 
 
 def test_entry_settings_uses_data_without_options() -> None:

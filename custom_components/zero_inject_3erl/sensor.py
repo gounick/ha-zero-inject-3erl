@@ -12,7 +12,7 @@ from homeassistant.components.sensor import (
     SensorEntityDescription,
     SensorStateClass,
 )
-from homeassistant.const import EntityCategory, UnitOfEnergy
+from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
@@ -154,14 +154,6 @@ SENSORS: tuple[ThreeERLSensorEntityDescription, ...] = (
         entity_registry_visible_default=False,
     ),
     _text(SENSOR_KEY_COMMENTAIRES, "comments", entity_registry_enabled_default=False),
-    ThreeERLSensorEntityDescription(
-        key="energie_bridage_kwh",
-        translation_key="cumulative_energy",
-        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
-        device_class=SensorDeviceClass.ENERGY,
-        state_class=SensorStateClass.TOTAL,
-        value_fn=_computed("energie_bridage_kwh"),
-    ),
 )
 
 
@@ -179,8 +171,15 @@ async def async_setup_entry(
     :param async_add_entities: Callback to register entities.
     :type async_add_entities: AddEntitiesCallback
     """
-    coordinator = entry.runtime_data.coordinator
-    async_add_entities(ThreeERLSensor(coordinator, description) for description in SENSORS)
+    async_add_entities(
+        ThreeERLSensor(
+            entry.runtime_data.pricing_coordinator
+            if description.key in ("current_prep", "estimated_daily_prep")
+            else entry.runtime_data.coordinator,
+            description,
+        )
+        for description in SENSORS
+    )
 
 
 class ThreeERLSensor(ThreeERLEntity, SensorEntity):

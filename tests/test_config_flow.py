@@ -13,13 +13,12 @@ from custom_components.zero_inject_3erl.const import (
     CONF_AGGREGATION_MODE,
     CONF_API_URL,
     CONF_NOTIFY_SERVICE,
-    CONF_PV_POWER_ENTITY,
     CONF_RELAY_ENTITY,
     DEFAULT_API_URL,
     DOMAIN,
 )
 
-from .conftest import PV_POWER_ENTITY, RELAY_ENTITY
+from .conftest import RELAY_ENTITY
 
 
 async def test_user_flow_creates_entry(hass: HomeAssistant, mock_fetch: AsyncMock) -> None:
@@ -32,7 +31,6 @@ async def test_user_flow_creates_entry(hass: HomeAssistant, mock_fetch: AsyncMoc
         {
             CONF_API_URL: DEFAULT_API_URL,
             CONF_AGGREGATION_MODE: "aci",
-            CONF_PV_POWER_ENTITY: [PV_POWER_ENTITY],
             CONF_RELAY_ENTITY: [RELAY_ENTITY],
         },
     )
@@ -51,7 +49,6 @@ async def test_user_flow_cannot_connect(hass: HomeAssistant, mock_fetch: AsyncMo
         {
             CONF_API_URL: DEFAULT_API_URL,
             CONF_AGGREGATION_MODE: "aci",
-            CONF_PV_POWER_ENTITY: [PV_POWER_ENTITY],
             CONF_RELAY_ENTITY: [RELAY_ENTITY],
         },
     )
@@ -70,6 +67,17 @@ async def test_options_flow_shows_form(
     assert result["step_id"] == "init"
 
 
+async def test_cleared_initial_notification_is_not_suggested_again(hass, config_entry):
+    hass.config_entries.async_update_entry(
+        config_entry,
+        data={**config_entry.data, CONF_NOTIFY_SERVICE: ["notify.phone"]},
+        options={**config_entry.data},
+    )
+    result = await hass.config_entries.options.async_init(config_entry.entry_id)
+    key = next(key for key in result["data_schema"].schema if str(key) == CONF_NOTIFY_SERVICE)
+    assert key.description.get("suggested_value", []) == []
+
+
 async def test_options_flow_clears_notify_service(
     hass: HomeAssistant, config_entry: MockConfigEntry, mock_fetch: AsyncMock
 ) -> None:
@@ -84,7 +92,6 @@ async def test_options_flow_clears_notify_service(
         {
             CONF_API_URL: DEFAULT_API_URL,
             CONF_AGGREGATION_MODE: "aci",
-            CONF_PV_POWER_ENTITY: [PV_POWER_ENTITY],
             CONF_RELAY_ENTITY: [RELAY_ENTITY],
         },
     )

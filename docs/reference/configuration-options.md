@@ -6,9 +6,7 @@ All fields are set during the config flow and remain editable under **Settings �
 |---|---|---|---|---|
 | 3ERL API URL | `api_url` | yes | `https://3erl.fr/api.json` | Endpoint polled for curtailment data. |
 | Self-consumption contract type | `aggregation_mode` | yes | `aci` | `aci` follows the `Bridage` signal; `acc` follows `Bridage_CDC`. See [ACI vs ACC](../explanation/concepts.md#aci-vs-acc). |
-| PV production power sensors | `pv_power_entity` | yes | — | One or more `sensor` entities with device class `power`, reporting production power in watts. Their values are summed, so several production sources can be combined. |
 | Zero-injection relay switches | `relay_entity` | yes | — | One or more `switch` entities wired to the DRM port(s). Every listed relay is aligned with the computed state, so several production sources can be curtailed independently. |
-| Home consumption power sensor | `consumption_power_entity` | no | — | `sensor` entity with device class `power`, reporting home consumption in watts. Improves the curtailed-energy estimate; see below. |
 | Grid export sensor | `injection_power_entity` | no | — | Positive export-only measurement at the grid connection, in W/kW or VA/kVA. Signed net-power and energy counters are not supported. Only used for observation, never for relay control. A source that only reports on change (e.g. ZLinky `SINSTI`) can be kept fresh with a periodic read, see [examples/zlinky-sinsti-refresh.yaml](../examples/zlinky-sinsti-refresh.yaml). |
 | Export threshold | `injection_threshold` | no | `50` | Threshold in W for active-power sources or VA for apparent-power sources, after k-unit scaling. Range 0–10000. |
 | Export confirmation duration | `injection_delay` | no | `120` | Seconds continuously above the threshold during commanded limitation before the export diagnostic turns on. Range 1–3600. |
@@ -26,4 +24,4 @@ There is no polling-interval option. The integration follows the update schedule
 
 ## Changing options
 
-Option changes take effect after the config entry reloads. The API URL, relay entity, power sensor, contract type, notification entity and PRD3 offset can all be updated without removing the integration. Initial installation checks the API, but the options form does not require it to be reachable. Local control remains available during outages. Clear the notification field to stop notifications, or the grid export field to stop export observation. A measurement source must report often enough for the configured maximum age; an unchanged number is not evidence of a fresh report.
+Option changes take effect after the config entry reloads. The API URL, relay entities, grid-export sensor, contract type, notification entities and PRD3 offset can all be updated without removing the integration. Initial installation checks the API, but the options form does not require it to be reachable. Local control remains available during outages. Clear the notification field to stop notifications, or the grid export field to stop export observation. A measurement source must report often enough for the configured maximum age; an unchanged number is not evidence of a fresh report.

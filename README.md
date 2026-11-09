@@ -24,22 +24,22 @@ Home Assistant custom integration that monitors the French [3ERL](https://3erl.f
   - **Auto** — relay follows the 3ERL curtailment signal.
   - **On** — relay forced ON (zero-injection always active).
   - **Off** — relay forced OFF (zero-injection disabled).
-- Tracks curtailed energy. Estimated remuneration is published by 3ERL on <https://dashboard.3erl.fr> and is intentionally not computed by the integration.
+- Does not measure or estimate curtailed energy; 3ERL publishes remuneration on <https://dashboard.3erl.fr>.
 - Sends optional notifications when the limitation command changes, without claiming relay acknowledgement or zero grid export.
 - Provides a persistent manual-bypass switch that releases all relay control, even during a 3ERL outage.
 - Separately supervises relay acknowledgement and optional grid-export measurements, including ZLinky W or VA sensors.
 - Hides contract-specific ACI/ACC entities when they do not apply, while preserving manual visibility overrides.
-- Exposes a service to reset the cumulative energy counter.
+- Exposes no custom services; all user control is through entities and options.
 
 ## Supported PV systems
 
-The integration currently supports a generic PV production power sensor. Auto-detection of specific inverter brands (Enphase, SMA, Fronius, etc.) may come later through provider modules; contributions for other systems are welcome.
+The integration currently drives user-provided relay switches and can optionally observe a grid-export sensor. Auto-detection of specific inverter brands (Enphase, SMA, Fronius, etc.) may come later through provider modules; contributions for other systems are welcome.
 
 ## Requirements
 
 - Home Assistant 2026.9.3 or newer.
 - One or more switch entities controlling the zero-injection relays (e.g. a Zigbee dry-contact relay per production source).
-- One or more power sensors that report current PV production in watts (their values are summed).
+- Optional: a positive grid-export sensor in W/kW or VA/kVA for observation.
 
 ## Installation
 
@@ -71,23 +71,25 @@ One choice matters: pick **Self-consumption contract type** (`aci` or `acc`) to 
 
 ## Entities
 
-The integration creates sensors for the 3ERL API fields, computed sensors for curtailed energy, binary sensors for the curtailment and active states, and an Auto / On / Off mode select. See the [entities reference](docs/reference/entities.md) for the full list.
+The integration creates sensors for the 3ERL API fields and informational prices, binary sensors for the curtailment and commanded states, and an Auto / On / Off mode select. See the [entities reference](docs/reference/entities.md) for the full list.
 
-## Estimated remuneration
+## Remuneration and curtailed energy
 
 The integration does not estimate remuneration. 3ERL publishes the estimated remuneration on its own dashboard at <https://dashboard.3erl.fr>; refer to it for settled or estimated amounts.
 
-The cumulative curtailed-energy counter is an experimental estimate based on measured production during requested curtailment, not measured lost production. Its calculation is unchanged by manual bypass and relay diagnostics; it still follows the API signal, even if relay control is suspended.
+It also does not measure or estimate curtailed energy. A power sensor cannot know the counterfactual production that would have occurred without limitation, so the previous experimental counter was removed rather than kept under a misleading name.
 
-## Development entity renames
+## Development entity changes
 
-This development version introduces new entity IDs and unique ID suffixes for commanded limitation, and removes the estimated-remuneration sensors:
+This development version introduces the commanded-limitation entity and removes estimate-only entities and actions:
 
 - `binary_sensor.3erl_zero_injection_commanded_limitation`
+- `sensor.3erl_zero_injection_curtailed_energy` — removed
+- `zero_inject_3erl.reset_counters` — removed
 - `sensor.3erl_zero_injection_estimated_cumulative_remuneration` — removed
 - `sensor.3erl_zero_injection_estimated_hourly_remuneration` — removed
 
-There is no migration or alias for the legacy entities. Update dashboard, automation and script references when deploying. Legacy registry entries may remain unavailable; old history and statistics are not automatically transferred to the new entity IDs. The `reset_counters` action now only accepts `energy_kwh`; the stored cumulative energy total is preserved.
+There is no migration or alias for the legacy entities. Update dashboard, automation and script references when deploying. Legacy registry entries may remain unavailable; old history and statistics are not automatically transferred.
 
 ## Manual control and supervision
 
@@ -99,10 +101,7 @@ Configure a positive grid-export measurement in the integration options. ZLinky 
 
 ## Services
 
-### `zero_inject_3erl.reset_counters`
-
-Reset the cumulative curtailed energy counter to zero, or seed it with an optional `energy_kwh` value (e.g. from the 3ERL dashboard).
-
+The integration does not register custom services.
 ## Dashboard
 
 Example Lovelace cards can be found in [docs/how-to/build-a-dashboard.md](docs/how-to/build-a-dashboard.md).

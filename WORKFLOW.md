@@ -31,10 +31,10 @@ flowchart TB
     API["3ERL API<br/>https://3erl.fr/api.json"]
     RELAY["Dry-contact Relay"]
     INVERTER["PV Inverter (Envoy DRM port)"]
-    PV_POWER["Injection Power Sensor"]
+    EXPORT["Optional grid-export sensor"]
 
     API -->|scheduled polls| COORD
-    PV_POWER -->|state changes| COORD
+    EXPORT -->|state changes| SENS
     COORD --> SENS
     SENS --> CTRL
     CTRL -->|switch.turn_on/off| RELAY
@@ -51,7 +51,7 @@ sequenceDiagram
     participant HA as Home Assistant
 
     U->>CF: Add integration
-    CF->>U: Ask for API URL, contract type, PV power sensor, relay, notify service
+    CF->>U: Ask for API URL, contract type, relay and optional diagnostics
     U->>CF: Submit configuration
     CF->>API: GET /api.json
     API-->>CF: JSON response
@@ -109,28 +109,29 @@ stateDiagram-v2
     Active --> Inactive
 ```
 
-## Curtailment and energy calculation
+## Signal validation and pricing
 
 ```mermaid
 flowchart LR
-    A["3ERL API<br/>curtailment signal = 1"] --> B["PV production power sensor<br/>W"]
-    B --> C["Energy delta<br/>kWh"]
-    C --> G["Cumulative counter<br/>persisted in Store"]
+    A["3ERL API response"] --> B{"Valid signal and timestamp?"}
+    B -->|yes| C["Replace last known signal"]
+    B -->|no| D["Keep previous valid signal<br/>retry in 1 minute"]
+    E["RTE / Enedis prices"] -.->|independent coordinator| F["Informational price sensors"]
 ```
 
-Estimated remuneration is out of scope: 3ERL publishes it on <https://dashboard.3erl.fr>.
+Invalid, missing or malformed curtailment fields are treated as a source error, not as "no curtailment". A future `Heure_Update` is rejected and retried shortly instead of delaying polling by its literal date.
+
+Estimated remuneration and curtailed energy are out of scope: 3ERL publishes remuneration on <https://dashboard.3erl.fr>, and a power sensor cannot measure the counterfactual production that would have occurred without limitation.
 
 ## Operational workflow
 
 1. The user installs the integration via HACS or manual copy, then configures it through the Home Assistant UI.
-2. The coordinator fetches the 3ERL API on the published update schedule: about 18 minutes after each `Heure_Update`, with a 1-minute retry when fresh data is late.
-3. Each time the configured injection power sensor changes, the coordinator computes the energy curtailed since the last update.
-4. The controller listens to coordinator updates, mode-select changes and relay changes, then aligns the relay with the computed state.
-5. While curtailment is active, the coordinator accumulates the estimated curtailed energy.
-6. The cumulative energy counter is saved to Home Assistant storage at most once a minute, flushed on unload, and restored on restart.
-7. The mode select restores its last value after a restart or reload.
+2. The signal coordinator fetches the 3ERL API on the published update schedule: about 18 minutes after each `Heure_Update`, with a 1-minute retry when fresh data is late or invalid.
+3. The controller listens to coordinator updates, mode-select changes and relay changes, then aligns the relay with the computed state.
+4. The pricing coordinator refreshes RTE and Enedis data independently; its failures do not delay relay control.
+5. The mode select restores its last value after a restart or reload.
 
 ## Maintenance workflow
 
-- To reset counters, call the service `zero_inject_3erl.reset_counters` from **Developer Tools → Services**.
-- To change the relay, PV sensor, contract type or notification entity, use **Settings → Devices & services → 3ERL Zero-Injection → Configure**.
+- To change the relay, contract type, export diagnostic or notification entities, use **Settings → Devices & services → 3ERL Zero-Injection → Configure**.
+- To inspect price data separately from control health, compare the API sensors with the current and estimated PRE+ entities.

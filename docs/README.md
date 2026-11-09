@@ -30,6 +30,6 @@ flowchart TD
 | Look up configuration fields | [reference/configuration-options.md](reference/configuration-options.md) |
 | Look up the created entities | [reference/entities.md](reference/entities.md) |
 | Look up the 3ERL API fields | [reference/api-fields.md](reference/api-fields.md) |
-| Look up the exposed services | [reference/services.md](reference/services.md) |
+| Check whether custom services exist | [reference/services.md](reference/services.md) |
 | Diagnose a problem | [troubleshooting.md](troubleshooting.md) |
 | Understand the internal architecture | [../WORKFLOW.md](../WORKFLOW.md) |

@@ -50,10 +50,10 @@ sections:
         entity: sensor.3erl_zero_injection_daily_trend
         name: Daily trend
 
-      # Totals
+      # Manual controls and diagnostics
       - type: tile
-        entity: sensor.3erl_zero_injection_curtailed_energy
-        name: Curtailed energy
+        entity: sensor.3erl_zero_injection_last_rte_update
+        name: Last update
       - type: tile
         entity: switch.3erl_zero_injection_manual_bypass
         name: Manual bypass
@@ -79,14 +79,14 @@ sections:
             name: Requested
           - entity: binary_sensor.3erl_zero_injection_commanded_limitation
             name: Active
-      - type: statistics-graph
-        title: Curtailed energy
-        days_to_show: 30
-        chart_type: bar
-        stat_types:
-          - change
+      - type: history-graph
+        title: Diagnostics — last 24 h
+        hours_to_show: 24
         entities:
-          - sensor.3erl_zero_injection_curtailed_energy
+          - entity: binary_sensor.3erl_zero_injection_3erl_data_stale
+            name: Stale data
+          - entity: binary_sensor.3erl_zero_injection_grid_export_during_commanded_limitation
+            name: Observed export
 
   - type: grid
     cards:

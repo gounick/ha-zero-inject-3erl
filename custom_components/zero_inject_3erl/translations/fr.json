@@ -5,9 +5,7 @@
         "data": {
           "api_url": "URL de l'API 3ERL",
           "aggregation_mode": "Type de contrat d'autoconsommation",
-          "pv_power_entity": "Capteurs de puissance de production PV",
           "relay_entity": "Interrupteurs des relais de limitation d'injection",
-          "consumption_power_entity": "Capteur de puissance consommée par la maison (optionnel)",
           "notify_service": "Entités de notification (optionnel)",
           "prd3_day_offset": "Décalage du profil PRD3 (ACI uniquement)",
           "injection_power_entity": "Capteur d'injection réseau (optionnel, W/kW ou VA/kVA)",
@@ -16,11 +14,7 @@
           "injection_max_age": "Âge maximal de la mesure d'injection (secondes)"
         },
         "description": "Configurez le bridage zéro-injection 3ERL. L'intégration interroge l'API 3ERL et commande un relais pour limiter l'injection photovoltaïque sur demande. Choisissez 'aci' pour l'autoconsommation individuelle ou 'acc' pour l'autoconsommation collective. Le décalage PRD3 sert à estimer le prix journalier ACI quand Enedis n'a pas encore publié le profil du jour.",
-        "title": "3ERL Zero-Injection",
-        "data_description": {
-          "pv_power_entity": "Capteur(s) remontant la production PV instantanée en watts. Avec plusieurs sources de production, sélectionnez-les toutes : les valeurs sont additionnées.",
-          "consumption_power_entity": "Capteur remontant la consommation instantanée de la maison en watts. Une fois renseigné, l'estimation de la puissance bridée utilise production moins consommation au lieu de la seule production."
-        }
+        "title": "3ERL Zero-Injection"
       }
     },
     "error": {
@@ -34,9 +28,7 @@
         "data": {
           "api_url": "URL de l'API 3ERL",
           "aggregation_mode": "Type de contrat d'autoconsommation",
-          "pv_power_entity": "Capteurs de puissance de production PV",
           "relay_entity": "Interrupteurs des relais de limitation d'injection",
-          "consumption_power_entity": "Capteur de puissance consommée par la maison (optionnel)",
           "notify_service": "Entités de notification (optionnel)",
           "prd3_day_offset": "Décalage du profil PRD3 (ACI uniquement)",
           "injection_power_entity": "Capteur d'injection réseau (optionnel, W/kW ou VA/kVA)",
@@ -45,11 +37,7 @@
           "injection_max_age": "Âge maximal de la mesure d'injection (secondes)"
         },
         "description": "Mettez à jour les paramètres du bridage 3ERL.",
-        "title": "3ERL Zero-Injection",
-        "data_description": {
-          "pv_power_entity": "Capteur(s) remontant la production PV instantanée en watts. Avec plusieurs sources de production, sélectionnez-les toutes : les valeurs sont additionnées.",
-          "consumption_power_entity": "Capteur remontant la consommation instantanée de la maison en watts. Une fois renseigné, l'estimation de la puissance bridée utilise production moins consommation au lieu de la seule production."
-        }
+        "title": "3ERL Zero-Injection"
       }
     },
     "error": {
@@ -187,17 +175,6 @@
             }
           }
         }
-      },
-      "cumulative_energy": {
-        "name": "Énergie bridée cumulée",
-        "state_attributes": {
-          "description": {
-            "name": "À propos",
-            "state": {
-              "cumulative_energy": "Énergie bridée estimée totale accumulée pendant le bridage. Persistée entre les redémarrages ; réinitialisable avec l'action reset_counters."
-            }
-          }
-        }
       }
     },
     "switch": {
@@ -269,18 +246,6 @@
               "mode_off": "Relais forcé OFF - zéro-injection désactivé."
             }
           }
-        }
-      }
-    }
-  },
-  "services": {
-    "reset_counters": {
-      "name": "Réinitialiser les compteurs",
-      "description": "Remet à zéro le compteur d'énergie bridée de toutes les entrées 3ERL. Renseignez une valeur pour initialiser le compteur, par exemple avec le total du dashboard 3ERL.",
-      "fields": {
-        "energy_kwh": {
-          "name": "Énergie bridée",
-          "description": "Valeur initiale optionnelle du compteur d'énergie bridée, en kWh."
         }
       }
     }

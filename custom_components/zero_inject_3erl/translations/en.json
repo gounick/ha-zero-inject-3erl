@@ -5,9 +5,7 @@
         "data": {
           "api_url": "3ERL API URL",
           "aggregation_mode": "Self-consumption contract type",
-          "pv_power_entity": "PV production power sensors",
           "relay_entity": "Zero-injection relay switches",
-          "consumption_power_entity": "Home consumption power sensor (optional)",
           "notify_service": "Notification entities (optional)",
           "prd3_day_offset": "PRD3 profile day offset (ACI only)",
           "injection_power_entity": "Grid export sensor (optional, W/kW or VA/kVA)",
@@ -16,11 +14,7 @@
           "injection_max_age": "Maximum export measurement age (seconds)"
         },
         "description": "Set up 3ERL zero-injection curtailment. The integration polls the 3ERL API and controls a relay to limit PV export when requested. Choose 'aci' for individual self-consumption or 'acc' for collective self-consumption. The PRD3 day offset is used to estimate the daily ACI price when Enedis has not yet published today's profile.",
-        "title": "3ERL Zero-Injection",
-        "data_description": {
-          "pv_power_entity": "Sensor(s) reporting current PV production in watts. With several production sources, select all of them: values are summed.",
-          "consumption_power_entity": "Sensor reporting current home consumption in watts. When set, the curtailed-power estimate uses production minus consumption instead of production alone."
-        }
+        "title": "3ERL Zero-Injection"
       }
     },
     "error": {
@@ -34,9 +28,7 @@
         "data": {
           "api_url": "3ERL API URL",
           "aggregation_mode": "Self-consumption contract type",
-          "pv_power_entity": "PV production power sensors",
           "relay_entity": "Zero-injection relay switches",
-          "consumption_power_entity": "Home consumption power sensor (optional)",
           "notify_service": "Notification entities (optional)",
           "prd3_day_offset": "PRD3 profile day offset (ACI only)",
           "injection_power_entity": "Grid export sensor (optional, W/kW or VA/kVA)",
@@ -45,11 +37,7 @@
           "injection_max_age": "Maximum export measurement age (seconds)"
         },
         "description": "Update the 3ERL zero-injection settings.",
-        "title": "3ERL Zero-Injection",
-        "data_description": {
-          "pv_power_entity": "Sensor(s) reporting current PV production in watts. With several production sources, select all of them: values are summed.",
-          "consumption_power_entity": "Sensor reporting current home consumption in watts. When set, the curtailed-power estimate uses production minus consumption instead of production alone."
-        }
+        "title": "3ERL Zero-Injection"
       }
     },
     "error": {
@@ -187,17 +175,6 @@
             }
           }
         }
-      },
-      "cumulative_energy": {
-        "name": "Curtailed energy",
-        "state_attributes": {
-          "description": {
-            "name": "About",
-            "state": {
-              "cumulative_energy": "Total estimated curtailed energy accumulated while curtailment is active. Persisted across restarts; resettable with the reset_counters action."
-            }
-          }
-        }
       }
     },
     "switch": {
@@ -269,18 +246,6 @@
               "mode_off": "Relay forced OFF - zero-injection disabled."
             }
           }
-        }
-      }
-    }
-  },
-  "services": {
-    "reset_counters": {
-      "name": "Reset counters",
-      "description": "Reset the cumulative curtailed energy counter for all 3ERL config entries. Pass an optional value to seed the counter, e.g. from the 3ERL dashboard total.",
-      "fields": {
-        "energy_kwh": {
-          "name": "Curtailed energy",
-          "description": "Optional starting value of the curtailed energy counter, in kWh."
         }
       }
     }

@@ -1,21 +1,13 @@
 # Install and configure the integration
 
-Goal: install `zero_inject_3erl` in Home Assistant and connect it to your relay and power sensor.
+Goal: install `zero_inject_3erl` in Home Assistant and connect it to your relay.
 
 ## Prerequisites
 
 - Home Assistant 2026.9.3 or newer.
 - A `switch.*` entity for the dry-contact relay, already paired and wired. See [Wire the relay](wire-the-relay.md).
 - The Envoy DRM port configured. See [Configure the Envoy DRM port](configure-envoy-drm.md).
-- A power sensor reporting injected power in watts (see below).
-
-## Choose the power sensors
-
-The integration estimates the energy lost to curtailment by integrating the configured sensors during curtailment periods. Choose one or more **production** power sensors, such as the Envoy `current_power_production` entity — the energy that would have been injected can only be derived from what was being generated at the time. With several production sources, select all of them: their power values are summed.
-
-Do not pick a grid-side injection sensor for this field: when the relay cuts export, measured injection falls to about zero and the counter stops counting.
-
-For a more accurate estimate, also fill the optional **Home consumption power sensor**. The counter then integrates `production − consumption` during curtailment, which is closer to the surplus that would actually have been injected. Without it, the counter is an upper bound that includes your base load.
+- Optional: a positive grid-export sensor in W/kW or VA/kVA if you want the export diagnostic.
 
 ## Install
 
@@ -40,9 +32,8 @@ For a more accurate estimate, also fill the optional **Home consumption power se
    |---|---|
    | 3ERL API URL | Leave the default `https://3erl.fr/api.json`. |
    | Self-consumption contract type | `aci` uses the `Bridage` signal, `acc` uses `Bridage_CDC`. See [ACI vs ACC](../explanation/concepts.md#aci-vs-acc). |
-   | PV production power sensors | The power sensor(s) chosen above. |
    | Zero-injection relay switches | The `switch.*` entity of your dry-contact relay; select several when each production source has its own relay. |
-   | Home consumption power sensor | Optional `sensor.*` reporting home consumption; refines the curtailed-energy estimate. |
+   | Grid export sensor | Optional positive export-only measurement used for observation, not control. |
    | Notification services | Optional `notify.*` entities for state-change notifications; select several to notify on different channels. |
    | PRD3 profile day offset | Leave `-2` unless you have a reason to change it. See [daily PRE+ estimate](../explanation/daily-prep-estimate.md). |
 
@@ -62,6 +53,6 @@ flowchart LR
 
 1. Check that `sensor.3erl_zero_injection_latest_pre` reports a value after the first poll.
 2. Set the mode select to **On**: the relay closes and export stops.
-3. Set the mode back to **Auto**: the relay opens.
+3. Set the mode back to **Auto**: the relay follows the current 3ERL signal. It opens only if curtailment is not requested; use manual bypass to operate the relay directly regardless of the signal.
 
 If something fails, see [troubleshooting](../troubleshooting.md).

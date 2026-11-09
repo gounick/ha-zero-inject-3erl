@@ -12,10 +12,13 @@ from homeassistant.components.binary_sensor import (
 from homeassistant.const import EntityCategory
 from homeassistant.core import Event, HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.event import async_track_state_change_event
+from homeassistant.helpers.event import (
+    async_track_state_change_event,
+    async_track_time_interval,
+)
 
 from . import ThreeERLConfigEntry
-from .const import SENSOR_KEY_BRIDAGE, SENSOR_KEY_BRIDAGE_CDC
+from .const import API_RETRY_INTERVAL, SENSOR_KEY_BRIDAGE, SENSOR_KEY_BRIDAGE_CDC
 from .coordinator import ThreeERLUpdateCoordinator
 from .entity import ThreeERLEntity
 from .helpers import (
@@ -76,6 +79,11 @@ async def async_setup_entry(
 
 class ThreeERLApiBinarySensor(ThreeERLEntity, BinarySensorEntity):
     """Binary sensor reflecting a boolean flag from the 3ERL API."""
+
+    @property
+    def available(self) -> bool:
+        """Keep signal entities visible as unknown during API outages."""
+        return True
 
     @property
     def is_on(self) -> bool | None:
@@ -159,18 +167,32 @@ class ThreeERLStaleBinarySensor(ThreeERLEntity, BinarySensorEntity):
         """Initialize the stale data binary sensor."""
         super().__init__(coordinator, STALE_DESCRIPTION)
 
+    async def async_added_to_hass(self) -> None:
+        """Refresh the live data age when no API event occurs."""
+        await super().async_added_to_hass()
+        self.async_on_remove(
+            async_track_time_interval(self.hass, self._on_time_interval, API_RETRY_INTERVAL)
+        )
+
+    @callback
+    def _on_time_interval(self, now) -> None:
+        """Write the updated age on the local timer."""
+        self.async_write_ha_state()
+
+    @property
+    def available(self) -> bool:
+        """Keep freshness reporting available during API failures."""
+        return True
+
     @property
     def is_on(self) -> bool | None:
         """Return True when the API data is stale."""
-        if not self.coordinator.data:
-            return None
-        return self.coordinator.data.get("data_stale")
+        return self.coordinator.data_stale
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
-        """Return the data age and the description slug."""
-        data = self.coordinator.data or {}
+        """Return the live data age and the description slug."""
         return {
-            "data_age_minutes": data.get("data_age_minutes"),
+            "data_age_minutes": self.coordinator.data_age_minutes,
             "description": "data_stale",
         }

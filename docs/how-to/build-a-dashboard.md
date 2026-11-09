@@ -6,7 +6,7 @@ Replace the entity IDs below with the ones generated on your Home Assistant inst
 
 A ready-made view combining all these cards is available in [examples/view.yaml](../examples/view.yaml).
 
-This development version introduces the new commanded-limitation entity ID and removes the estimated-remuneration sensors without legacy migration. Update existing cards, automations and scripts to the IDs shown here. Estimated remuneration is published by 3ERL on <https://dashboard.3erl.fr>. Contract-specific hiding does not remove explicit references from cards. Use the ACI demand and daily PRE+ for ACI, or the CDC demand and current PRE+ for ACC.
+This development version introduces the new commanded-limitation entity ID and removes the estimated-remuneration and curtailed-energy sensors without legacy migration. Update existing cards, automations and scripts to the IDs shown here. Estimated remuneration is published by 3ERL on <https://dashboard.3erl.fr>. Contract-specific hiding does not remove explicit references from cards. Use the ACI demand and daily PRE+ for ACI, or the CDC demand and current PRE+ for ACC.
 
 ## Compare command, relay and observed export
 
@@ -66,7 +66,7 @@ cards:
     icon: mdi:trending-up
 ```
 
-## Energy
+## Diagnostics
 
 ```yaml
 type: grid
@@ -74,9 +74,13 @@ columns: 2
 square: false
 cards:
   - type: tile
-    entity: sensor.3erl_zero_injection_curtailed_energy
-    name: Énergie bridée
-    icon: mdi:lightning-bolt
+    entity: binary_sensor.3erl_zero_injection_3erl_data_stale
+    name: Data freshness
+    icon: mdi:cloud-alert-outline
+  - type: tile
+    entity: binary_sensor.3erl_zero_injection_relay_control_fault
+    name: Relay control fault
+    icon: mdi:alert-outline
 ```
 
 ## History graphs
@@ -93,13 +97,12 @@ entities:
 ```
 
 ```yaml
-type: statistics-graph
-title: Énergie bridée — 30 jours
-days_to_show: 30
-chart_type: bar
-stat_types:
-  - change
+type: history-graph
+title: Diagnostics — 24h
+hours_to_show: 24
 entities:
-  - entity: sensor.3erl_zero_injection_curtailed_energy
-    name: Curtailed energy (kWh)
+  - entity: binary_sensor.3erl_zero_injection_3erl_data_stale
+    name: Stale API data
+  - entity: binary_sensor.3erl_zero_injection_grid_export_during_commanded_limitation
+    name: Observed export
 ```

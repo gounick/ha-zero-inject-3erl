@@ -19,7 +19,8 @@ API and computed entities expose a translated `description` attribute under **Mo
 | `sensor.3erl_zero_injection_degraded_mode` | — | `mode_degrade` | API degraded-mode flag. |
 | `sensor.3erl_zero_injection_rte_unavailable_since` | — | `rte_indispo_depuis` | Timestamp since which RTE data is unavailable, if any. |
 | `sensor.3erl_zero_injection_comments` | — | `Commentaires` | Operator comments published by 3ERL. |
-| `sensor.3erl_zero_injection_curtailed_energy` | kWh | computed | Cumulative estimated curtailed energy. Persisted across restarts. |
+
+The integration does not create a curtailed-energy sensor.
 
 ## Binary sensors
 
@@ -42,7 +43,30 @@ The commanded-limitation entity uses the unique ID suffix `commanded_limitation`
 
 ACI hides `Bridage_CDC` and current RTE PRE+. ACC hides `Bridage`, the locally estimated daily PRE+ and the 3ERL PRD3-weighted daily PRE+. These entities stay enabled and keep their history and identifiers. Contract changes update integration-managed visibility, while explicit user visibility overrides are preserved. Existing dashboard cards still show explicitly referenced hidden entities.
 
-The estimated-remuneration entities were removed: estimated remuneration is published by 3ERL on <https://dashboard.3erl.fr> and is out of scope for this integration. No legacy entity migration or history/statistics transfer is performed. Old registry entries may remain unavailable after deployment. The stored cumulative energy total is preserved and resumed; the energy calculation still follows the API signal, not confirmed relay execution or bypass, so the counter remains an experimental estimate.
+| Contract | Entity | Purpose |
+| --- | --- | --- |
+| ACI only | `binary_sensor.3erl_zero_injection_curtailment_requested` | `Bridage` curtailment signal. |
+| ACI only | `sensor.3erl_zero_injection_estimated_daily_pre` | Estimated daily PRE+ using the Enedis PRD3 profile. |
+| ACI only | `sensor.3erl_zero_injection_daily_pre_weighted_by_prd3_3erl` | `PREP_Profile_Num` published by 3ERL. |
+| ACC only | `binary_sensor.3erl_zero_injection_cdc_curtailment_requested` | `Bridage_CDC` curtailment signal. |
+| ACC only | `sensor.3erl_zero_injection_current_pre` | Current quarter-hour PRE+ from RTE. |
+| ACI and ACC | `sensor.3erl_zero_injection_latest_pre` | `Dernier_PREP` published by 3ERL. |
+| ACI and ACC | `sensor.3erl_zero_injection_daily_pre_average_prd4` | `PRD4` published by 3ERL. |
+| ACI and ACC | `sensor.3erl_zero_injection_daily_trend` | `PREP_Profile` daily trend. |
+| ACI and ACC | `sensor.3erl_zero_injection_last_rte_update` | `Heure_Update` timestamp. |
+| ACI and ACC | `sensor.3erl_zero_injection_long_term_curtailment_until` | `Bridage_Long_Terme` indicator. |
+| ACI and ACC | `sensor.3erl_zero_injection_degraded_mode` | `mode_degrade` indicator. |
+| ACI and ACC | `sensor.3erl_zero_injection_rte_unavailable_since` | `rte_indispo_depuis` timestamp. |
+| ACI and ACC | `sensor.3erl_zero_injection_comments` | `Commentaires` operator comments. |
+| ACI and ACC | `binary_sensor.3erl_zero_injection_commanded_limitation` | Computed limitation command after mode and bypass. |
+| ACI and ACC | `binary_sensor.3erl_zero_injection_relay_control_fault` | Relay availability and alignment diagnostic. |
+| ACI and ACC | `binary_sensor.3erl_zero_injection_grid_export_during_commanded_limitation` | Optional grid-export observation. |
+| ACI and ACC | `binary_sensor.3erl_zero_injection_3erl_data_stale` | API data freshness diagnostic. |
+| ACI and ACC | `select.3erl_zero_injection_zero_injection_mode` | Auto / On / Off operating mode. |
+| ACI and ACC | `switch.3erl_zero_injection_manual_bypass` | Suspends all relay commands. |
+
+
+The estimated-remuneration and curtailed-energy entities were removed: remuneration is published by 3ERL on <https://dashboard.3erl.fr>, while curtailed energy cannot be measured or estimated reliably from the configured inputs. No legacy entity migration or history/statistics transfer is performed. Old registry entries may remain unavailable after deployment.
 
 ## Select
 

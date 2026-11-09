@@ -1,9 +1,1 @@
-reset_counters:
-  fields:
-    energy_kwh:
-      required: false
-      selector:
-        number:
-          min: 0
-          mode: box
-          unit_of_measurement: kWh
+{}

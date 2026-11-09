@@ -1,19 +1,10 @@
 # Services
 
-## `zero_inject_3erl.reset_counters`
+The integration does not register custom services.
 
-Resets the cumulative curtailed energy counter to zero and clears the persisted value.
+User control is exposed through entities:
 
-An optional field seeds the counter instead of zeroing it — for example to match the total shown on the 3ERL dashboard:
+- `select.3erl_zero_injection_zero_injection_mode` for Auto / On / Off.
+- `switch.3erl_zero_injection_manual_bypass` to suspend all relay commands.
 
-| Field | Unit | Description |
-|---|---|---|
-| `energy_kwh` | kWh | Starting value of the curtailed energy counter. |
-
-Example call from **Developer Tools → Actions**:
-
-```yaml
-action: zero_inject_3erl.reset_counters
-data:
-  energy_kwh: 12.5
-```
+Estimated remuneration and curtailed energy are out of scope. See the [entities reference](entities.md).

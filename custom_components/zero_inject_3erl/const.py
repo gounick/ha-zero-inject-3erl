@@ -16,8 +16,6 @@ DEFAULT_PRD3_DAY_OFFSET = -2
 DEFAULT_PRD3_PROFILE = "PRD3_BASE"
 
 CONF_API_URL = "api_url"
-CONF_PV_POWER_ENTITY = "pv_power_entity"
-CONF_CONSUMPTION_POWER_ENTITY = "consumption_power_entity"
 CONF_RELAY_ENTITY = "relay_entity"
 CONF_NOTIFY_SERVICE = "notify_service"
 CONF_AGGREGATION_MODE = "aggregation_mode"
@@ -42,10 +40,6 @@ DEFAULT_AGGREGATION_MODE = AGGREGATION_MODE_ACI
 ZERO_INJECT_MODES = ["Auto", "On", "Off"]
 MODE_UNIQUE_ID_SUFFIX = "mode"
 
-# Utility constants used for power/energy conversions.
-SECONDS_PER_HOUR = 3600
-WATTS_PER_KILOWATT = 1000
-
 # Default request timeout for the 3ERL public API.
 API_TIMEOUT_SECONDS = 30
 
@@ -62,17 +56,8 @@ API_FALLBACK_INTERVAL = timedelta(minutes=15)
 # Data older than twice the 15-minute publication cycle is reported as stale.
 API_STALE_AFTER = timedelta(minutes=30)
 
-# Minimum interval between two production-power based energy updates.
-POWER_UPDATE_INTERVAL = timedelta(seconds=10)
-
-# Storage key for the cumulative curtailed energy value.
-STORAGE_KEY = f"{DOMAIN}.cumulative"
-
-# Delay used to batch writes of the cumulative values to disk.
-STORE_SAVE_DELAY_SECONDS = 60
-
-# Service identifiers.
-SERVICE_RESET_COUNTERS = "reset_counters"
+RELAY_RETRY_INTERVAL = timedelta(seconds=30)
+RELAY_COMMAND_TIMEOUT = 30
 
 SENSOR_KEY_BRIDAGE = "Bridage"
 SENSOR_KEY_BRIDAGE_CDC = "Bridage_CDC"

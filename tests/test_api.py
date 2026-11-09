@@ -70,6 +70,41 @@ async def test_fetch_success() -> None:
     assert data["PREP_Profile"] == "1+"
 
 
+@pytest.mark.parametrize("payload", [[], "not a dict", None])
+async def test_fetch_rejects_non_dict_response(payload) -> None:
+    session = _mock_session_with_response(_mock_aiohttp_response(json_data=payload))
+    with pytest.raises(ThreeERLApiError):
+        await ThreeERLApiClient(session, "https://3erl.fr/api.json").fetch()
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        {},
+        {"Heure_Update": "30/09/2026 15:00"},
+        {"Bridage": None},
+        {"Bridage": []},
+        {"Bridage": {}},
+        {"Bridage": "unexpected"},
+    ],
+)
+async def test_fetch_rejects_invalid_signal(payload) -> None:
+    session = _mock_session_with_response(_mock_aiohttp_response(json_data=payload))
+    with pytest.raises(ThreeERLApiError):
+        await ThreeERLApiClient(session, "https://3erl.fr/api.json").fetch()
+
+
+@pytest.mark.parametrize(
+    "heure_update",
+    [None, "", "not a date", 42, "01/01/2099 12:00"],
+)
+async def test_fetch_rejects_invalid_timestamp(heure_update) -> None:
+    payload = {**_sample_api_response(), "Heure_Update": heure_update}
+    session = _mock_session_with_response(_mock_aiohttp_response(json_data=payload))
+    with pytest.raises(ThreeERLApiError):
+        await ThreeERLApiClient(session, "https://3erl.fr/api.json").fetch()
+
+
 async def test_fetch_server_error() -> None:
     """Test that a server error raises ThreeERLApiError."""
     mock_resp = _mock_aiohttp_response(status=500, raise_for_status=False)

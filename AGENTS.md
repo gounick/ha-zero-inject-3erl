@@ -20,7 +20,9 @@ This file provides guidance to compatible agentic tools when generating or revie
 ### Use English Everywhere
 
 - Always use English for code, comments, documentation, and user-facing messages.
-- No French or other languages, except in the French translation file (`translations/fr.json`).
+- English is the primary documentation language. When adding or changing Markdown documentation, create or update a secondary French version next to it as `<name>.fr.md`.
+- Keep French Markdown files synchronized with their English source and prefer links to the corresponding `.fr.md` files from French pages.
+- No other languages, except in the French translation file (`translations/fr.json`) and the secondary `*.fr.md` documentation files.
 
 ### DRY — Don't Repeat Yourself
 
@@ -77,12 +79,12 @@ This file provides guidance to compatible agentic tools when generating or revie
 
 ```text
 custom_components/zero_inject_3erl/
-├── __init__.py       # HA lifecycle, service registration
+├── __init__.py       # HA lifecycle and entry runtime wiring
 ├── manifest.json     # Integration metadata
 ├── const.py          # Domain constants, config keys, defaults
 ├── config_flow.py    # UI configuration flow + options flow
 ├── api.py            # 3ERL REST API client
-├── coordinator.py    # DataUpdateCoordinator, energy accumulation
+├── coordinator.py    # API and informational-pricing coordinators
 ├── pricing.py        # RTE PRE+ and Enedis PRD3 fetching, price estimates
 ├── helpers.py        # Shared decision, settings and entity helpers
 ├── controller.py     # Relay control logic (Auto / On / Off)
@@ -97,7 +99,7 @@ custom_components/zero_inject_3erl/
 ```
 
 - `ThreeERLApiClient` owns all HTTP calls to `https://3erl.fr/api.json`.
-- `ThreeERLUpdateCoordinator` polls the API and accumulates curtailed energy from the configured PV power sensor.
+- `ThreeERLUpdateCoordinator` polls the API; `ThreeERLPricingCoordinator` refreshes informational prices independently.
 - `ZeroInjectController` listens to coordinator updates, mode changes and relay changes, then aligns the relay with the computed state.
 - The mode select platform is set up before the other platforms so they can resolve its entity id.
 - Tests live in `tests/`. `tests/conftest.py` provides `config_entry` and `mock_fetch` (patches the 3ERL API and pricing sources) for full setup tests.
@@ -105,12 +107,13 @@ custom_components/zero_inject_3erl/
 
 ### Extensibility for other PV systems
 
-Currently the integration supports a generic PV power sensor. Future providers (Enphase auto-detection, SMA, Fronius, etc.) should be added as adapter modules under `custom_components/zero_inject_3erl/providers/`, each exposing:
+The integration currently drives user-configured relay switches. Future providers (Enphase auto-detection, SMA, Fronius, etc.) should be added as adapter modules under `custom_components/zero_inject_3erl/providers/`, each exposing:
 
 - `is_supported(hass, entry)` — detect whether this provider applies.
-- `async_get_power_entity(hass, entry)` — return the power sensor entity ID to monitor.
+- `async_get_relay_entities(hass, entry)` — return relay switch entity IDs to control.
+- `async_get_export_entity(hass, entry)` — optionally return a positive export sensor entity ID to observe.
 
-The coordinator and controller should remain provider-agnostic.
+The coordinators and controller should remain provider-agnostic.
 
 ---
 

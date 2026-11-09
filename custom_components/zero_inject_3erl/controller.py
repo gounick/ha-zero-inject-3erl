@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from typing import Any
 
@@ -80,6 +81,7 @@ class ZeroInjectController:
         self._unsub_states: Any = None
         self._last_active_state: bool | None = None
         self._running = False
+        self._command_tasks: dict[tuple[str, str], asyncio.Task[None]] = {}
 
     async def async_setup(self) -> None:
         """Set up listeners for coordinator, mode select and relay updates."""
@@ -99,8 +101,11 @@ class ZeroInjectController:
         self._apply_relay_state()
 
     async def async_shutdown(self) -> None:
-        """Remove all listeners."""
+        """Remove all listeners and cancel pending relay commands."""
         self._running = False
+        for task in self._command_tasks.values():
+            task.cancel()
+        self._command_tasks.clear()
         for unsub in (self._unsub_coordinator, self._unsub_states):
             if unsub is not None:
                 unsub()
@@ -188,10 +193,17 @@ class ZeroInjectController:
             calls.setdefault((domain, service), []).append(relay_entity)
 
         for (domain, service), entity_ids in calls.items():
+            pending = self._command_tasks.get((domain, service))
+            if pending is not None and not pending.done():
+                continue
             _LOGGER.debug("Calling %s.%s on %s", domain, service, entity_ids)
-            self._hass.async_create_background_task(
+            task = self._hass.async_create_background_task(
                 self._async_call_service(domain, service, {ATTR_ENTITY_ID: entity_ids}),
                 name=f"{DOMAIN}_relay_control",
+            )
+            self._command_tasks[(domain, service)] = task
+            task.add_done_callback(
+                lambda finished, key=(domain, service): self._command_tasks.pop(key, None)
             )
 
     async def _async_call_service(
@@ -213,7 +225,7 @@ class ZeroInjectController:
             if self.bypassed or active is None or (service == SERVICE_TURN_ON) != active:
                 return
         try:
-            await self._hass.services.async_call(domain, service, service_data)
+            await self._hass.services.async_call(domain, service, service_data, blocking=True)
         except HomeAssistantError, vol.Invalid:
             _LOGGER.exception(
                 "Failed to call %s.%s on %s",

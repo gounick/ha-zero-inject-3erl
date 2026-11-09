@@ -59,9 +59,9 @@ Cable notes:
 - Keep the run short. For longer runs, use shielded twisted pair and ground the shield at one end only.
 - Do not connect the relay supply terminals to the DRM port.
 
-## Set the fail-safe behavior
+## Check the failure behavior
 
-The contact must be **open** when the system fails, so export falls back to normal.
+For a fail-open installation, the contact must physically open when the relay loses power. Other failures are model-specific: a Zigbee network loss or a Home Assistant restart can leave a powered relay in its last state. Do not rely on `power_on_behavior` alone to prove those cases.
 
 ```mermaid
 stateDiagram-v2
@@ -69,13 +69,15 @@ stateDiagram-v2
     Open: Relay OFF<br/>contact open<br/>Envoy Level 1<br/>export 100 %
     Closed: Relay ON<br/>contact closed<br/>Envoy Level 2<br/>export 0 % (ACI) or floor (ACC)
     Open --> Closed: switch.turn_on<br/>(3ERL curtailment signal)
-    Closed --> Open: switch.turn_off<br/>power loss / Zigbee loss / HA restart
+    Closed --> Open: switch.turn_off<br/>or verified relay power loss
 ```
 
 On the Legrand 412173, set:
 
 - `device_mode` to **switch** (not "auto").
 - `power_on_behavior` to **off**, so the contact opens after a power loss.
+
+Test your own model by stopping Home Assistant and by disabling Zigbee communication while the contact is closed. If it stays closed and fail-open behavior is required, add a hardware watchdog or choose a relay that documents that behavior.
 
 ## Pair the relay with Home Assistant
 

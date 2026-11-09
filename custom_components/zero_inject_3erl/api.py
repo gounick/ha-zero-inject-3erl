@@ -7,8 +7,10 @@ import logging
 from typing import Any
 
 import aiohttp
+from homeassistant.util import dt as dt_util
 
-from .const import API_TIMEOUT_SECONDS
+from .const import API_TIMEOUT_SECONDS, DEFAULT_AGGREGATION_MODE, SENSOR_KEY_HEURE_UPDATE
+from .helpers import curtailment_signal_key, is_bridage_active, parse_heure_update
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -26,10 +28,16 @@ class ThreeERLApiClient:
     :type api_url: str
     """
 
-    def __init__(self, session: aiohttp.ClientSession, api_url: str) -> None:
+    def __init__(
+        self,
+        session: aiohttp.ClientSession,
+        api_url: str,
+        aggregation_mode: str = DEFAULT_AGGREGATION_MODE,
+    ) -> None:
         """Initialize the 3ERL API client."""
         self._session = session
         self._api_url = api_url
+        self._aggregation_mode = aggregation_mode
 
     async def fetch(self) -> dict[str, Any]:
         """Fetch the latest data from the 3ERL API.
@@ -56,4 +64,10 @@ class ThreeERLApiClient:
         if not isinstance(data, dict):
             raise ThreeERLApiError("3ERL API returned an unexpected response type")
 
+        if is_bridage_active(data, self._aggregation_mode) is None:
+            signal_key = curtailment_signal_key(self._aggregation_mode)
+            raise ThreeERLApiError(f"3ERL API returned an invalid {signal_key} signal")
+        published = parse_heure_update(data.get(SENSOR_KEY_HEURE_UPDATE))
+        if published is None or published > dt_util.utcnow():
+            raise ThreeERLApiError("3ERL API returned an invalid or future Heure_Update")
         return data

@@ -14,13 +14,11 @@ from pytest_homeassistant_custom_component.common import MockConfigEntry
 from custom_components.zero_inject_3erl.const import (
     CONF_AGGREGATION_MODE,
     CONF_API_URL,
-    CONF_PV_POWER_ENTITY,
     CONF_RELAY_ENTITY,
     DEFAULT_API_URL,
     DOMAIN,
 )
 
-PV_POWER_ENTITY = "sensor.pv_power"
 RELAY_ENTITY = "switch.relay"
 
 
@@ -78,7 +76,6 @@ def config_entry(hass: HomeAssistant) -> MockConfigEntry:
         data={
             CONF_API_URL: DEFAULT_API_URL,
             CONF_AGGREGATION_MODE: "aci",
-            CONF_PV_POWER_ENTITY: PV_POWER_ENTITY,
             CONF_RELAY_ENTITY: RELAY_ENTITY,
         },
     )

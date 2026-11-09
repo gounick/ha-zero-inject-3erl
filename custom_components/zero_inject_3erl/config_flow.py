@@ -16,14 +16,12 @@ from .const import (
     AGGREGATION_MODES,
     CONF_AGGREGATION_MODE,
     CONF_API_URL,
-    CONF_CONSUMPTION_POWER_ENTITY,
     CONF_INJECTION_DELAY,
     CONF_INJECTION_MAX_AGE,
     CONF_INJECTION_POWER_ENTITY,
     CONF_INJECTION_THRESHOLD,
     CONF_NOTIFY_SERVICE,
     CONF_PRD3_DAY_OFFSET,
-    CONF_PV_POWER_ENTITY,
     CONF_RELAY_ENTITY,
     DEFAULT_AGGREGATION_MODE,
     DEFAULT_API_URL,
@@ -33,7 +31,7 @@ from .const import (
     DEFAULT_PRD3_DAY_OFFSET,
     DOMAIN,
 )
-from .helpers import entity_id_list, pv_power_entities, relay_entities
+from .helpers import entity_id_list, entry_settings, relay_entities
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -56,14 +54,8 @@ SETTINGS_SCHEMA = vol.Schema(
                 translation_key=CONF_AGGREGATION_MODE,
             )
         ),
-        vol.Required(CONF_PV_POWER_ENTITY): selector.EntitySelector(
-            selector.EntitySelectorConfig(domain="sensor", device_class="power", multiple=True)
-        ),
         vol.Required(CONF_RELAY_ENTITY): selector.EntitySelector(
             selector.EntitySelectorConfig(domain="switch", multiple=True)
-        ),
-        vol.Optional(CONF_CONSUMPTION_POWER_ENTITY): selector.EntitySelector(
-            selector.EntitySelectorConfig(domain="sensor", device_class="power")
         ),
         vol.Optional(CONF_INJECTION_POWER_ENTITY): selector.EntitySelector(
             selector.EntitySelectorConfig(domain="sensor")
@@ -98,7 +90,7 @@ SETTINGS_SCHEMA = vol.Schema(
 )
 
 
-async def _async_validate_api(hass: HomeAssistant, api_url: str) -> dict[str, str]:
+async def _async_validate_api(hass: HomeAssistant, api_url: str, contract: str) -> dict[str, str]:
     """Check that the 3ERL API answers at the given URL.
 
     :param hass: Home Assistant instance.
@@ -109,7 +101,7 @@ async def _async_validate_api(hass: HomeAssistant, api_url: str) -> dict[str, st
     :rtype: dict[str, str]
     """
     try:
-        await ThreeERLApiClient(async_get_clientsession(hass), api_url).fetch()
+        await ThreeERLApiClient(async_get_clientsession(hass), api_url, contract).fetch()
     except ThreeERLApiError:
         return {"base": "cannot_connect"}
     except Exception:
@@ -122,7 +114,7 @@ class ZeroInject3ERLConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle the config flow for 3ERL Zero-Injection."""
 
     VERSION = 1
-    MINOR_VERSION = 2
+    MINOR_VERSION = 3
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
@@ -131,7 +123,9 @@ class ZeroInject3ERLConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         errors: dict[str, str] = {}
 
         if user_input is not None:
-            errors = await _async_validate_api(self.hass, user_input[CONF_API_URL])
+            errors = await _async_validate_api(
+                self.hass, user_input[CONF_API_URL], user_input[CONF_AGGREGATION_MODE]
+            )
             if not errors:
                 await self.async_set_unique_id(DOMAIN)
                 self._abort_if_unique_id_configured()
@@ -166,10 +160,9 @@ class ZeroInject3ERLOptionsFlow(config_entries.OptionsFlow):
         if user_input is not None:
             return self.async_create_entry(data=user_input)
 
-        current = {**DEFAULT_VALUES, **self.config_entry.data, **self.config_entry.options}
+        current = {**DEFAULT_VALUES, **entry_settings(self.config_entry)}
         # Entries created before multi-sensor support store a single entity
         # id string; the selector expects a list.
-        current[CONF_PV_POWER_ENTITY] = pv_power_entities(current)
         current[CONF_RELAY_ENTITY] = relay_entities(current)
         current[CONF_NOTIFY_SERVICE] = entity_id_list(current, CONF_NOTIFY_SERVICE)
         return self.async_show_form(

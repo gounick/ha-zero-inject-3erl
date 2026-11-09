@@ -54,6 +54,6 @@ En autoconsommation collective (ACC), il n'y a pas de pondération journalière 
 
 ## Pages liées
 
-- [Concepts : fonctionnement du zéro-injection 3ERL](concepts.md)
-- [Référence des champs de l'API](../reference/api-fields.md)
-- [Référence des entités](../reference/entities.md)
+- [Concepts : fonctionnement du zéro-injection 3ERL](concepts.fr.md)
+- [Référence des champs de l'API](../reference/api-fields.fr.md)
+- [Référence des entités](../reference/entities.fr.md)

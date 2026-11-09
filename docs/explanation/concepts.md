@@ -45,7 +45,7 @@ Enphase Envoy gateways expose a digital input that limits production when its co
 | Open | Level 1 | 100 % |
 | Closed | Level 2 | 0 % (ACI) or the configured floor (ACC) |
 
-This arrangement is fail-safe. If the relay, Zigbee network or Home Assistant fails, the contact opens and export returns to normal.
+This arrangement is intended to fail back to normal export only when the relay hardware actually opens its contact. A power-cycle behavior such as `power_on_behavior: off` does not by itself prove what happens after a Zigbee loss, Home Assistant stop or coordinator outage. Verify the physical behavior of your relay model before relying on it.
 
 ## Remuneration and curtailed energy
 
@@ -53,10 +53,10 @@ This arrangement is fail-safe. If the relay, Zigbee network or Home Assistant fa
 
 The integration still exposes the underlying prices as informational sensors: the current quarter-hour PRE+ (ACC) and an estimated daily PRE+ weighted by the Enedis PRD3 profile (ACI). Because Enedis only publishes the current day's PRD3 profile after the day is over, the estimate uses the profile from a configurable past day (default `-2`). See [How the daily PRE+ is calculated](daily-prep-estimate.md) for the full walkthrough.
 
-Curtailed energy is an estimate of the surplus that would have been injected. The integration integrates `production − consumption` during curtailment periods when a consumption sensor is configured, and production alone otherwise (an upper bound). A grid-side injection sensor cannot be used for this counter because measured injection falls to about zero while curtailment is applied.
+The integration does not measure or estimate curtailed energy. Lost production is counterfactual: during limitation, a production sensor reports the reduced output, not what the inverter could have produced without the limit. A grid-side export sensor cannot provide that value either.
 
 ## Related pages
 
 - [API field reference](../reference/api-fields.md)
 - [Configure the Envoy DRM port](../how-to/configure-envoy-drm.md)
-- [Choose the power sensor](../how-to/install-and-configure.md#choose-the-power-sensor)
+- [Install and configure the integration](../how-to/install-and-configure.md)

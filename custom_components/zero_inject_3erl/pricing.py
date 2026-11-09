@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import math
 from datetime import date, datetime, timedelta
 from typing import Any
 
@@ -107,7 +108,7 @@ class PricingDataManager:
         :rtype: float | None
         """
         slot = self._current_slot()
-        published = [s for s in self._prep_values if s <= slot]
+        published = [s for s in self._prep_values if s.date() == slot.date() and s <= slot]
         if not published:
             return None
         return self._prep_values[max(published)]
@@ -121,6 +122,10 @@ class PricingDataManager:
         :raises PricingDataError: If at least one source failed.
         """
         errors: list[str] = []
+        today = dt_now().date()
+        self._prep_values = {
+            slot: value for slot, value in self._prep_values.items() if slot.date() == today
+        }
         try:
             self._prep_values = await self._fetch_rte_prep()
         except PricingDataError as err:
@@ -174,7 +179,9 @@ class PricingDataManager:
         except (aiohttp.ClientError, TimeoutError, ValueError) as err:
             raise PricingDataError(f"Failed to fetch RTE pricing data: {err!r}") from err
 
-        values = data.get("values", []) if isinstance(data, dict) else []
+        values = data.get("values") if isinstance(data, dict) else None
+        if not isinstance(values, list):
+            raise PricingDataError("Unexpected RTE pricing response format")
         result: dict[datetime, float] = {}
         for item in values:
             if not isinstance(item, dict):
@@ -187,7 +194,9 @@ class PricingDataManager:
             if positive is None:
                 continue
             try:
-                result[slot] = float(positive)
+                value = float(positive)
+                if math.isfinite(value) and slot.date() == day:
+                    result[slot] = value
             except ValueError, TypeError:
                 continue
         return result
@@ -243,7 +252,9 @@ class PricingDataManager:
             if slot is None or coefficient is None:
                 continue
             try:
-                result[slot] = float(coefficient)
+                value = float(coefficient)
+                if math.isfinite(value) and slot.date() == target_day:
+                    result[slot] = value
             except ValueError, TypeError:
                 continue
         return result
@@ -302,4 +313,4 @@ class PricingDataManager:
             return None
         if parsed.tzinfo is None:
             parsed = parsed.replace(tzinfo=API_TIMEZONE)
-        return parsed
+        return parsed.astimezone(API_TIMEZONE)

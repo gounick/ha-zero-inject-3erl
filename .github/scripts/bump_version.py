@@ -57,8 +57,6 @@ def update_pyproject(path: Path, version: str) -> None:
     :param version: Validated release version.
     :type version: str
     """
-    if not path.is_file():
-        return
     text = path.read_text(encoding="utf-8")
     text, count = re.subn(
         r'(?m)^(version\s*=\s*)"[^"]*"',
@@ -68,6 +66,40 @@ def update_pyproject(path: Path, version: str) -> None:
     )
     if count:
         path.write_text(text, encoding="utf-8")
+
+
+def validate_release_files(root: Path, version: str) -> list[str]:
+    """Check that every release file already carries the version.
+
+    :param root: Repository root.
+    :type root: Path
+    :param version: Validated release version.
+    :type version: str
+    :return: Validation errors.
+    :rtype: list[str]
+    """
+    errors: list[str] = []
+    changelog = (root / "CHANGELOG.md").read_text(encoding="utf-8")
+    if f"## [{version}]" not in changelog:
+        errors.append(f"CHANGELOG.md has no section for {version}")
+
+    manifests = list((root / "custom_components").glob("*/manifest.json"))
+    if not manifests:
+        errors.append("No integration manifest found")
+    for manifest in manifests:
+        data = json.loads(manifest.read_text(encoding="utf-8"))
+        if data.get("version") != version:
+            errors.append(f"{manifest}: version is {data.get('version')!r}, expected {version!r}")
+
+    pyproject = root / "pyproject.toml"
+    match = re.search(
+        r'(?m)^version\s*=\s*"([^"]*)"',
+        pyproject.read_text(encoding="utf-8"),
+    )
+    if match is None or match.group(1) != version:
+        actual = match.group(1) if match else None
+        errors.append(f"pyproject.toml: version is {actual!r}, expected {version!r}")
+    return errors
 
 
 def main() -> int:
@@ -80,6 +112,12 @@ def main() -> int:
     if not VERSION_PATTERN.fullmatch(version):
         print(f"Invalid release version: {version!r}", file=sys.stderr)
         return 1
+
+    if "--check" in sys.argv[1:]:
+        errors = validate_release_files(Path.cwd(), version)
+        for error in errors:
+            print(error, file=sys.stderr)
+        return 1 if errors else 0
 
     update_changelog(Path("CHANGELOG.md"), version)
     update_manifests(Path("custom_components"), version)

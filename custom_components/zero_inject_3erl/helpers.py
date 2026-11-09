@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Mapping
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from homeassistant.config_entries import ConfigEntry
@@ -20,7 +20,6 @@ from .const import (
     API_RETRY_INTERVAL,
     API_TIME_FORMAT,
     API_TIMEZONE,
-    CONF_PV_POWER_ENTITY,
     CONF_RELAY_ENTITY,
     DEFAULT_AGGREGATION_MODE,
     DEFAULT_ZERO_INJECT_MODE,
@@ -35,7 +34,7 @@ _LOGGER = logging.getLogger(__name__)
 
 # Flag values seen so far that did not match a known pattern. Logged once
 # per distinct value to avoid spamming the log on every poll cycle.
-_REPORTED_FLAG_VALUES: set[Any] = set()
+_REPORTED_FLAG_VALUES: set[str] = set()
 
 
 def entry_settings(entry: ConfigEntry) -> Mapping[str, Any]:
@@ -72,17 +71,6 @@ def entity_id_list(settings: Mapping[str, Any], key: str) -> list[str]:
     if isinstance(value, list):
         return [entity_id for entity_id in value if isinstance(entity_id, str)]
     return []
-
-
-def pv_power_entities(settings: Mapping[str, Any]) -> list[str]:
-    """Return the configured PV production sensor entity ids.
-
-    :param settings: Active settings of a config entry.
-    :type settings: Mapping[str, Any]
-    :return: Entity ids of the production sensors to sum.
-    :rtype: list[str]
-    """
-    return entity_id_list(settings, CONF_PV_POWER_ENTITY)
 
 
 def relay_entities(settings: Mapping[str, Any]) -> list[str]:
@@ -129,8 +117,8 @@ def curtailment_signal_key(aggregation_mode: str = DEFAULT_AGGREGATION_MODE) -> 
 def is_bridage_active(
     api_data: dict[str, Any],
     aggregation_mode: str = DEFAULT_AGGREGATION_MODE,
-) -> bool:
-    """Return whether the 3ERL API requests curtailment.
+) -> bool | None:
+    """Return the curtailment signal, or None when invalid.
 
     :param api_data: Raw data returned by the 3ERL API.
     :type api_data: dict[str, Any]
@@ -142,29 +130,30 @@ def is_bridage_active(
     return is_flag_set(api_data.get(curtailment_signal_key(aggregation_mode)))
 
 
-def is_flag_set(value: Any) -> bool:
+def is_flag_set(value: Any) -> bool | None:
     """Return whether a 3ERL API boolean flag is set.
 
     Known truthy values are 1, "1" and true/on/yes; known falsy values are
-    0, "0", None and false/off/no. Any other value is treated as unset and
-    logged once to help diagnose an API format change.
+    0, "0" and false/off/no. Other values are unknown, never an off command.
 
     :param value: Raw flag value from the API.
     :type value: Any
     :return: True for 1 or a truthy string (true, on, yes).
     :rtype: bool
     """
-    if value is None or value is False:
-        return False
     lowered = str(value).lower()
-    if value == 1 or lowered in ("1", "true", "on", "yes"):
-        return True
-    if value == 0 or lowered in ("0", "false", "off", "no", ""):
-        return False
-    if value not in _REPORTED_FLAG_VALUES:
-        _REPORTED_FLAG_VALUES.add(value)
-        _LOGGER.warning("Unexpected 3ERL flag value %r, treated as unset", value)
-    return False
+    if isinstance(value, bool | int | float | str):
+        if value == 1 or lowered in ("1", "true", "on", "yes"):
+            return True
+        if value == 0 or lowered in ("0", "false", "off", "no"):
+            return False
+    reported = repr(value)
+    if reported not in _REPORTED_FLAG_VALUES:
+        if len(_REPORTED_FLAG_VALUES) >= 100:
+            _REPORTED_FLAG_VALUES.clear()
+        _REPORTED_FLAG_VALUES.add(reported)
+        _LOGGER.warning("Unexpected 3ERL flag value %r, treated as unknown", value)
+    return None
 
 
 def get_mode_entity_id(hass: HomeAssistant, entry_id: str) -> str | None:
@@ -233,10 +222,12 @@ def next_poll_delay(heure_update: Any, now: datetime) -> timedelta:
     published = parse_heure_update(heure_update)
     if published is None:
         return API_FALLBACK_INTERVAL
-    next_publication = published + API_PUBLICATION_DELAY + API_POLL_MARGIN
-    if next_publication <= now:
+    now = now.astimezone(UTC)
+    published = published.astimezone(UTC)
+    if published > now:
         return API_RETRY_INTERVAL
-    return next_publication - now
+    delay = published + API_PUBLICATION_DELAY + API_POLL_MARGIN - now
+    return min(API_FALLBACK_INTERVAL, max(API_RETRY_INTERVAL, delay))
 
 
 def get_current_mode(hass: HomeAssistant, mode_entity_id: str | None) -> str:
@@ -257,7 +248,7 @@ def get_current_mode(hass: HomeAssistant, mode_entity_id: str | None) -> str:
     return state.state
 
 
-def compute_commanded_limitation(mode: str, bridage_active: bool) -> bool:
+def compute_commanded_limitation(mode: str, bridage_active: bool | None) -> bool | None:
     """Return whether zero-injection should be active.
 
     :param mode: Current zero-injection mode.

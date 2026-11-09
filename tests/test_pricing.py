@@ -66,6 +66,40 @@ def _enedis_response(base_slot: datetime) -> list[dict[str, Any]]:
     return values
 
 
+@pytest.mark.parametrize("payload", [{"values": None}, {"values": {}}, [], None])
+async def test_invalid_rte_shape_is_a_pricing_error(payload):
+    session = _mock_session(_mock_response(payload), _mock_response([]))
+    with pytest.raises(PricingDataError):
+        await PricingDataManager(session).async_update()
+
+
+@pytest.mark.parametrize("value", ["inf", "nan", "-inf"])
+async def test_nonfinite_prices_are_ignored(value):
+    session = _mock_session(
+        _mock_response(
+            {"values": [{"date": "2026-10-04T12:00:00+02:00", "pre": {"positive": value}}]}
+        ),
+        _mock_response([]),
+    )
+    with patch(
+        "custom_components.zero_inject_3erl.pricing.dt_now",
+        return_value=datetime(2026, 10, 4, 14, tzinfo=ZoneInfo("Europe/Paris")),
+    ):
+        manager = PricingDataManager(session)
+        await manager.async_update()
+        assert manager.current_prep() is None
+
+
+def test_yesterdays_price_is_not_current():
+    manager = PricingDataManager(MagicMock())
+    manager._prep_values = {datetime(2026, 10, 3, 23, 45, tzinfo=ZoneInfo("Europe/Paris")): 100.0}
+    with patch(
+        "custom_components.zero_inject_3erl.pricing.dt_now",
+        return_value=datetime(2026, 10, 4, 1, tzinfo=ZoneInfo("Europe/Paris")),
+    ):
+        assert manager.current_prep() is None
+
+
 async def test_update_computes_estimated_daily_prep() -> None:
     """Test that the manager fetches data and computes the estimated daily PRE+."""
     now = datetime(2026, 10, 4, 14, 20, tzinfo=ZoneInfo("Europe/Paris"))

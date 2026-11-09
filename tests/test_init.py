@@ -2,30 +2,59 @@
 
 from __future__ import annotations
 
+import asyncio
 from datetime import timedelta
-from pathlib import Path
 from unittest.mock import AsyncMock, patch
 
-import pytest
-import voluptuous as vol
-from freezegun.api import FrozenDateTimeFactory
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er
 from pytest_homeassistant_custom_component.common import (
     MockConfigEntry,
     async_fire_time_changed,
+    async_mock_service,
 )
 
-from custom_components.zero_inject_3erl.api import ThreeERLApiError
-from custom_components.zero_inject_3erl.const import (
-    CONF_API_URL,
-    DOMAIN,
-    SERVICE_RESET_COUNTERS,
-    STORAGE_KEY,
-)
+from custom_components.zero_inject_3erl.const import CONF_API_URL, DOMAIN
 
-from .conftest import PV_POWER_ENTITY
+from .conftest import RELAY_ENTITY, sample_api_response
+
+
+async def test_control_starts_while_pricing_is_blocked(hass, config_entry, mock_fetch):
+    release = asyncio.Event()
+    started = asyncio.Event()
+
+    async def blocked_pricing(self):
+        started.set()
+        await release.wait()
+
+    mock_fetch.return_value = sample_api_response(bridage=1)
+    hass.states.async_set(RELAY_ENTITY, "off")
+    calls = async_mock_service(hass, "switch", "turn_on")
+    with patch(
+        "custom_components.zero_inject_3erl.pricing.PricingDataManager.async_update",
+        new=blocked_pricing,
+    ):
+        setup = hass.async_create_task(hass.config_entries.async_setup(config_entry.entry_id))
+        await started.wait()
+        await asyncio.wait({setup}, timeout=0.2)
+        try:
+            assert setup.done()
+            await hass.async_block_till_done()
+            assert len(calls) == 1
+        finally:
+            release.set()
+            await setup
+            await hass.async_block_till_done()
+
+
+async def test_no_energy_service_or_sensor(hass, config_entry, mock_fetch):
+    assert await hass.config_entries.async_setup(config_entry.entry_id)
+    await hass.async_block_till_done()
+    assert not hass.services.has_service(DOMAIN, "reset_counters")
+    assert not any(
+        state.attributes.get("device_class") == "energy" for state in hass.states.async_all()
+    )
 
 
 async def test_setup_and_unload(
@@ -35,7 +64,6 @@ async def test_setup_and_unload(
     assert await hass.config_entries.async_setup(config_entry.entry_id)
     await hass.async_block_till_done()
     assert config_entry.state is ConfigEntryState.LOADED
-
     assert await hass.config_entries.async_unload(config_entry.entry_id)
     await hass.async_block_till_done()
     assert config_entry.state is ConfigEntryState.NOT_LOADED
@@ -53,104 +81,18 @@ async def test_select_unique_id_is_migrated(
         config_entry=config_entry,
         suggested_object_id="custom_mode",
     )
-
-    assert await hass.config_entries.async_setup(config_entry.entry_id)
-    await hass.async_block_till_done()
-
-    entity = registry.async_get("select.custom_mode")
-    assert entity is not None
-    assert entity.unique_id == f"{DOMAIN}_{config_entry.entry_id}_mode"
-    assert config_entry.minor_version == 2
-
-
-async def test_reset_counters_service(
-    hass: HomeAssistant, config_entry: MockConfigEntry, mock_fetch: AsyncMock
-) -> None:
-    """Test that the reset service clears the cumulative counters."""
-    assert await hass.config_entries.async_setup(config_entry.entry_id)
-    await hass.async_block_till_done()
-    coordinator = config_entry.runtime_data.coordinator
-    coordinator._cumulative_energy_kwh = 5.0
-
-    await hass.services.async_call(DOMAIN, SERVICE_RESET_COUNTERS, blocking=True)
-
-    assert coordinator.data["energie_bridage_kwh"] == 0.0
-
-
-async def test_reset_counters_service_accepts_values(
-    hass: HomeAssistant, config_entry: MockConfigEntry, mock_fetch: AsyncMock
-) -> None:
-    """Test that the optional field sets the counter instead of zeroing it."""
-    assert await hass.config_entries.async_setup(config_entry.entry_id)
-    await hass.async_block_till_done()
-    coordinator = config_entry.runtime_data.coordinator
-
-    await hass.services.async_call(
-        DOMAIN,
-        SERVICE_RESET_COUNTERS,
-        {"energy_kwh": 12.5},
-        blocking=True,
+    hass.config_entries.async_update_entry(
+        config_entry,
+        data={**config_entry.data, "pv_power_entity": "sensor.pv"},
+        options={**config_entry.data, "consumption_power_entity": "sensor.load"},
     )
-
-    assert coordinator.data["energie_bridage_kwh"] == 12.5
-
-
-async def test_reset_counters_service_rejects_invalid_values(
-    hass: HomeAssistant, config_entry: MockConfigEntry, mock_fetch: AsyncMock
-) -> None:
-    """Test that non-numeric or negative values are rejected by the schema."""
     assert await hass.config_entries.async_setup(config_entry.entry_id)
     await hass.async_block_till_done()
-
-    with pytest.raises(vol.Invalid):
-        await hass.services.async_call(
-            DOMAIN,
-            SERVICE_RESET_COUNTERS,
-            {"energy_kwh": "not-a-number"},
-            blocking=True,
-        )
-    with pytest.raises(vol.Invalid):
-        await hass.services.async_call(
-            DOMAIN,
-            SERVICE_RESET_COUNTERS,
-            {"energy_kwh": -1},
-            blocking=True,
-        )
-
-
-async def test_failed_setup_does_not_leak_power_listener(
-    hass: HomeAssistant, config_entry: MockConfigEntry
-) -> None:
-    """Test that a failed first refresh registers no PV power listener."""
-    with (
-        patch(
-            "custom_components.zero_inject_3erl.api.ThreeERLApiClient.fetch",
-            side_effect=ThreeERLApiError("boom"),
-        ),
-        patch(
-            "custom_components.zero_inject_3erl.coordinator.async_track_state_change_event"
-        ) as track,
-    ):
-        assert await hass.config_entries.async_setup(config_entry.entry_id)
-        await hass.async_block_till_done()
-
-    track.assert_not_called()
-
-
-async def test_remove_entry_deletes_cumulative_storage(
-    hass: HomeAssistant, config_entry: MockConfigEntry, mock_fetch: AsyncMock
-) -> None:
-    """Test that removing the entry deletes its persisted counters."""
-    assert await hass.config_entries.async_setup(config_entry.entry_id)
-    await hass.async_block_till_done()
-    coordinator = config_entry.runtime_data.coordinator
-    await coordinator.async_reset_counters(energy_kwh=5.0)
-
-    assert await hass.config_entries.async_remove(config_entry.entry_id)
-    await hass.async_block_till_done()
-
-    path = Path(hass.config.path(f".storage/{STORAGE_KEY}_{config_entry.entry_id}"))
-    assert not await hass.async_add_executor_job(path.exists)
+    entity = registry.async_get("select.custom_mode")
+    assert entity.unique_id == f"{DOMAIN}_{config_entry.entry_id}_mode"
+    assert config_entry.minor_version == 3
+    assert "pv_power_entity" not in config_entry.data
+    assert "consumption_power_entity" not in config_entry.options
 
 
 async def test_api_url_option_is_used(
@@ -163,49 +105,38 @@ async def test_api_url_option_is_used(
     )
     assert await hass.config_entries.async_setup(config_entry.entry_id)
     await hass.async_block_till_done()
-
-    coordinator = config_entry.runtime_data.coordinator
-    assert coordinator._api_client._api_url == custom_url
+    assert config_entry.runtime_data.coordinator._api_client._api_url == custom_url
 
 
-async def test_power_updates_do_not_postpone_api_polling(
-    hass: HomeAssistant,
-    config_entry: MockConfigEntry,
-    mock_fetch: AsyncMock,
-    freezer: FrozenDateTimeFactory,
-) -> None:
-    """Test that frequent PV power changes do not delay the next API poll."""
-    hass.states.async_set(PV_POWER_ENTITY, "100")
+async def test_local_freshness_updates_do_not_postpone_polling(
+    hass, config_entry, mock_fetch, freezer
+):
     assert await hass.config_entries.async_setup(config_entry.entry_id)
     await hass.async_block_till_done()
     assert mock_fetch.call_count == 1
-
-    freezer.tick(timedelta(seconds=30))
-    async_fire_time_changed(hass)
-    hass.states.async_set(PV_POWER_ENTITY, "200")
-    await hass.async_block_till_done()
-
-    freezer.tick(timedelta(seconds=40))
+    freezer.tick(timedelta(seconds=70))
     async_fire_time_changed(hass)
     await hass.async_block_till_done()
-
     assert mock_fetch.call_count == 2
 
 
-async def test_unload_stops_power_listener(
-    hass: HomeAssistant, config_entry: MockConfigEntry, mock_fetch: AsyncMock
-) -> None:
-    """Test that an unloaded coordinator no longer reacts to the PV sensor."""
-    hass.states.async_set(PV_POWER_ENTITY, "100")
-    assert await hass.config_entries.async_setup(config_entry.entry_id)
-    await hass.async_block_till_done()
-    coordinator = config_entry.runtime_data.coordinator
+async def test_unload_cancels_blocked_pricing(hass, config_entry, mock_fetch):
+    started = asyncio.Event()
+    cancelled = asyncio.Event()
 
-    assert await hass.config_entries.async_unload(config_entry.entry_id)
-    await hass.async_block_till_done()
+    async def blocked_pricing(self):
+        started.set()
+        try:
+            await asyncio.Event().wait()
+        finally:
+            cancelled.set()
 
-    coordinator._last_update_time = None
-    hass.states.async_set(PV_POWER_ENTITY, "2500")
-    await hass.async_block_till_done()
-
-    assert coordinator.data["pv_power_w"] == 100.0
+    with patch(
+        "custom_components.zero_inject_3erl.pricing.PricingDataManager.async_update",
+        new=blocked_pricing,
+    ):
+        assert await hass.config_entries.async_setup(config_entry.entry_id)
+        await started.wait()
+        assert await hass.config_entries.async_unload(config_entry.entry_id)
+        await hass.async_block_till_done()
+        assert cancelled.is_set()

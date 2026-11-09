@@ -1,8 +1,10 @@
+import asyncio
 from datetime import timedelta
 
 import pytest
 from homeassistant.core import State
 from homeassistant.helpers import entity_registry as er
+from homeassistant.util import dt as dt_util
 from pytest_homeassistant_custom_component.common import (
     async_fire_time_changed,
     async_mock_service,
@@ -10,7 +12,7 @@ from pytest_homeassistant_custom_component.common import (
 )
 
 from custom_components.zero_inject_3erl.api import ThreeERLApiError
-from custom_components.zero_inject_3erl.const import DOMAIN
+from custom_components.zero_inject_3erl.const import API_TIMEZONE, DOMAIN
 
 from .conftest import RELAY_ENTITY, sample_api_response
 
@@ -302,7 +304,6 @@ async def test_options_save_during_api_outage(hass, config_entry, mock_fetch):
         result["flow_id"],
         {
             **config_entry.data,
-            "pv_power_entity": ["sensor.pv_power"],
             "relay_entity": [RELAY_ENTITY],
             "injection_power_entity": "sensor.export",
             "injection_threshold": 75,
@@ -316,12 +317,56 @@ async def test_options_save_during_api_outage(hass, config_entry, mock_fetch):
     assert mock_fetch.call_count == 0
 
 
+async def test_slow_relay_call_is_deduplicated(hass, config_entry, mock_fetch):
+    release = asyncio.Event()
+    calls = []
+
+    async def slow_turn_on(call):
+        calls.append(call)
+        await release.wait()
+
+    hass.services.async_register("switch", "turn_on", slow_turn_on)
+    hass.services.async_register("switch", "turn_off", lambda call: None)
+    mock_fetch.return_value = sample_api_response(bridage=1)
+    hass.states.async_set(RELAY_ENTITY, "off")
+    assert await hass.config_entries.async_setup(config_entry.entry_id)
+    coordinator = config_entry.runtime_data.coordinator
+    coordinator.async_set_updated_data(coordinator.data)
+    coordinator.async_set_updated_data(coordinator.data)
+    release.set()
+    await hass.async_block_till_done()
+    assert len(calls) == 1
+
+
+async def test_signal_and_freshness_survive_failed_refresh(hass, config_entry, mock_fetch, freezer):
+    mock_fetch.return_value = sample_api_response(bridage=1)
+    await setup(hass, config_entry)
+    requested_id = entity_id(hass, config_entry, "binary_sensor", "Bridage")
+    stale_id = entity_id(hass, config_entry, "binary_sensor", "data_stale")
+    mock_fetch.side_effect = ThreeERLApiError("offline")
+    await tick(hass, freezer, 61)
+    assert hass.states.get(requested_id).state == "on"
+    assert hass.states.get(stale_id).state == "on"
+
+
+async def test_stale_diagnostic_ages_on_local_timer(hass, config_entry, mock_fetch, freezer):
+    published = dt_util.now(API_TIMEZONE) - timedelta(minutes=10)
+    mock_fetch.return_value = {
+        **sample_api_response(),
+        "Heure_Update": published.strftime("%d/%m/%Y %H:%M"),
+    }
+    await setup(hass, config_entry)
+    stale_id = entity_id(hass, config_entry, "binary_sensor", "data_stale")
+    assert hass.states.get(stale_id).state == "off"
+    await tick(hass, freezer, 61)
+    assert hass.states.get(stale_id).attributes["data_age_minutes"] >= 11
+    await tick(hass, freezer, 20 * 60)
+    assert hass.states.get(stale_id).state == "on"
+
+
 async def test_new_entity_identifiers(hass, config_entry, mock_fetch):
     await setup(hass, config_entry)
-    for domain, key, suffix in (
-        ("sensor", "energie_bridage_kwh", "curtailed_energy"),
-        ("binary_sensor", "commanded_limitation", "commanded_limitation"),
-    ):
+    for domain, key, suffix in (("binary_sensor", "commanded_limitation", "commanded_limitation"),):
         expected_id = f"{domain}.3erl_zero_injection_{suffix}"
         assert entity_id(hass, config_entry, domain, key) == expected_id
         assert hass.states.get(expected_id) is not None

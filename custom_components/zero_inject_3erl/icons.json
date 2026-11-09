@@ -33,9 +33,6 @@
       },
       "comments": {
         "default": "mdi:comment-text-outline"
-      },
-      "cumulative_energy": {
-        "default": "mdi:lightning-bolt"
       }
     },
     "binary_sensor": {
@@ -56,11 +53,6 @@
       "mode": {
         "default": "mdi:tune"
       }
-    }
-  },
-  "services": {
-    "reset_counters": {
-      "service": "mdi:counter"
     }
   }
 }
