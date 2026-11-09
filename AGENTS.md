@@ -47,6 +47,13 @@ This file provides guidance to compatible agentic tools when generating or revie
 - An entity, option or service that no longer serves a user-facing purpose must be removed together with its translations, tests and documentation references.
 - If unsure whether something is dead, verify with a project-wide search before deleting; if it is genuinely unreachable, remove it.
 
+### Brand images
+
+- Brand images live in `custom_components/zero_inject_3erl/brand/` and are served locally via `/api/brands/integration/{domain}/{image}` since Home Assistant 2026.3.
+- Do **not** open pull requests against `home-assistant/brands`: submissions for custom integrations are no longer accepted there.
+- Supported filenames: `icon.png`, `dark_icon.png`, `logo.png`, `dark_logo.png` and their `@2x` variants. Icons must be square PNGs; the current set is 256×256 with 512×512 `@2x`, RGBA.
+- `custom_components/zero_inject_3erl/brand/` is the single source of truth for the visuals; do not duplicate the images elsewhere in the repository.
+
 ### Documentation & Changelog
 
 - Update `README.md` when adding or changing features visible to users.

@@ -47,6 +47,13 @@ Ce fichier guide les outils agentiques compatibles lorsqu’ils génèrent ou re
 - Une entité, option ou action sans usage visible doit être supprimée avec ses traductions, tests et références.
 - En cas de doute, vérifiez par une recherche globale avant de supprimer.
 
+### Images de marque
+
+- Les images de marque vivent dans `custom_components/zero_inject_3erl/brand/` et sont servies localement via `/api/brands/integration/{domain}/{image}` depuis Home Assistant 2026.3.
+- N’ouvrez **pas** de pull request sur `home-assistant/brands` : les soumissions pour intégrations custom n’y sont plus acceptées.
+- Fichiers pris en charge : `icon.png`, `dark_icon.png`, `logo.png`, `dark_logo.png` et leurs variantes `@2x`. Les icônes sont des PNG carrés ; le set actuel fait 256×256 avec `@2x` en 512×512, en RGBA.
+- `custom_components/zero_inject_3erl/brand/` est la source de vérité unique des visuels ; ne dupliquez pas les images ailleurs dans le dépôt.
+
 ### Documentation et changelog
 
 - Mettez à jour `README.md` pour tout changement visible par l’utilisateur.
