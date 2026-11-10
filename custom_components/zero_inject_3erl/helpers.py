@@ -95,9 +95,9 @@ def build_device_info(entry_id: str) -> DeviceInfo:
     return DeviceInfo(
         identifiers={(DOMAIN, entry_id)},
         name="3ERL Zero-Injection",
-        manufacturer="3ERL",
+        manufacturer="gounick",
         model="Zero-Injection",
-        configuration_url="https://3erl.fr",
+        configuration_url="https://github.com/gounick/ha-zero-inject-3erl",
     )
 
 

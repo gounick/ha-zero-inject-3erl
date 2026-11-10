@@ -1,0 +1,23 @@
+name: Question or other
+description: Ask a question or raise a topic that is neither a bug nor a feature request
+title: "[Question]: "
+labels: ["question"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        For general discussion about 3ERL itself, consider the community channels first — see the documentation index.
+  - type: textarea
+    id: question
+    attributes:
+      label: Your question
+      description: Be as specific as possible; link to the documentation pages you already consulted.
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Contract type (ACI/ACC), hardware, relevant configuration — anything that helps answer.
+    validations:
+      required: false

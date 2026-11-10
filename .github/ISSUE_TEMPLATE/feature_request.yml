@@ -1,0 +1,39 @@
+name: Feature request
+description: Suggest an enhancement or new capability
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve?
+      description: Describe the use case or limitation you are hitting.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: What should the integration do? Include entity, option or service ideas if relevant.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Workarounds or other approaches you have tried or rejected.
+    validations:
+      required: false
+  - type: dropdown
+    id: pv-system
+    attributes:
+      label: PV system involved (if any)
+      description: Useful for requests about new provider support.
+      multiple: true
+      options:
+        - Enphase Envoy
+        - ZLinky / relay control
+        - Other (describe above)
+        - Not applicable
+    validations:
+      required: false

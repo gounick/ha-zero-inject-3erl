@@ -1,8 +1,10 @@
 # 3ERL Zero-Injection
 
+<!-- markdownlint-disable MD033 -->
 <p align="center">
   <img src="custom_components/zero_inject_3erl/brand/icon.png" alt="Icône 3ERL Zero-Injection" width="160">
 </p>
+<!-- markdownlint-enable MD033 -->
 
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/16497/badge)](https://www.bestpractices.dev/projects/16497)
 [![hassfest](https://github.com/gounick/ha-zero-inject-3erl/actions/workflows/hassfest.yaml/badge.svg?branch=main)](https://github.com/gounick/ha-zero-inject-3erl/actions/workflows/hassfest.yaml)
@@ -82,19 +84,7 @@ L’intégration crée des sensors pour les champs API et les prix informatifs, 
 
 L’intégration n’estime pas la rémunération. 3ERL la publie sur son tableau de bord : <https://dashboard.3erl.fr>.
 
-Elle ne mesure ni n’estime non plus l’énergie bridée. Un capteur de puissance ne peut pas connaître la production contrefactuelle qui aurait eu lieu sans limitation ; l’ancien compteur expérimental a donc été supprimé plutôt que conservé sous un nom trompeur.
-
-## Changements d’entités en développement
-
-Cette version introduit l’entité de limitation commandée et supprime les entités et actions purement estimatives :
-
-- `binary_sensor.3erl_zero_injection_commanded_limitation`
-- `sensor.3erl_zero_injection_curtailed_energy` — supprimé
-- `zero_inject_3erl.reset_counters` — supprimé
-- `sensor.3erl_zero_injection_estimated_cumulative_remuneration` — supprimé
-- `sensor.3erl_zero_injection_estimated_hourly_remuneration` — supprimé
-
-Aucune migration ni alias n’est fourni. Mettez à jour les références dans dashboards, automatisations et scripts. D’anciens registres peuvent rester indisponibles et les anciennes statistiques ne sont pas transférées.
+Elle ne mesure ni n’estime non plus l’énergie bridée. Un capteur de puissance ne peut pas connaître la production contrefactuelle qui aurait eu lieu sans limitation.
 
 ## Contrôle manuel et supervision
 
@@ -126,7 +116,7 @@ Voir [docs/README.fr.md](docs/README.fr.md) pour l’index complet.
 
 ## Contributions
 
-Les contributions pour d’autres systèmes PV ou agrégateurs de bridage sont bienvenues. Ouvrez un ticket avant une pull request.
+Les contributions pour d’autres systèmes PV ou agrégateurs de bridage sont bienvenues. Ouvrez un ticket avant une pull request, et consultez [CONTRIBUTING.fr.md](CONTRIBUTING.fr.md) pour les exigences.
 
 ## Développement
 

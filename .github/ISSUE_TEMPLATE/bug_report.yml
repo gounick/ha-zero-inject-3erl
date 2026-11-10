@@ -1,0 +1,60 @@
+name: Bug report
+description: Report a defect in the 3ERL Zero-Injection integration
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug. Please fill in every section — the more detail, the faster the diagnosis.
+  - type: input
+    id: ha-version
+    attributes:
+      label: Home Assistant version
+      description: Core version shown in Settings → About (e.g. 2026.10.4)
+      placeholder: "2026.10.4"
+    validations:
+      required: true
+  - type: input
+    id: integration-version
+    attributes:
+      label: Integration version
+      description: Release or commit of ha-zero-inject-3erl (e.g. 0.2.0)
+      placeholder: "0.2.0"
+    validations:
+      required: true
+  - type: dropdown
+    id: contract
+    attributes:
+      label: Self-consumption contract type
+      options:
+        - ACI
+        - ACC
+        - I don't know
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: Describe the bug and what you expected instead.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Go to …
+        2. Set mode to …
+        3. Observe …
+    validations:
+      required: false
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs or diagnostics
+      description: Paste log excerpts or the downloaded diagnostics file. Remove any tokens, passwords or personal data first.
+      render: text
+    validations:
+      required: false

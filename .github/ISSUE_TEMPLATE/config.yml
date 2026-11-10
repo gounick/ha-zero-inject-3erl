@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Documentation
+    url: https://github.com/gounick/ha-zero-inject-3erl/tree/main/docs
+    about: Check the documentation index before opening an issue.
+  - name: Security vulnerability
+    url: https://github.com/gounick/ha-zero-inject-3erl/security/advisories/new
+    about: Report vulnerabilities privately — never in a public issue.
