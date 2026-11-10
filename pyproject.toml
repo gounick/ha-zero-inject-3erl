@@ -1,6 +1,6 @@
 [project]
 name = "ha-zero-inject-3erl"
-version = "0.2.0"
+version = "0.2.1"
 description = "Home Assistant custom integration for 3ERL zero-injection curtailment."
 readme = "README.md"
 license = { text = "MIT" }

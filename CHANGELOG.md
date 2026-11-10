@@ -2,6 +2,31 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+## [0.2.1] - 2026-11-10
+
+### Added
+
+- Contribution guide (`CONTRIBUTING.md`) describing coding standards, testing and documentation requirements for contributors.
+- Contributor Covenant 2.1 code of conduct.
+- GitHub issue templates (bug report, feature request, question) with security reports routed to private advisories, plus a pull request template.
+- OpenSSF Best Practices badge in the READMEs.
+- `/release_new` agent command (`.agents/skills/`) automating the release procedure.
+- PRE+ documentation gains a seasonal-trends section, the private 3ERL-RE Facebook group link and the community PRE+ history graphs.
+- Secondary French `*.fr.md` versions for every Markdown file; English remains the primary documentation language.
+- Local brand images under `custom_components/zero_inject_3erl/brand/` served through the Home Assistant brands API (HA 2026.3+); the READMEs display the icon.
+
+### Changed
+
+- Device attribution: the device manufacturer is now `gounick` and the device documentation link points to the repository — the integration is community-built, not commissioned by 3ERL.
+- READMEs no longer list removed development entities that never shipped in a published release.
+- Branch protection on `main`: required CI checks, no force-push, no deletion.
+
+### Fixed
+
+- `uv.lock` resynchronized with `pyproject.toml` (was blocking `uv sync --locked` in CI) and Pillow overridden to 13.0.0 to clear the Dependabot advisories in the test environment.
+
 ## [0.2.0] - 2026-11-09
 
 ### Added
