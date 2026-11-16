@@ -136,16 +136,19 @@ class ThreeERLSupervisionSensor(BinarySensorEntity):
         self._attr_extra_state_attributes.update(
             source_entity=entity_id, measurement_timestamp=state.last_reported.isoformat()
         )
-        if age > max_age or age < 0:
-            return None, "stale_measurement"
         unit = state.attributes.get("unit_of_measurement")
         scale = {"W": 1, "kW": 1000, "VA": 1, "kVA": 1000}.get(unit)
+        try:
+            value = float(state.state) * (scale or 0)
+        except ValueError, TypeError:
+            value = math.nan
+        if age > max_age or age < 0:
+            # A stale reading at zero means export stopped being reported;
+            # treat it as no export rather than blinding the diagnostic.
+            stale_zero = scale is not None and math.isfinite(value) and value <= 0
+            return (0.0 if stale_zero else None), "stale_measurement"
         if scale is None:
             return None, "unsupported_unit"
-        try:
-            value = float(state.state) * scale
-        except ValueError, TypeError:
-            return None, "invalid_measurement"
         if not math.isfinite(value) or value < 0:
             return None, "invalid_measurement"
         self._attr_extra_state_attributes.update(
@@ -164,7 +167,10 @@ class ThreeERLSupervisionSensor(BinarySensorEntity):
         elif not active or value <= threshold:
             self._since.clear()
             self._attr_is_on = False
-            reason = "no_commanded_limitation" if not active else "no_export_observed"
+            if not active:
+                reason = "no_commanded_limitation"
+            elif reason == "valid_measurement":
+                reason = "no_export_observed"
         else:
             since = self._since.setdefault("export", dt_util.utcnow())
             self._attr_is_on = dt_util.utcnow() - since >= timedelta(seconds=delay)
