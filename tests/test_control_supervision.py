@@ -157,6 +157,32 @@ async def test_injection_observation_delayed(hass, config_entry, mock_fetch, fre
     await hass.async_block_till_done()
     assert hass.states.get(injection_id).state == "off"
     await tick(hass, freezer, 301)
+    assert hass.states.get(injection_id).state == "off"
+
+
+async def test_stale_zero_injection_is_no_export(hass, config_entry, mock_fetch, freezer):
+    hass.config_entries.async_update_entry(
+        config_entry, options={**config_entry.data, "injection_power_entity": "sensor.export"}
+    )
+    mock_fetch.return_value = sample_api_response(bridage=1)
+    hass.states.async_set("sensor.export", "0", {"unit_of_measurement": "W"})
+    await setup(hass, config_entry)
+    injection_id = entity_id(hass, config_entry, "binary_sensor", "injection_during_limitation")
+    await tick(hass, freezer, 301)
+    state = hass.states.get(injection_id)
+    assert state.state == "off"
+    assert state.attributes["reason"] == "stale_measurement"
+
+
+async def test_stale_positive_injection_stays_unknown(hass, config_entry, mock_fetch, freezer):
+    hass.config_entries.async_update_entry(
+        config_entry, options={**config_entry.data, "injection_power_entity": "sensor.export"}
+    )
+    mock_fetch.return_value = sample_api_response(bridage=1)
+    hass.states.async_set("sensor.export", "100", {"unit_of_measurement": "W"})
+    await setup(hass, config_entry)
+    injection_id = entity_id(hass, config_entry, "binary_sensor", "injection_during_limitation")
+    await tick(hass, freezer, 301)
     assert hass.states.get(injection_id).state == "unknown"
 
 
