@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.2.2] - 2026-11-18
+
 ### Fixed
 
 - Grid-export supervision: a stale measurement at zero now reports no export instead of an unknown diagnostic. Sources such as the Linky TIC production labels (ZLinky `SINSTI`/`CCAIN`) stop being republished once injection ends, which previously left the diagnostic blind with `stale_measurement`; the reason attribute still reports `stale_measurement` for transparency.

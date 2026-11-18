@@ -4,6 +4,8 @@ Tous les changements notables du projet sont documentés dans ce fichier.
 
 ## [Non publié]
 
+## [0.2.2] - 2026-11-18
+
 ### Corrigé
 
 - Supervision de l’export réseau : une mesure périmée à zéro indique désormais l’absence d’export au lieu d’un diagnostic inconnu. Certaines sources comme les étiquettes de production TIC du Linky (ZLinky `SINSTI`/`CCAIN`) cessent d’être republiées quand l’injection s’arrête, ce qui laissait le diagnostic aveugle avec `stale_measurement` ; l’attribut de raison conserve `stale_measurement` par transparence.
