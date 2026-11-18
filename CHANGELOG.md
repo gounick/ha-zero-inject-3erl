@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Changed
+
+- The ZLinky refresh example now reads `CCAIN` (active injected power) instead of `SINSTI` and is renamed `examples/zlinky-ccain-refresh.yaml`; troubleshooting and configuration docs point to the renamed file.
+
 ## [0.2.2] - 2026-11-18
 
 ### Fixed

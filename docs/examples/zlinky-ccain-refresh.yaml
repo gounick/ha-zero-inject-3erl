@@ -1,20 +1,20 @@
-# Automation keeping the ZLinky SINSTI measurement fresh for the
+# Automation keeping the ZLinky CCAIN measurement fresh for the
 # grid-export supervision diagnostic.
 #
-# SINSTI is a manufacturer attribute that the LiXee ZLinky only reports on
-# change. When the injected apparent power is stable (typically 0 VA at
-# night), Home Assistant receives no report and the supervision diagnostic
-# turns unknown once the measurement exceeds `injection_max_age`
-# (default 300 s). Publishing a periodic read on the device's `get` topic
-# refreshes the sensor's `last_reported` timestamp.
+# CCAIN (active injected power, W) is a manufacturer attribute that the
+# LiXee ZLinky only reports on change. When active injection is stable
+# (typically 0 W at night), Home Assistant receives no report and the
+# supervision diagnostic would turn unknown once the measurement exceeds
+# `injection_max_age` (default 300 s). Publishing a periodic read on the
+# device's `get` topic refreshes the sensor's `last_reported` timestamp.
 #
 # Adapt the MQTT topic to your device's friendly name and the exposure key
 # shown in Zigbee2MQTT (Exposes tab). Every-minute reads while a limitation
 # is commanded keep the diagnostic responsive during curtailment.
 
-alias: ZLinky SINSTI refresh
+alias: ZLinky CCAIN refresh
 description: >-
-  Force une lecture périodique de SINSTI : toutes les 4 minutes en
+  Force une lecture périodique de CCAIN : toutes les 4 minutes en
   permanence, toutes les minutes pendant une limitation commandée
   (âge max 300 s).
 mode: single
@@ -38,9 +38,9 @@ actions:
           - action: mqtt.publish
             data:
               topic: zigbee2mqtt/Z2M LIXEE ZLinky TIC/get
-              payload: '{"sinsti":""}'
+              payload: '{"ccain":""}'
     default:
       - action: mqtt.publish
         data:
           topic: zigbee2mqtt/Z2M LIXEE ZLinky TIC/get
-          payload: '{"sinsti":""}'
+          payload: '{"ccain":""}'
