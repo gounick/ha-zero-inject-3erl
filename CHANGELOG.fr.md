@@ -4,6 +4,11 @@ Tous les changements notables du projet sont documentés dans ce fichier.
 
 ## [Non publié]
 
+### Corrigé
+
+- Supervision de l’export réseau : une mesure périmée à zéro indique désormais l’absence d’export au lieu d’un diagnostic inconnu. Certaines sources comme les étiquettes de production TIC du Linky (ZLinky `SINSTI`/`CCAIN`) cessent d’être republiées quand l’injection s’arrête, ce qui laissait le diagnostic aveugle avec `stale_measurement` ; l’attribut de raison conserve `stale_measurement` par transparence.
+- La documentation recommande désormais une source d’export en puissance active (W, ex. ZLinky `CCAIN`) plutôt qu’en puissance apparente (VA, ex. ZLinky `SINSTI`), qui compte aussi le réactif encore émis par les onduleurs pendant le bridage.
+
 ## [0.2.1] - 2026-11-10
 
 ### Ajouté

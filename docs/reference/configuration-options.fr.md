@@ -7,10 +7,10 @@ Tous les champs sont renseignés dans le flux de configuration et restent modifi
 | URL de l’API 3ERL | `api_url` | oui | `https://3erl.fr/api.json` | Point d’accès interrogé pour les données de bridage. |
 | Type de contrat | `aggregation_mode` | oui | `aci` | `aci` suit `Bridage` ; `acc` suit `Bridage_CDC`. Voir [ACI vs ACC](../explanation/concepts.fr.md#aci-vs-acc). |
 | Interrupteurs des relais | `relay_entity` | oui | — | Une ou plusieurs entités `switch` câblées au(x) port(s) DRM. |
-| Capteur d’export réseau | `injection_power_entity` | non | — | Mesure positive d’export en W/kW ou VA/kVA, utilisée uniquement pour l’observation. |
+| Capteur d’export réseau | `injection_power_entity` | non | — | Mesure positive d’export en W/kW ou VA/kVA, utilisée uniquement pour l’observation. Préférer une puissance active en W (ex. ZLinky `CCAIN`) : une puissance apparente en VA (ex. ZLinky `SINSTI`) compte aussi le réactif encore émis par les onduleurs pendant le bridage, lu comme de l’export sans énergie active injectée. |
 | Seuil d’export | `injection_threshold` | non | `50` | Seuil en W pour une puissance active ou VA pour une puissance apparente. |
 | Durée de confirmation | `injection_delay` | non | `120` | Durée d’export au-dessus du seuil avant activation du diagnostic. |
-| Âge maximal de mesure | `injection_max_age` | non | `300` | Âge maximal de la dernière mesure reçue avant un état inconnu. |
+| Âge maximal de mesure | `injection_max_age` | non | `300` | Âge maximal de la dernière mesure reçue avant un état inconnu ; une mesure périmée à zéro vaut absence d’export (raison `stale_measurement`), certaines sources cessant d’être republiées quand l’injection s’arrête. |
 | Entités de notification | `notify_service` | non | — | Entités `notify` recevant `notify.send_message` lors d’un changement de commande. |
 | Décalage du profil PRD3 | `prd3_day_offset` | non | `-2` | Jour utilisé pour choisir le profil PRD3 Enedis dans l’estimation ACI. |
 
