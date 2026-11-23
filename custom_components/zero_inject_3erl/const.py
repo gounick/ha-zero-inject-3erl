@@ -24,6 +24,7 @@ CONF_INJECTION_POWER_ENTITY = "injection_power_entity"
 CONF_INJECTION_THRESHOLD = "injection_threshold"
 CONF_INJECTION_DELAY = "injection_delay"
 CONF_INJECTION_MAX_AGE = "injection_max_age"
+CONF_STALE_BEHAVIOR = "stale_behavior"
 DEFAULT_INJECTION_THRESHOLD = 50.0
 DEFAULT_INJECTION_DELAY = 120
 DEFAULT_INJECTION_MAX_AGE = 300
@@ -39,6 +40,18 @@ DEFAULT_AGGREGATION_MODE = AGGREGATION_MODE_ACI
 
 ZERO_INJECT_MODES = ["Auto", "On", "Off"]
 MODE_UNIQUE_ID_SUFFIX = "mode"
+
+# Behavior of the Auto mode when the 3ERL signal is stale: keep the last
+# known signal, release the relay, or keep the relay engaged.
+STALE_BEHAVIOR_KEEP_LAST = "keep_last"
+STALE_BEHAVIOR_RELEASE = "release"
+STALE_BEHAVIOR_CURTAIL = "curtail"
+STALE_BEHAVIORS = [STALE_BEHAVIOR_KEEP_LAST, STALE_BEHAVIOR_RELEASE, STALE_BEHAVIOR_CURTAIL]
+DEFAULT_STALE_BEHAVIOR = STALE_BEHAVIOR_KEEP_LAST
+
+SERVICE_SET_BYPASS = "set_bypass"
+ATTR_BYPASS_ENABLE = "enable"
+ATTR_BYPASS_DURATION = "duration"
 
 # Default request timeout for the 3ERL public API.
 API_TIMEOUT_SECONDS = 30

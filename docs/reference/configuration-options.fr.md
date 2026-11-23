@@ -13,6 +13,7 @@ Tous les champs sont renseignés dans le flux de configuration et restent modifi
 | Âge maximal de mesure | `injection_max_age` | non | `300` | Âge maximal de la dernière mesure reçue avant un état inconnu ; une mesure périmée à zéro vaut absence d’export (raison `stale_measurement`), certaines sources cessant d’être republiées quand l’injection s’arrête. |
 | Entités de notification | `notify_service` | non | — | Entités `notify` recevant `notify.send_message` lors d’un changement de commande. |
 | Décalage du profil PRD3 | `prd3_day_offset` | non | `-2` | Jour utilisé pour choisir le profil PRD3 Enedis dans l’estimation ACI. |
+| Comportement sur données obsolètes | `stale_behavior` | non | `keep_last` | Ce que fait le mode Auto quand les dernières données 3ERL dépassent deux cycles de publication : `keep_last` suit le dernier signal connu, `release` relâche le relais, `curtail` le maintient engagé. Ne s’applique qu’en Auto ; les modes On/Off et le bypass manuel ne sont pas affectés. |
 
 ## Instance unique
 

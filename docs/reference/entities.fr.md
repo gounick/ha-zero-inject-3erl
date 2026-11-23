@@ -37,7 +37,7 @@ L’entité `commanded_limitation` utilise le suffixe d’ID unique `commanded_l
 
 ## Interrupteur de bypass manuel
 
-`switch.3erl_zero_injection_manual_bypass` suspend toutes les commandes de relais, y compris les modes forcés On/Off. Il ne change pas l’état physique du relais ; l’utilisateur pilote les switchs d’origine directement. Sa valeur est restaurée après redémarrage ou rechargement. Sa désactivation reprend immédiatement le mode sélectionné. Ce switch est indépendant de l’API.
+`switch.3erl_zero_injection_manual_bypass` suspend toutes les commandes de relais, y compris les modes forcés On/Off. Il ne change pas l’état physique du relais ; l’utilisateur pilote les switchs d’origine directement. Sa valeur est restaurée après redémarrage ou rechargement. Sa désactivation reprend immédiatement le mode sélectionné. Ce switch est indépendant de l’API. Le [service `set_bypass`](services.fr.md) peut l’activer pour une durée limitée.
 
 ## Visibilité par contrat
 

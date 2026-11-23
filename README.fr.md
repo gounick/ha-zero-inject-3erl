@@ -33,10 +33,10 @@ Intégration Home Assistant personnalisée qui surveille l’API française [3ER
   - **Off** — limitation désactivée.
 - Ne mesure ni n’estime l’énergie bridée ; la rémunération est publiée par 3ERL sur <https://dashboard.3erl.fr>.
 - Envoie des notifications optionnelles lorsque la commande change, sans prétendre confirmer le relais ou l’absence d’export.
-- Fournit un bypass manuel persistant qui suspend toutes les commandes, même pendant une panne 3ERL.
+- Fournit un bypass manuel persistant qui suspend toutes les commandes, même pendant une panne 3ERL ; le service `set_bypass` peut aussi l’activer pour une durée limitée.
 - Supervise séparément l’acquittement du relais et une mesure optionnelle d’export réseau, y compris ZLinky en W ou VA.
 - Masque les entités propres à ACI/ACC selon le contrat tout en préservant les choix manuels.
-- N’enregistre aucun service personnalisé ; le contrôle se fait par entités et options.
+- Réessaie les commandes de relais en désaccord toutes les 30 secondes et permet de choisir le comportement du relais quand les données 3ERL sont obsolètes.
 
 ## Systèmes PV pris en charge
 
@@ -96,7 +96,7 @@ Configurez une mesure positive d’export dans les options. Les mesures ZLinky a
 
 ## Services
 
-L’intégration n’enregistre aucun service personnalisé.
+`zero_inject_3erl.set_bypass` active le bypass manuel, éventuellement avec une `duration` en minutes après laquelle il se désactive automatiquement ; `enable: false` le désactive. Voir [services](docs/reference/services.fr.md).
 
 ## Tableau de bord
 

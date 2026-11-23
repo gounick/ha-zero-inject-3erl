@@ -26,11 +26,11 @@
 2. Operate the original relay switches directly and check grid export on the meter.
 3. Once the source is trustworthy, select the desired mode and disable bypass. The current mode and signal take effect immediately.
 
-Auto preserves the last known signal during API failures after a first successful response. Before any successful response it leaves relays unchanged. An unchanged flag is not necessarily a fault; check the API timestamp and data-stale diagnostic. Bypass is never enabled automatically.
+Auto preserves the last known signal during API failures after a first successful response, unless the stale-data behavior option is set to release or curtail the relay. Before any successful response it leaves relays unchanged. An unchanged flag is not necessarily a fault; check the API timestamp and data-stale diagnostic. Bypass is never enabled automatically.
 
 ## Relay control fault
 
-Inspect `unavailable_relays`, `misaligned_relays` and `relay_states`. Unavailability is reported immediately; mismatches get a 30-second grace period. On recovery, a relay is aligned with the current command, not a queued old demand. There is no dedicated one-minute retry timer. Local supervision checks every five seconds without sending commands.
+Inspect `unavailable_relays`, `misaligned_relays` and `relay_states`. Unavailability is reported immediately; mismatches get a 30-second grace period. Misaligned commands are retried every 30 seconds until the relay acknowledges, and each attempt times out after 30 seconds. On recovery, a relay is aligned with the current command, not a queued old demand. Local supervision checks every five seconds without sending commands.
 
 ## Grid-export diagnostic is unknown
 

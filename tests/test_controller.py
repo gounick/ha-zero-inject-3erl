@@ -2,13 +2,18 @@
 
 from __future__ import annotations
 
-from unittest.mock import AsyncMock
+import asyncio
+from datetime import timedelta
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from homeassistant.core import HomeAssistant, ServiceCall, State
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import entity_registry as er
+from homeassistant.util import dt as dt_util
 from pytest_homeassistant_custom_component.common import (
     MockConfigEntry,
+    async_fire_time_changed,
     async_mock_service,
     mock_restore_cache,
 )
@@ -16,10 +21,12 @@ from pytest_homeassistant_custom_component.common import (
 from custom_components.zero_inject_3erl.const import (
     CONF_NOTIFY_SERVICE,
     CONF_RELAY_ENTITY,
+    CONF_STALE_BEHAVIOR,
     DOMAIN,
+    RELAY_RETRY_INTERVAL,
 )
 
-from .conftest import RELAY_ENTITY, sample_api_response
+from .conftest import RELAY_ENTITY, fresh_heure_update, sample_api_response
 
 NOTIFY_ENTITY = "notify.phone"
 
@@ -219,3 +226,136 @@ async def test_multiple_notify_entities_are_all_called(
 
     notified = {call.data["entity_id"] for call in notify_calls}
     assert notified == {"notify.phone", "notify.telegram"}
+
+
+async def test_misaligned_relay_retried_on_interval(
+    hass: HomeAssistant,
+    config_entry: MockConfigEntry,
+    mock_fetch: AsyncMock,
+) -> None:
+    """Test that a failed relay command is retried on the retry interval."""
+    calls: list[ServiceCall] = []
+
+    async def failing_turn_on(call: ServiceCall) -> None:
+        calls.append(call)
+        raise HomeAssistantError("relay rejected the command")
+
+    hass.services.async_register("switch", "turn_on", failing_turn_on)
+    # Fresh data so the next coordinator refresh is ~18 minutes away and only
+    # the retry tracker can drive new attempts.
+    mock_fetch.return_value = sample_api_response(bridage=1, heure_update=fresh_heure_update())
+    hass.states.async_set(RELAY_ENTITY, "off")
+    assert await hass.config_entries.async_setup(config_entry.entry_id)
+    await hass.async_block_till_done()
+    assert len(calls) == 1
+
+    async_fire_time_changed(hass, dt_util.utcnow() + RELAY_RETRY_INTERVAL + timedelta(seconds=5))
+    await hass.async_block_till_done()
+    assert len(calls) == 2
+
+
+async def test_relay_command_timeout_does_not_block_retries(
+    hass: HomeAssistant,
+    config_entry: MockConfigEntry,
+    mock_fetch: AsyncMock,
+    turn_on_calls: list[ServiceCall],
+) -> None:
+    """Test that a hanging service call times out and retries continue."""
+    calls: list[ServiceCall] = []
+
+    async def hanging_turn_on(call: ServiceCall) -> None:
+        calls.append(call)
+        await asyncio.sleep(30)
+
+    hass.services.async_register("switch", "turn_on", hanging_turn_on)
+    mock_fetch.return_value = sample_api_response(bridage=1, heure_update=fresh_heure_update())
+    hass.states.async_set(RELAY_ENTITY, "off")
+    with patch("custom_components.zero_inject_3erl.controller.RELAY_COMMAND_TIMEOUT", 0.05):
+        assert await hass.config_entries.async_setup(config_entry.entry_id)
+        await hass.async_block_till_done()
+        assert len(calls) == 1
+        # Wait in real time for the first call to hit its timeout so the
+        # dedup slot is released before the retry interval fires.
+        await asyncio.sleep(0.2)
+
+        async_fire_time_changed(
+            hass, dt_util.utcnow() + RELAY_RETRY_INTERVAL + timedelta(seconds=5)
+        )
+        await hass.async_block_till_done()
+        assert len(calls) == 2
+
+
+async def test_stale_data_keeps_last_signal_by_default(
+    hass: HomeAssistant,
+    config_entry: MockConfigEntry,
+    mock_fetch: AsyncMock,
+    turn_on_calls: list[ServiceCall],
+) -> None:
+    """Test that stale data keeps following the last signal by default."""
+    mock_fetch.return_value = sample_api_response(bridage=1)
+    hass.states.async_set(RELAY_ENTITY, "off")
+    assert await hass.config_entries.async_setup(config_entry.entry_id)
+    await hass.async_block_till_done()
+
+    assert len(turn_on_calls) == 1
+
+
+async def test_stale_release_policy_releases_relay(
+    hass: HomeAssistant,
+    config_entry: MockConfigEntry,
+    mock_fetch: AsyncMock,
+    turn_on_calls: list[ServiceCall],
+    turn_off_calls: list[ServiceCall],
+) -> None:
+    """Test that the release policy frees the relay on stale data."""
+    hass.config_entries.async_update_entry(
+        config_entry,
+        options={**config_entry.data, CONF_STALE_BEHAVIOR: "release"},
+    )
+    mock_fetch.return_value = sample_api_response(bridage=1)
+    hass.states.async_set(RELAY_ENTITY, "on")
+    assert await hass.config_entries.async_setup(config_entry.entry_id)
+    await hass.async_block_till_done()
+
+    assert turn_on_calls == []
+    assert len(turn_off_calls) == 1
+
+
+async def test_stale_curtail_policy_activates_relay(
+    hass: HomeAssistant,
+    config_entry: MockConfigEntry,
+    mock_fetch: AsyncMock,
+    turn_on_calls: list[ServiceCall],
+) -> None:
+    """Test that the curtail policy activates the relay on stale data."""
+    hass.config_entries.async_update_entry(
+        config_entry,
+        options={**config_entry.data, CONF_STALE_BEHAVIOR: "curtail"},
+    )
+    mock_fetch.return_value = sample_api_response(bridage=0)
+    hass.states.async_set(RELAY_ENTITY, "off")
+    assert await hass.config_entries.async_setup(config_entry.entry_id)
+    await hass.async_block_till_done()
+
+    assert len(turn_on_calls) == 1
+
+
+async def test_stale_policy_ignored_when_data_is_fresh(
+    hass: HomeAssistant,
+    config_entry: MockConfigEntry,
+    mock_fetch: AsyncMock,
+    turn_on_calls: list[ServiceCall],
+    turn_off_calls: list[ServiceCall],
+) -> None:
+    """Test that the stale policy does not apply to fresh data."""
+    hass.config_entries.async_update_entry(
+        config_entry,
+        options={**config_entry.data, CONF_STALE_BEHAVIOR: "release"},
+    )
+    mock_fetch.return_value = sample_api_response(bridage=1, heure_update=fresh_heure_update())
+    hass.states.async_set(RELAY_ENTITY, "off")
+    assert await hass.config_entries.async_setup(config_entry.entry_id)
+    await hass.async_block_till_done()
+
+    assert len(turn_on_calls) == 1
+    assert turn_off_calls == []

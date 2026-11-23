@@ -23,13 +23,16 @@ from .const import (
     CONF_NOTIFY_SERVICE,
     CONF_PRD3_DAY_OFFSET,
     CONF_RELAY_ENTITY,
+    CONF_STALE_BEHAVIOR,
     DEFAULT_AGGREGATION_MODE,
     DEFAULT_API_URL,
     DEFAULT_INJECTION_DELAY,
     DEFAULT_INJECTION_MAX_AGE,
     DEFAULT_INJECTION_THRESHOLD,
     DEFAULT_PRD3_DAY_OFFSET,
+    DEFAULT_STALE_BEHAVIOR,
     DOMAIN,
+    STALE_BEHAVIORS,
 )
 from .helpers import entity_id_list, entry_settings, relay_entities
 
@@ -42,6 +45,7 @@ DEFAULT_VALUES: dict[str, Any] = {
     CONF_INJECTION_THRESHOLD: DEFAULT_INJECTION_THRESHOLD,
     CONF_INJECTION_DELAY: DEFAULT_INJECTION_DELAY,
     CONF_INJECTION_MAX_AGE: DEFAULT_INJECTION_MAX_AGE,
+    CONF_STALE_BEHAVIOR: DEFAULT_STALE_BEHAVIOR,
 }
 
 SETTINGS_SCHEMA = vol.Schema(
@@ -73,6 +77,13 @@ SETTINGS_SCHEMA = vol.Schema(
         vol.Optional(CONF_INJECTION_MAX_AGE): selector.NumberSelector(
             selector.NumberSelectorConfig(
                 min=1, max=3600, step=1, mode=selector.NumberSelectorMode.BOX
+            )
+        ),
+        vol.Optional(CONF_STALE_BEHAVIOR): selector.SelectSelector(
+            selector.SelectSelectorConfig(
+                options=STALE_BEHAVIORS,
+                mode=selector.SelectSelectorMode.DROPDOWN,
+                translation_key=CONF_STALE_BEHAVIOR,
             )
         ),
         vol.Optional(CONF_NOTIFY_SERVICE): selector.EntitySelector(

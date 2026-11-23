@@ -11,7 +11,8 @@
           "injection_power_entity": "Capteur d'injection réseau (optionnel, W/kW ou VA/kVA)",
           "injection_threshold": "Seuil d'injection (W ou VA selon la source)",
           "injection_delay": "Durée de confirmation de l'injection (secondes)",
-          "injection_max_age": "Âge maximal de la mesure d'injection (secondes)"
+          "injection_max_age": "Âge maximal de la mesure d'injection (secondes)",
+          "stale_behavior": "Comportement du relais quand les données 3ERL sont obsolètes"
         },
         "description": "Configurez le bridage zéro-injection 3ERL. L'intégration interroge l'API 3ERL et commande un relais pour limiter l'injection photovoltaïque sur demande. Choisissez 'aci' pour l'autoconsommation individuelle ou 'acc' pour l'autoconsommation collective. Le décalage PRD3 sert à estimer le prix journalier ACI quand Enedis n'a pas encore publié le profil du jour.",
         "title": "3ERL Zero-Injection"
@@ -34,7 +35,8 @@
           "injection_power_entity": "Capteur d'injection réseau (optionnel, W/kW ou VA/kVA)",
           "injection_threshold": "Seuil d'injection (W ou VA selon la source)",
           "injection_delay": "Durée de confirmation de l'injection (secondes)",
-          "injection_max_age": "Âge maximal de la mesure d'injection (secondes)"
+          "injection_max_age": "Âge maximal de la mesure d'injection (secondes)",
+          "stale_behavior": "Comportement du relais quand les données 3ERL sont obsolètes"
         },
         "description": "Mettez à jour les paramètres du bridage 3ERL.",
         "title": "3ERL Zero-Injection"
@@ -50,6 +52,29 @@
       "options": {
         "aci": "ACI - Autoconsommation individuelle (signal Bridage)",
         "acc": "ACC - Autoconsommation collective (signal Bridage_CDC)"
+      }
+    },
+    "stale_behavior": {
+      "options": {
+        "keep_last": "Continuer à suivre le dernier signal connu",
+        "release": "Relâcher le relais (arrêter de limiter l'injection)",
+        "curtail": "Maintenir le relais engagé (continuer à limiter l'injection)"
+      }
+    }
+  },
+  "services": {
+    "set_bypass": {
+      "name": "Définir le contournement manuel",
+      "description": "Active ou désactive le contournement manuel. Si une durée est indiquée, le contournement se désactive automatiquement à son expiration.",
+      "fields": {
+        "enable": {
+          "name": "Activer",
+          "description": "Active (par défaut) ou désactive le contournement."
+        },
+        "duration": {
+          "name": "Durée",
+          "description": "Durée optionnelle en minutes après laquelle le contournement se désactive automatiquement. Laisser vide pour un contournement persistant."
+        }
       }
     }
   },
@@ -217,7 +242,7 @@
           "description": {
             "name": "À propos",
             "state": {
-              "data_stale": "Actif quand les dernières données 3ERL ont plus de deux cycles de publication. Le relais continue de suivre le dernier signal connu jusqu'à l'arrivée de données fraîches."
+              "data_stale": "Actif quand les dernières données 3ERL ont plus de deux cycles de publication. Le relais applique alors le comportement configuré pour les données obsolètes."
             }
           }
         }

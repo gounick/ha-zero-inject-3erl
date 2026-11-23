@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from datetime import timedelta
 from typing import Any
 
 import voluptuous as vol
@@ -23,11 +24,21 @@ from homeassistant.const import (
 )
 from homeassistant.core import Event, HomeAssistant, callback
 from homeassistant.exceptions import HomeAssistantError
-from homeassistant.helpers.event import async_track_state_change_event
+from homeassistant.helpers.event import (
+    async_call_later,
+    async_track_state_change_event,
+    async_track_time_interval,
+)
 
 from .const import (
     CONF_NOTIFY_SERVICE,
+    CONF_STALE_BEHAVIOR,
+    DEFAULT_STALE_BEHAVIOR,
     DOMAIN,
+    RELAY_COMMAND_TIMEOUT,
+    RELAY_RETRY_INTERVAL,
+    STALE_BEHAVIOR_CURTAIL,
+    STALE_BEHAVIOR_KEEP_LAST,
 )
 from .coordinator import ThreeERLUpdateCoordinator
 from .helpers import (
@@ -76,9 +87,12 @@ class ZeroInjectController:
         settings = entry_settings(entry)
         self._relay_entities = relay_entities(settings)
         self._notify_services = entity_id_list(settings, CONF_NOTIFY_SERVICE)
+        self._stale_behavior = settings.get(CONF_STALE_BEHAVIOR, DEFAULT_STALE_BEHAVIOR)
         self._mode_entity_id: str | None = None
         self._unsub_coordinator: Any = None
         self._unsub_states: Any = None
+        self._unsub_retry: Any = None
+        self._unsub_bypass_timer: Any = None
         self._last_active_state: bool | None = None
         self._running = False
         self._command_tasks: dict[tuple[str, str], asyncio.Task[None]] = {}
@@ -97,6 +111,9 @@ class ZeroInjectController:
         self._unsub_states = async_track_state_change_event(
             self._hass, tracked, self._on_state_change
         )
+        self._unsub_retry = async_track_time_interval(
+            self._hass, self._on_retry_interval, RELAY_RETRY_INTERVAL
+        )
 
         self._apply_relay_state()
 
@@ -106,15 +123,22 @@ class ZeroInjectController:
         for task in self._command_tasks.values():
             task.cancel()
         self._command_tasks.clear()
-        for unsub in (self._unsub_coordinator, self._unsub_states):
+        self._cancel_bypass_timer()
+        for unsub in (self._unsub_coordinator, self._unsub_states, self._unsub_retry):
             if unsub is not None:
                 unsub()
         self._unsub_coordinator = None
         self._unsub_states = None
+        self._unsub_retry = None
 
     @callback
     def _on_state_change(self, event: Event) -> None:
         """Handle a change of the mode select or of the relay."""
+        self._apply_relay_state()
+
+    @callback
+    def _on_retry_interval(self, now) -> None:
+        """Re-align relays that stayed misaligned since the last attempt."""
         self._apply_relay_state()
 
     def _resolve_mode_entity_id(self) -> str | None:
@@ -140,9 +164,54 @@ class ZeroInjectController:
         if self.bypassed:
             return False
         mode = get_current_mode(self._hass, get_mode_entity_id(self._hass, self._entry.entry_id))
-        if mode == "Auto" and not (self._coordinator.data or {}).get("api_data"):
-            return None
+        if mode == "Auto":
+            if not (self._coordinator.data or {}).get("api_data"):
+                return None
+            if self._coordinator.data_stale and self._stale_behavior != STALE_BEHAVIOR_KEEP_LAST:
+                return self._stale_behavior == STALE_BEHAVIOR_CURTAIL
         return compute_commanded_limitation(mode, self._coordinator.curtailment_requested)
+
+    async def async_set_bypass(self, duration: float | None = None) -> None:
+        """Enable the manual bypass, optionally for a limited duration.
+
+        :param duration: Duration in minutes after which the bypass turns
+            itself off, or None for a persistent bypass.
+        :type duration: float | None
+        """
+        entity_id = get_bypass_entity_id(self._hass, self._entry.entry_id)
+        if entity_id is None:
+            raise HomeAssistantError("Manual bypass switch is not available")
+        self._cancel_bypass_timer()
+        await self._hass.services.async_call(
+            "switch", SERVICE_TURN_ON, {ATTR_ENTITY_ID: entity_id}, blocking=True
+        )
+        if duration is not None:
+            self._unsub_bypass_timer = async_call_later(
+                self._hass, timedelta(minutes=duration), self._async_bypass_expired
+            )
+
+    async def async_clear_bypass(self) -> None:
+        """Disable the manual bypass and cancel any pending expiry."""
+        self._cancel_bypass_timer()
+        entity_id = get_bypass_entity_id(self._hass, self._entry.entry_id)
+        if entity_id is None:
+            raise HomeAssistantError("Manual bypass switch is not available")
+        await self._hass.services.async_call(
+            "switch", SERVICE_TURN_OFF, {ATTR_ENTITY_ID: entity_id}, blocking=True
+        )
+
+    def _cancel_bypass_timer(self) -> None:
+        if self._unsub_bypass_timer is not None:
+            self._unsub_bypass_timer()
+            self._unsub_bypass_timer = None
+
+    @callback
+    def _async_bypass_expired(self, now) -> None:
+        """Turn the bypass switch off once its duration elapses."""
+        self._unsub_bypass_timer = None
+        self._hass.async_create_background_task(
+            self.async_clear_bypass(), f"{DOMAIN}_bypass_expired"
+        )
 
     def _compute_active_state(self) -> bool | None:
         """Compute whether zero-injection should be active.
@@ -163,7 +232,11 @@ class ZeroInjectController:
         if not self._running:
             return
         active = self._compute_active_state()
-        if self.bypassed or active is None:
+        if self.bypassed:
+            self._last_active_state = None
+            return
+        self._cancel_bypass_timer()
+        if active is None:
             self._last_active_state = None
             return
         if self._last_active_state is not None and self._last_active_state != active:
@@ -203,7 +276,7 @@ class ZeroInjectController:
             )
             self._command_tasks[(domain, service)] = task
             task.add_done_callback(
-                lambda finished, key=(domain, service): self._command_tasks.pop(key, None)
+                lambda _done, key=(domain, service): self._command_tasks.pop(key, None)
             )
 
     async def _async_call_service(
@@ -225,7 +298,15 @@ class ZeroInjectController:
             if self.bypassed or active is None or (service == SERVICE_TURN_ON) != active:
                 return
         try:
-            await self._hass.services.async_call(domain, service, service_data, blocking=True)
+            async with asyncio.timeout(RELAY_COMMAND_TIMEOUT):
+                await self._hass.services.async_call(domain, service, service_data, blocking=True)
+        except TimeoutError:
+            _LOGGER.warning(
+                "Timed out calling %s.%s on %s",
+                domain,
+                service,
+                service_data.get(ATTR_ENTITY_ID),
+            )
         except HomeAssistantError, vol.Invalid:
             _LOGGER.exception(
                 "Failed to call %s.%s on %s",

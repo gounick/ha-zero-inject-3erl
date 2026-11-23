@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+
+- New `zero_inject_3erl.set_bypass` service: enables the manual bypass, optionally for a limited `duration` in minutes after which it turns off automatically; `enable: false` disables it. Turning the bypass switch off by any means cancels a pending expiry.
+- New `stale_behavior` option controlling what Auto mode does when the latest 3ERL data is older than two publication cycles: `keep_last` (default, previous behavior), `release` (relay off) or `curtail` (relay on).
+- Misaligned relay commands are now retried every 30 seconds, so a relay that rejected a command or stayed misaligned without a state change is corrected without waiting for the next signal event. Each service call times out after 30 seconds instead of potentially blocking forever.
+- New `test_i18n` test enforcing the bilingual documentation rules: `en.json`/`fr.json` key parity and a `*.fr.md` twin for every tracked Markdown file.
+- `vulture` dead-code check in the prek hook suite, scoped to `custom_components` with a whitelist for Home Assistant lifecycle conventions.
+
 ### Changed
 
 - The ZLinky refresh example now reads `CCAIN` (active injected power) instead of `SINSTI` and is renamed `examples/zlinky-ccain-refresh.yaml`; troubleshooting and configuration docs point to the renamed file.

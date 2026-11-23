@@ -4,9 +4,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+import voluptuous as vol
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
-from homeassistant.core import HomeAssistant, callback
+from homeassistant.core import HomeAssistant, ServiceCall, callback
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
@@ -14,12 +15,15 @@ from homeassistant.helpers.storage import Store
 
 from .api import ThreeERLApiClient
 from .const import (
+    ATTR_BYPASS_DURATION,
+    ATTR_BYPASS_ENABLE,
     CONF_AGGREGATION_MODE,
     CONF_API_URL,
     DEFAULT_AGGREGATION_MODE,
     DEFAULT_API_URL,
     DOMAIN,
     MODE_UNIQUE_ID_SUFFIX,
+    SERVICE_SET_BYPASS,
 )
 from .controller import ZeroInjectController
 from .coordinator import ThreeERLPricingCoordinator, ThreeERLUpdateCoordinator
@@ -38,6 +42,13 @@ PLATFORMS: list[Platform] = [
 DEPENDENT_PLATFORMS = [
     platform for platform in PLATFORMS if platform not in (Platform.SELECT, Platform.SWITCH)
 ]
+
+SET_BYPASS_SCHEMA = vol.Schema(
+    {
+        vol.Optional(ATTR_BYPASS_ENABLE, default=True): cv.boolean,
+        vol.Optional(ATTR_BYPASS_DURATION): vol.All(vol.Coerce(float), vol.Range(min=1, max=1440)),
+    }
+)
 
 
 @dataclass
@@ -113,6 +124,17 @@ async def async_setup_entry(hass: HomeAssistant, entry: ThreeERLConfigEntry) -> 
 
     entry.async_on_unload(_cancel_pricing)
     entry.async_on_unload(entry.add_update_listener(_async_update_listener))
+
+    async def _handle_set_bypass(call: ServiceCall) -> None:
+        if call.data[ATTR_BYPASS_ENABLE]:
+            await controller.async_set_bypass(call.data.get(ATTR_BYPASS_DURATION))
+        else:
+            await controller.async_clear_bypass()
+
+    if not hass.services.has_service(DOMAIN, SERVICE_SET_BYPASS):
+        hass.services.async_register(
+            DOMAIN, SERVICE_SET_BYPASS, _handle_set_bypass, schema=SET_BYPASS_SCHEMA
+        )
     return True
 
 
@@ -136,6 +158,8 @@ async def async_unload_entry(hass: HomeAssistant, entry: ThreeERLConfigEntry) ->
     unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
     if not unload_ok:
         await entry.runtime_data.controller.async_setup()
+    elif hass.services.has_service(DOMAIN, SERVICE_SET_BYPASS):
+        hass.services.async_remove(DOMAIN, SERVICE_SET_BYPASS)
     return unload_ok
 
 

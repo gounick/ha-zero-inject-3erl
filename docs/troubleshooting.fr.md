@@ -27,11 +27,11 @@
 2. Pilotez les switchs d’origine et vérifiez l’export au compteur.
 3. Quand la source redevient fiable, choisissez le mode souhaité puis désactivez le bypass. Le mode et le signal courants sont appliqués immédiatement.
 
-En Auto, le dernier signal valide est conservé pendant une panne API après une première réponse réussie. Avant cette première réponse, les relais restent inchangés. Un drapeau qui ne change pas n’est pas forcément une panne : vérifiez l’horodatage API et le diagnostic de données périmées. Le bypass n’est jamais activé automatiquement.
+En Auto, le dernier signal valide est conservé pendant une panne API après une première réponse réussie, sauf si l’option de comportement sur données obsolètes est réglée pour relâcher ou maintenir le relais. Avant cette première réponse, les relais restent inchangés. Un drapeau qui ne change pas n’est pas forcément une panne : vérifiez l’horodatage API et le diagnostic de données périmées. Le bypass n’est jamais activé automatiquement.
 
 ## Défaut de pilotage des relais
 
-Inspectez `unavailable_relays`, `misaligned_relays` et `relay_states`. Une indisponibilité est signalée immédiatement ; un désaccord bénéficie de 30 secondes de tolérance. Au retour, le relais est aligné sur la commande actuelle, pas sur une ancienne demande. Il n’existe pas de minuteur de retry dédié d’une minute. La supervision locale vérifie l’état toutes les cinq secondes sans envoyer de commande.
+Inspectez `unavailable_relays`, `misaligned_relays` et `relay_states`. Une indisponibilité est signalée immédiatement ; un désaccord bénéficie de 30 secondes de tolérance. Les commandes en désaccord sont réessayées toutes les 30 secondes jusqu’à l’acquittement du relais, et chaque tentative expire après 30 secondes. Au retour, le relais est aligné sur la commande actuelle, pas sur une ancienne demande. La supervision locale vérifie l’état toutes les cinq secondes sans envoyer de commande.
 
 ## Le diagnostic d’export est inconnu
 

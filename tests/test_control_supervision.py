@@ -320,7 +320,9 @@ async def test_api_recovery_starts_control_without_reload(hass, config_entry, mo
     mock_fetch.return_value = sample_api_response(bridage=1)
     await tick(hass, freezer, 61)
     assert config_entry.runtime_data.coordinator.last_update_success
-    assert len(calls) == 1
+    # The mocked relay never acknowledges, so the periodic retry may issue
+    # the command more than once; what matters is that control resumed.
+    assert len(calls) >= 1
 
 
 async def test_options_save_during_api_outage(hass, config_entry, mock_fetch):

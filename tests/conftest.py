@@ -9,9 +9,12 @@ from unittest.mock import AsyncMock, patch
 import pytest
 from homeassistant.core import HomeAssistant
 from homeassistant.setup import async_setup_component
+from homeassistant.util import dt as dt_util
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.zero_inject_3erl.const import (
+    API_TIME_FORMAT,
+    API_TIMEZONE,
     CONF_AGGREGATION_MODE,
     CONF_API_URL,
     CONF_RELAY_ENTITY,
@@ -22,11 +25,13 @@ from custom_components.zero_inject_3erl.const import (
 RELAY_ENTITY = "switch.relay"
 
 
-def sample_api_response(bridage: int = 0) -> dict[str, Any]:
+def sample_api_response(bridage: int = 0, heure_update: str = "30/09/2026 15:00") -> dict[str, Any]:
     """Return a sample 3ERL API response.
 
     :param bridage: Value of the ACI curtailment flag.
     :type bridage: int
+    :param heure_update: Value of the ``Heure_Update`` publication time.
+    :type heure_update: str
     :return: Sample API payload.
     :rtype: dict[str, Any]
     """
@@ -34,11 +39,16 @@ def sample_api_response(bridage: int = 0) -> dict[str, Any]:
         "Bridage": bridage,
         "Bridage_CDC": 0,
         "Dernier_PREP": 150.0,
-        "Heure_Update": "30/09/2026 15:00",
+        "Heure_Update": heure_update,
         "PREP_Profile": "1+",
         "PRD4": 120.0,
         "Bridage_Long_Terme": 0,
     }
+
+
+def fresh_heure_update() -> str:
+    """Return a ``Heure_Update`` value timestamped at the current time."""
+    return dt_util.now(API_TIMEZONE).strftime(API_TIME_FORMAT)
 
 
 @pytest.fixture(autouse=True)
