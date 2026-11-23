@@ -39,6 +39,7 @@ from .const import (
     RELAY_RETRY_INTERVAL,
     STALE_BEHAVIOR_CURTAIL,
     STALE_BEHAVIOR_KEEP_LAST,
+    ZERO_INJECT_MODES,
 )
 from .coordinator import ThreeERLUpdateCoordinator
 from .helpers import (
@@ -93,6 +94,8 @@ class ZeroInjectController:
         self._unsub_states: Any = None
         self._unsub_retry: Any = None
         self._unsub_bypass_timer: Any = None
+        self._unsub_mode_timer: Any = None
+        self._mode_timer_expected: str | None = None
         self._last_active_state: bool | None = None
         self._running = False
         self._command_tasks: dict[tuple[str, str], asyncio.Task[None]] = {}
@@ -124,6 +127,7 @@ class ZeroInjectController:
             task.cancel()
         self._command_tasks.clear()
         self._cancel_bypass_timer()
+        self._cancel_mode_timer()
         for unsub in (self._unsub_coordinator, self._unsub_states, self._unsub_retry):
             if unsub is not None:
                 unsub()
@@ -134,6 +138,13 @@ class ZeroInjectController:
     @callback
     def _on_state_change(self, event: Event) -> None:
         """Handle a change of the mode select or of the relay."""
+        if (
+            event.data.get("entity_id") == self._mode_entity_id
+            and self._mode_timer_expected is not None
+        ):
+            new_state = event.data.get("new_state")
+            if new_state is None or new_state.state != self._mode_timer_expected:
+                self._cancel_mode_timer()
         self._apply_relay_state()
 
     @callback
@@ -212,6 +223,56 @@ class ZeroInjectController:
         self._hass.async_create_background_task(
             self.async_clear_bypass(), f"{DOMAIN}_bypass_expired"
         )
+
+    async def async_set_mode(self, option: str, duration: float | None = None) -> None:
+        """Select a zero-injection mode, optionally reverting to Auto later.
+
+        :param option: One of Auto, On, Off.
+        :type option: str
+        :param duration: Duration in minutes after which the mode reverts
+            to Auto, or None for a persistent selection.
+        :type duration: float | None
+        """
+        if option not in ZERO_INJECT_MODES:
+            raise HomeAssistantError(f"Unknown zero-injection mode: {option}")
+        entity_id = get_mode_entity_id(self._hass, self._entry.entry_id)
+        if entity_id is None:
+            raise HomeAssistantError("Zero-injection mode select is not available")
+        self._cancel_mode_timer()
+        await self._hass.services.async_call(
+            "select",
+            "select_option",
+            {ATTR_ENTITY_ID: entity_id, "option": option},
+            blocking=True,
+        )
+        if duration is not None:
+            self._mode_timer_expected = option
+            self._unsub_mode_timer = async_call_later(
+                self._hass, timedelta(minutes=duration), self._async_mode_expired
+            )
+
+    def _cancel_mode_timer(self) -> None:
+        if self._unsub_mode_timer is not None:
+            self._unsub_mode_timer()
+            self._unsub_mode_timer = None
+        self._mode_timer_expected = None
+
+    @callback
+    def _async_mode_expired(self, now) -> None:
+        """Revert the mode select to Auto once its duration elapses."""
+        self._unsub_mode_timer = None
+        self._mode_timer_expected = None
+        entity_id = self._mode_entity_id or get_mode_entity_id(self._hass, self._entry.entry_id)
+        if entity_id is not None:
+            self._hass.async_create_background_task(
+                self._hass.services.async_call(
+                    "select",
+                    "select_option",
+                    {ATTR_ENTITY_ID: entity_id, "option": "Auto"},
+                    blocking=True,
+                ),
+                f"{DOMAIN}_mode_expired",
+            )
 
     def _compute_active_state(self) -> bool | None:
         """Compute whether zero-injection should be active.

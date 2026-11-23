@@ -96,7 +96,10 @@ Configure a positive grid-export measurement in the integration options. ZLinky 
 
 ## Services
 
-`zero_inject_3erl.set_bypass` enables the manual bypass, optionally with a `duration` in minutes after which it turns off automatically; `enable: false` disables it. See [services](docs/reference/services.md).
+- `zero_inject_3erl.set_bypass` enables the manual bypass, optionally with a `duration` in minutes after which it turns off automatically; `enable: false` disables it.
+- `zero_inject_3erl.set_mode` selects the operating mode (`Auto`/`On`/`Off`), optionally with a `duration` after which it reverts to `Auto`.
+
+See [services](docs/reference/services.md). A diagnostic **Refresh 3ERL data** button also polls the API on demand.
 
 ## Dashboard
 

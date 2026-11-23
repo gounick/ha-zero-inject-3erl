@@ -76,6 +76,26 @@
           "description": "Optional duration in minutes after which the bypass turns off automatically. Omit for a persistent bypass."
         }
       }
+    },
+    "set_mode": {
+      "name": "Set zero-injection mode",
+      "description": "Selects the zero-injection mode. When a duration is given, the mode reverts to Auto once it elapses.",
+      "fields": {
+        "mode": {
+          "name": "Mode",
+          "description": "One of Auto, On or Off."
+        },
+        "duration": {
+          "name": "Duration",
+          "description": "Optional duration in minutes after which the mode reverts to Auto. Omit for a persistent selection."
+        }
+      }
+    }
+  },
+  "issues": {
+    "relay_control_fault": {
+      "title": "Relay control fault",
+      "description": "One or more zero-injection relays do not follow the commanded limitation. Unavailable: {unavailable}. Misaligned: {misaligned}. Check the relay connectivity and the manual bypass."
     }
   },
   "entity": {
@@ -205,6 +225,11 @@
     "switch": {
       "manual_bypass": {
         "name": "Manual bypass"
+      }
+    },
+    "button": {
+      "refresh": {
+        "name": "Refresh 3ERL data"
       }
     },
     "binary_sensor": {

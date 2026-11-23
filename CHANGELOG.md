@@ -11,6 +11,10 @@ All notable changes to this project will be documented in this file.
 - Misaligned relay commands are now retried every 30 seconds, so a relay that rejected a command or stayed misaligned without a state change is corrected without waiting for the next signal event. Each service call times out after 30 seconds instead of potentially blocking forever.
 - New `test_i18n` test enforcing the bilingual documentation rules: `en.json`/`fr.json` key parity and a `*.fr.md` twin for every tracked Markdown file.
 - `vulture` dead-code check in the prek hook suite, scoped to `custom_components` with a whitelist for Home Assistant lifecycle conventions.
+- New `zero_inject_3erl.set_mode` service: selects the operating mode, optionally with a `duration` in minutes after which it reverts to `Auto`. Changing the mode by any other means cancels the pending revert.
+- New diagnostic button `button.3erl_zero_injection_refresh_3erl_data` forcing an immediate poll of the 3ERL API.
+- The relay-control fault diagnostic now also raises a Repairs issue while the fault is active and clears it on recovery.
+- Agent skills under `.agents/skills/`: `/add_entity`, `/pr_review`, `/release_verify`, `/bugfix` and `/api_schema_audit`.
 
 ### Changed
 

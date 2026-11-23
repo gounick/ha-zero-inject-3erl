@@ -33,6 +33,12 @@ L’intégration ne crée aucun capteur d’énergie bridée.
 | `binary_sensor.3erl_zero_injection_grid_export_during_commanded_limitation` | mesure réseau optionnelle | Export au-dessus du seuil pendant une limitation commandée après la durée de confirmation. Inconnu si la mesure est absente, périmée ou invalide, sauf une mesure périmée à zéro qui reste inactive avec la raison `stale_measurement`. L’absence d’export ne prouve pas un bridage effectif. |
 | `binary_sensor.3erl_zero_injection_3erl_data_stale` | calculé | Actif quand les dernières données 3ERL dépassent deux cycles de publication. Attribut : `data_age_minutes`. |
 
+Le défaut de commande du relais crée aussi un ticket dans Réparations tant que le défaut est actif et l’efface au rétablissement.
+
+## Bouton
+
+`button.3erl_zero_injection_refresh_3erl_data` (diagnostic) interroge immédiatement l’API 3ERL, sans attendre la cadence adaptative. L’appuyer avec des données périmées retente la récupération ; le prochain poll reste dérivé du dernier `Heure_Update`.
+
 L’entité `commanded_limitation` utilise le suffixe d’ID unique `commanded_limitation`. Les notifications décrivent une commande, pas l’acquittement du relais ni la mesure réseau. Les switchs relais d’origine restent la source des états remontés ; aucune entité d’état relais dupliquée n’est créée. Une panne API ne rend pas la supervision locale ni les commandes manuelles indisponibles.
 
 ## Interrupteur de bypass manuel
@@ -64,6 +70,7 @@ ACI masque `Bridage_CDC` et le PRE+ RTE courant. ACC masque `Bridage`, le PRE+ j
 | ACI et ACC | `binary_sensor.3erl_zero_injection_3erl_data_stale` | Fraîcheur des données API. |
 | ACI et ACC | `select.3erl_zero_injection_zero_injection_mode` | Mode Auto / On / Off. |
 | ACI et ACC | `switch.3erl_zero_injection_manual_bypass` | Suspension manuelle des commandes. |
+| ACI et ACC | `button.3erl_zero_injection_refresh_3erl_data` | Force une interrogation immédiate de l’API 3ERL. |
 
 Les entités de rémunération estimée et d’énergie bridée ont été supprimées : la rémunération est publiée par 3ERL sur <https://dashboard.3erl.fr>, et l’énergie bridée ne peut pas être mesurée ou estimée de façon fiable à partir des entrées configurées. Aucune migration ni transfert de statistiques n’est fourni ; d’anciens registres peuvent rester indisponibles.
 

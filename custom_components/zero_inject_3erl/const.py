@@ -53,6 +53,9 @@ SERVICE_SET_BYPASS = "set_bypass"
 ATTR_BYPASS_ENABLE = "enable"
 ATTR_BYPASS_DURATION = "duration"
 
+SERVICE_SET_MODE = "set_mode"
+ATTR_MODE_OPTION = "mode"
+
 # Default request timeout for the 3ERL public API.
 API_TIMEOUT_SECONDS = 30
 

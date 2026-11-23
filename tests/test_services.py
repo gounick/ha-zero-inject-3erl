@@ -143,3 +143,71 @@ async def test_manual_bypass_off_cancels_pending_timer(
     async_fire_time_changed(hass, dt_util.utcnow() + timedelta(minutes=2))
     await hass.async_block_till_done()
     assert hass.states.is_state(bypass_id, "off")
+
+
+def _mode_entity_id(hass: HomeAssistant, entry: MockConfigEntry) -> str:
+    """Return the mode select entity id of the given entry."""
+    entity_id = er.async_get(hass).async_get_entity_id(
+        "select", DOMAIN, f"{DOMAIN}_{entry.entry_id}_mode"
+    )
+    assert entity_id is not None
+    return entity_id
+
+
+async def test_set_mode_service_changes_mode(
+    hass: HomeAssistant,
+    config_entry: MockConfigEntry,
+    mock_fetch: AsyncMock,
+) -> None:
+    """Test that set_mode switches the mode select."""
+    mock_fetch.return_value = sample_api_response(bridage=0)
+    await _setup(hass, config_entry)
+
+    await hass.services.async_call(DOMAIN, "set_mode", {"mode": "On"}, blocking=True)
+    await hass.async_block_till_done()
+
+    mode_id = _mode_entity_id(hass, config_entry)
+    assert hass.states.is_state(mode_id, "On")
+
+
+async def test_set_mode_with_duration_reverts_to_auto(
+    hass: HomeAssistant,
+    config_entry: MockConfigEntry,
+    mock_fetch: AsyncMock,
+) -> None:
+    """Test that a timed mode override reverts to Auto."""
+    mock_fetch.return_value = sample_api_response(bridage=0)
+    await _setup(hass, config_entry)
+
+    await hass.services.async_call(DOMAIN, "set_mode", {"mode": "On", "duration": 1}, blocking=True)
+    await hass.async_block_till_done()
+    mode_id = _mode_entity_id(hass, config_entry)
+    assert hass.states.is_state(mode_id, "On")
+
+    async_fire_time_changed(hass, dt_util.utcnow() + timedelta(minutes=1, seconds=5))
+    await hass.async_block_till_done()
+    assert hass.states.is_state(mode_id, "Auto")
+
+
+async def test_manual_mode_change_cancels_timed_mode(
+    hass: HomeAssistant,
+    config_entry: MockConfigEntry,
+    mock_fetch: AsyncMock,
+) -> None:
+    """Test that a manual mode change cancels a pending revert."""
+    mock_fetch.return_value = sample_api_response(bridage=0)
+    await _setup(hass, config_entry)
+
+    await hass.services.async_call(DOMAIN, "set_mode", {"mode": "On", "duration": 1}, blocking=True)
+    mode_id = _mode_entity_id(hass, config_entry)
+    await hass.services.async_call(
+        "select",
+        "select_option",
+        {"entity_id": mode_id, "option": "Off"},
+        blocking=True,
+    )
+    await hass.async_block_till_done()
+
+    async_fire_time_changed(hass, dt_util.utcnow() + timedelta(minutes=2))
+    await hass.async_block_till_done()
+    assert hass.states.is_state(mode_id, "Off")

@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from homeassistant.components.binary_sensor import BinarySensorDeviceClass, BinarySensorEntity
 from homeassistant.const import EntityCategory
 from homeassistant.core import callback
+from homeassistant.helpers import issue_registry as ir
 from homeassistant.helpers.event import async_track_state_change_event, async_track_time_interval
 from homeassistant.util import dt as dt_util
 
@@ -112,6 +113,7 @@ class ThreeERLSupervisionSensor(BinarySensorEntity):
             self._attr_extra_state_attributes["reason"] = (
                 "manual_bypass" if self._controller.bypassed else "no_signal"
             )
+            self._sync_repair_issue([], [])
             return
         now = dt_util.utcnow()
         self._since = {entity_id: self._since.get(entity_id, now) for entity_id in misaligned}
@@ -125,6 +127,27 @@ class ThreeERLSupervisionSensor(BinarySensorEntity):
             if self._attr_is_on
             else "aligned_or_settling"
         )
+        self._sync_repair_issue(unavailable, misaligned)
+
+    def _sync_repair_issue(self, unavailable: list[str], misaligned: list[str]) -> None:
+        """Create or clear the Repairs entry matching the fault state."""
+        issue_id = f"relay_control_fault_{self._entry.entry_id}"
+        if self._attr_is_on:
+            ir.async_create_issue(
+                self.hass,
+                DOMAIN,
+                issue_id,
+                is_fixable=False,
+                learn_more_url="https://github.com/gounick/ha-zero-inject-3erl/blob/main/docs/troubleshooting.md#relay-control-fault",
+                severity=ir.IssueSeverity.WARNING,
+                translation_key="relay_control_fault",
+                translation_placeholders={
+                    "unavailable": ", ".join(unavailable) or "-",
+                    "misaligned": ", ".join(misaligned) or "-",
+                },
+            )
+        else:
+            ir.async_delete_issue(self.hass, DOMAIN, issue_id)
 
     def _read_injection(self) -> tuple[float | None, str]:
         entity_id = self._settings.get(CONF_INJECTION_POWER_ENTITY)
