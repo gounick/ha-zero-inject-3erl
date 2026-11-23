@@ -55,6 +55,9 @@ sections:
         entity: sensor.3erl_zero_injection_last_rte_update
         name: Last update
       - type: tile
+        entity: button.3erl_zero_injection_refresh_3erl_data
+        name: Refresh 3ERL data
+      - type: tile
         entity: switch.3erl_zero_injection_manual_bypass
         name: Manual bypass
       - type: tile
@@ -67,6 +70,64 @@ sections:
         entity: switch.your_relay_switch
         name: Relay
         # <-- replace with your relay switch entity
+
+  - type: grid
+    cards:
+      - type: heading
+        heading: Timed overrides
+        icon: mdi:timer-outline
+
+      # Services accept a duration in minutes (1–1440): set_bypass turns the
+      # bypass off at expiry, set_mode reverts to Auto. Any manual change
+      # (switch off, select change, another service call) cancels the timer.
+      - type: grid
+        columns: 2
+        square: false
+        cards:
+          - type: button
+            name: Bypass 1 h
+            icon: mdi:pause-circle
+            tap_action:
+              action: perform-action
+              perform_action: zero_inject_3erl.set_bypass
+              data:
+                enable: true
+                duration: 60
+              confirmation:
+                text: Suspend automatic control for 1 hour?
+          - type: button
+            name: Bypass 4 h
+            icon: mdi:pause-circle-outline
+            tap_action:
+              action: perform-action
+              perform_action: zero_inject_3erl.set_bypass
+              data:
+                enable: true
+                duration: 240
+              confirmation:
+                text: Suspend automatic control for 4 hours?
+          - type: button
+            name: Force On 30 min
+            icon: mdi:power
+            tap_action:
+              action: perform-action
+              perform_action: zero_inject_3erl.set_mode
+              data:
+                mode: "On"
+                duration: 30
+              confirmation:
+                text: Force On for 30 minutes, then back to Auto?
+          - type: button
+            name: Force Off 30 min
+            icon: mdi:power-off
+            tap_action:
+              action: perform-action
+              perform_action: zero_inject_3erl.set_mode
+              data:
+                mode: "Off"
+                duration: 30
+              confirmation:
+                text: Force Off for 30 minutes, then back to Auto?
 
   - type: grid
     column_span: 2
