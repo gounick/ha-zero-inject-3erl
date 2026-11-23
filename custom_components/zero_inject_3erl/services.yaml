@@ -20,9 +20,9 @@ set_mode:
       selector:
         select:
           options:
-            - Auto
-            - On
-            - Off
+            - "Auto"
+            - "On"
+            - "Off"
     duration:
       required: false
       selector:
