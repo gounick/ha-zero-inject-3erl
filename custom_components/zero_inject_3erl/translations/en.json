@@ -11,7 +11,8 @@
           "injection_power_entity": "Grid export sensor (optional, W/kW or VA/kVA)",
           "injection_threshold": "Export threshold (W or VA according to source)",
           "injection_delay": "Export confirmation duration (seconds)",
-          "injection_max_age": "Maximum export measurement age (seconds)"
+          "injection_max_age": "Maximum export measurement age (seconds)",
+          "stale_behavior": "Relay behavior when 3ERL data is stale"
         },
         "description": "Set up 3ERL zero-injection curtailment. The integration polls the 3ERL API and controls a relay to limit PV export when requested. Choose 'aci' for individual self-consumption or 'acc' for collective self-consumption. The PRD3 day offset is used to estimate the daily ACI price when Enedis has not yet published today's profile.",
         "title": "3ERL Zero-Injection"
@@ -34,7 +35,8 @@
           "injection_power_entity": "Grid export sensor (optional, W/kW or VA/kVA)",
           "injection_threshold": "Export threshold (W or VA according to source)",
           "injection_delay": "Export confirmation duration (seconds)",
-          "injection_max_age": "Maximum export measurement age (seconds)"
+          "injection_max_age": "Maximum export measurement age (seconds)",
+          "stale_behavior": "Relay behavior when 3ERL data is stale"
         },
         "description": "Update the 3ERL zero-injection settings.",
         "title": "3ERL Zero-Injection"
@@ -50,6 +52,29 @@
       "options": {
         "aci": "ACI - Individual self-consumption (Bridage signal)",
         "acc": "ACC - Collective self-consumption (Bridage_CDC signal)"
+      }
+    },
+    "stale_behavior": {
+      "options": {
+        "keep_last": "Keep following the last known signal",
+        "release": "Release the relay (stop limiting export)",
+        "curtail": "Keep the relay engaged (keep limiting export)"
+      }
+    }
+  },
+  "services": {
+    "set_bypass": {
+      "name": "Set manual bypass",
+      "description": "Turns the manual bypass on or off. When a duration is given, the bypass turns off automatically once it elapses.",
+      "fields": {
+        "enable": {
+          "name": "Enable",
+          "description": "Turn the bypass on (default) or off."
+        },
+        "duration": {
+          "name": "Duration",
+          "description": "Optional duration in minutes after which the bypass turns off automatically. Omit for a persistent bypass."
+        }
       }
     }
   },
@@ -217,7 +242,7 @@
           "description": {
             "name": "About",
             "state": {
-              "data_stale": "On when the latest 3ERL data is older than two publication cycles. The relay keeps following the last known signal until fresh data arrives."
+              "data_stale": "On when the latest 3ERL data is older than two publication cycles. The relay then follows the configured stale-data behavior."
             }
           }
         }

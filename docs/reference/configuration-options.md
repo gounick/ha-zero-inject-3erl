@@ -13,6 +13,7 @@ All fields are set during the config flow and remain editable under **Settings �
 | Maximum export measurement age | `injection_max_age` | no | `300` | Seconds since HA last received a report from the source. Older, missing or invalid measurements produce an unknown diagnostic, except a stale reading of zero which is treated as no export (reason `stale_measurement`) — some sources, such as the Linky TIC production labels, stop being republished once injection ends. Range 1–3600. |
 | Notification entities | `notify_service` | no | — | One or more `notify` entities that each receive a message through `notify.send_message` when the active state changes. |
 | PRD3 profile day offset | `prd3_day_offset` | no | `-2` | Day offset used to pick the Enedis PRD3 profile when estimating the daily ACI price. `-2` uses the profile from two days ago because Enedis publishes yesterday's profile late in the morning. |
+| Relay behavior on stale data | `stale_behavior` | no | `keep_last` | What Auto mode does when the latest 3ERL data is older than two publication cycles: `keep_last` follows the last known signal, `release` turns the relay off, `curtail` keeps it on. Applies only in Auto; On/Off modes and the manual bypass are unaffected. |
 
 ## Single instance
 

@@ -37,7 +37,7 @@ The commanded-limitation entity uses the unique ID suffix `commanded_limitation`
 
 ## Manual bypass switch
 
-`switch.3erl_zero_injection_manual_bypass` suspends all relay commands when on, including forced On/Off modes. It does not change the physical relay state; users operate the original relay switches directly. Its value is restored after restart or reload. Turning it off immediately resumes the selected mode. This switch is independent of API availability.
+`switch.3erl_zero_injection_manual_bypass` suspends all relay commands when on, including forced On/Off modes. It does not change the physical relay state; users operate the original relay switches directly. Its value is restored after restart or reload. Turning it off immediately resumes the selected mode. This switch is independent of API availability. The [`set_bypass` service](services.md) can enable it for a limited duration.
 
 ## Contract visibility
 

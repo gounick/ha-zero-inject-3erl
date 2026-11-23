@@ -43,9 +43,29 @@ select = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-# pytest relies on plain assert statements.
-"tests/**" = ["S101"]
+# pytest relies on plain assert statements; repo hygiene tests invoke git.
+"tests/**" = ["S101", "S603", "S607"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
+
+[tool.vulture]
+min_confidence = 60
+paths = ["custom_components"]
+# Home Assistant resolves lifecycle hooks, entity properties and platform
+# setup functions through its own framework calls; they are never invoked
+# directly from the integration code.
+ignore_names = [
+    "async_*",
+    "_async_update_data",
+    "available",
+    "is_on",
+    "native_value",
+    "extra_state_attributes",
+    "_attr_*",
+    "CONFIG_SCHEMA",
+    "VERSION",
+    "MINOR_VERSION",
+    "ZeroInject3ERLConfigFlow",
+]

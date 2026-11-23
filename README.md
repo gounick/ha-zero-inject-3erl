@@ -33,10 +33,10 @@ Home Assistant custom integration that monitors the French [3ERL](https://3erl.f
   - **Off** — relay forced OFF (zero-injection disabled).
 - Does not measure or estimate curtailed energy; 3ERL publishes remuneration on <https://dashboard.3erl.fr>.
 - Sends optional notifications when the limitation command changes, without claiming relay acknowledgement or zero grid export.
-- Provides a persistent manual-bypass switch that releases all relay control, even during a 3ERL outage.
+- Provides a persistent manual-bypass switch that releases all relay control, even during a 3ERL outage; the `set_bypass` service can also enable it for a limited duration.
 - Separately supervises relay acknowledgement and optional grid-export measurements, including ZLinky W or VA sensors.
 - Hides contract-specific ACI/ACC entities when they do not apply, while preserving manual visibility overrides.
-- Exposes no custom services; all user control is through entities and options.
+- Retries misaligned relay commands every 30 seconds and lets you choose the relay behavior when 3ERL data goes stale.
 
 ## Supported PV systems
 
@@ -96,7 +96,7 @@ Configure a positive grid-export measurement in the integration options. ZLinky 
 
 ## Services
 
-The integration does not register custom services.
+`zero_inject_3erl.set_bypass` enables the manual bypass, optionally with a `duration` in minutes after which it turns off automatically; `enable: false` disables it. See [services](docs/reference/services.md).
 
 ## Dashboard
 
