@@ -10,6 +10,7 @@
 [![hassfest](https://github.com/gounick/ha-zero-inject-3erl/actions/workflows/hassfest.yaml/badge.svg?branch=main)](https://github.com/gounick/ha-zero-inject-3erl/actions/workflows/hassfest.yaml)
 [![HACS](https://github.com/gounick/ha-zero-inject-3erl/actions/workflows/hacs.yml/badge.svg?branch=main)](https://github.com/gounick/ha-zero-inject-3erl/actions/workflows/hacs.yml)
 [![Tests](https://github.com/gounick/ha-zero-inject-3erl/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/gounick/ha-zero-inject-3erl/actions/workflows/tests.yml)
+[![codecov](https://codecov.io/gh/gounick/ha-zero-inject-3erl/branch/main/graph/badge.svg)](https://codecov.io/gh/gounick/ha-zero-inject-3erl)
 [![Security](https://github.com/gounick/ha-zero-inject-3erl/actions/workflows/security.yml/badge.svg?branch=main)](https://github.com/gounick/ha-zero-inject-3erl/actions/workflows/security.yml)
 [![Release checks](https://github.com/gounick/ha-zero-inject-3erl/actions/workflows/release.yml/badge.svg?branch=main)](https://github.com/gounick/ha-zero-inject-3erl/actions/workflows/release.yml)
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/hacs/integration)
