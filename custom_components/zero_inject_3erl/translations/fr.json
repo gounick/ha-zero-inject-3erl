@@ -76,6 +76,26 @@
           "description": "Durée optionnelle en minutes après laquelle le contournement se désactive automatiquement. Laisser vide pour un contournement persistant."
         }
       }
+    },
+    "set_mode": {
+      "name": "Définir le mode zéro-injection",
+      "description": "Sélectionne le mode zéro-injection. Si une durée est indiquée, le mode revient à Auto à son expiration.",
+      "fields": {
+        "mode": {
+          "name": "Mode",
+          "description": "Auto, On ou Off."
+        },
+        "duration": {
+          "name": "Durée",
+          "description": "Durée optionnelle en minutes après laquelle le mode revient à Auto. Laisser vide pour une sélection persistante."
+        }
+      }
+    }
+  },
+  "issues": {
+    "relay_control_fault": {
+      "title": "Défaut de commande du relais",
+      "description": "Un ou plusieurs relais de limitation ne suivent pas la commande. Indisponibles : {unavailable}. En désaccord : {misaligned}. Vérifiez la connectivité du relais et le contournement manuel."
     }
   },
   "entity": {
@@ -205,6 +225,11 @@
     "switch": {
       "manual_bypass": {
         "name": "Bypass manuel"
+      }
+    },
+    "button": {
+      "refresh": {
+        "name": "Rafraîchir les données 3ERL"
       }
     },
     "binary_sensor": {

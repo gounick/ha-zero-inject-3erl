@@ -99,6 +99,7 @@ custom_components/zero_inject_3erl/
 ├── binary_sensor.py  # Demande ACI/ACC, commande, fraîcheur, supervision
 ├── supervision.py    # Diagnostics relais et export réseau
 ├── select.py         # Sélecteur de mode
+├── button.py         # Bouton de rafraîchissement manuel
 ├── switch.py         # Bypass manuel persistant
 ├── visibility.py     # Visibilité ACI/ACC avec choix utilisateur
 ├── services.yaml     # Définitions de services

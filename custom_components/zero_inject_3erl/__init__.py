@@ -17,6 +17,7 @@ from .api import ThreeERLApiClient
 from .const import (
     ATTR_BYPASS_DURATION,
     ATTR_BYPASS_ENABLE,
+    ATTR_MODE_OPTION,
     CONF_AGGREGATION_MODE,
     CONF_API_URL,
     DEFAULT_AGGREGATION_MODE,
@@ -24,6 +25,8 @@ from .const import (
     DOMAIN,
     MODE_UNIQUE_ID_SUFFIX,
     SERVICE_SET_BYPASS,
+    SERVICE_SET_MODE,
+    ZERO_INJECT_MODES,
 )
 from .controller import ZeroInjectController
 from .coordinator import ThreeERLPricingCoordinator, ThreeERLUpdateCoordinator
@@ -34,6 +37,7 @@ CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
 PLATFORMS: list[Platform] = [
     Platform.BINARY_SENSOR,
+    Platform.BUTTON,
     Platform.SELECT,
     Platform.SENSOR,
     Platform.SWITCH,
@@ -46,6 +50,13 @@ DEPENDENT_PLATFORMS = [
 SET_BYPASS_SCHEMA = vol.Schema(
     {
         vol.Optional(ATTR_BYPASS_ENABLE, default=True): cv.boolean,
+        vol.Optional(ATTR_BYPASS_DURATION): vol.All(vol.Coerce(float), vol.Range(min=1, max=1440)),
+    }
+)
+
+SET_MODE_SCHEMA = vol.Schema(
+    {
+        vol.Required(ATTR_MODE_OPTION): vol.In(ZERO_INJECT_MODES),
         vol.Optional(ATTR_BYPASS_DURATION): vol.All(vol.Coerce(float), vol.Range(min=1, max=1440)),
     }
 )
@@ -135,6 +146,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: ThreeERLConfigEntry) -> 
         hass.services.async_register(
             DOMAIN, SERVICE_SET_BYPASS, _handle_set_bypass, schema=SET_BYPASS_SCHEMA
         )
+
+    async def _handle_set_mode(call: ServiceCall) -> None:
+        await controller.async_set_mode(
+            call.data[ATTR_MODE_OPTION], call.data.get(ATTR_BYPASS_DURATION)
+        )
+
+    if not hass.services.has_service(DOMAIN, SERVICE_SET_MODE):
+        hass.services.async_register(
+            DOMAIN, SERVICE_SET_MODE, _handle_set_mode, schema=SET_MODE_SCHEMA
+        )
     return True
 
 
@@ -158,8 +179,10 @@ async def async_unload_entry(hass: HomeAssistant, entry: ThreeERLConfigEntry) ->
     unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
     if not unload_ok:
         await entry.runtime_data.controller.async_setup()
-    elif hass.services.has_service(DOMAIN, SERVICE_SET_BYPASS):
-        hass.services.async_remove(DOMAIN, SERVICE_SET_BYPASS)
+    else:
+        for service in (SERVICE_SET_BYPASS, SERVICE_SET_MODE):
+            if hass.services.has_service(DOMAIN, service):
+                hass.services.async_remove(DOMAIN, service)
     return unload_ok
 
 

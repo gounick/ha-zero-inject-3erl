@@ -140,6 +140,24 @@ async def test_relay_fault_delayed_and_unavailability_immediate(
     assert hass.states.get(fault_id).attributes["unavailable_relays"] == [RELAY_ENTITY]
 
 
+async def test_relay_fault_raises_and_clears_repair_issue(
+    hass, config_entry, mock_fetch, freezer, issue_registry
+):
+    mock_fetch.return_value = sample_api_response(bridage=1)
+    hass.states.async_set(RELAY_ENTITY, "off")
+    await setup(hass, config_entry)
+
+    issue_id = f"relay_control_fault_{config_entry.entry_id}"
+    assert (DOMAIN, issue_id) not in issue_registry.issues
+
+    await tick(hass, freezer, 31)
+    assert (DOMAIN, issue_id) in issue_registry.issues
+
+    hass.states.async_set(RELAY_ENTITY, "on")
+    await hass.async_block_till_done()
+    assert (DOMAIN, issue_id) not in issue_registry.issues
+
+
 @pytest.mark.parametrize("unit,value", [("W", "100"), ("kW", "0.1"), ("VA", "100"), ("kVA", "0.1")])
 async def test_injection_observation_delayed(hass, config_entry, mock_fetch, freezer, unit, value):
     hass.config_entries.async_update_entry(

@@ -33,6 +33,12 @@ The integration does not create a curtailed-energy sensor.
 | `binary_sensor.3erl_zero_injection_grid_export_during_commanded_limitation` | optional grid measurement | Export above the threshold during commanded limitation after the confirmation duration. Unknown for missing, stale or invalid measurements, except a stale reading of zero which reports off with reason `stale_measurement`. Attributes include source, timestamp, measured export, W/VA unit, threshold, delay and reason. No export observed does not prove effective curtailment. |
 | `binary_sensor.3erl_zero_injection_3erl_data_stale` | computed | True when the latest 3ERL data is older than two publication cycles. Attribute: `data_age_minutes`. |
 
+The relay-control fault also raises a Repairs issue while the fault is active and clears it on recovery.
+
+## Button
+
+`button.3erl_zero_injection_refresh_3erl_data` (diagnostic) polls the 3ERL API immediately, bypassing the adaptive schedule. Pressing it while data is stale retries the fetch; the next poll is still derived from the last `Heure_Update`.
+
 The commanded-limitation entity uses the unique ID suffix `commanded_limitation` and the default entity ID shown above. Legacy active-state entities are not migrated. Notifications describe the command, not relay acknowledgement or grid measurements. The original relay switches remain the source of reported relay states; no duplicate relay-state entity is created. API failures do not make local supervision or manual controls unavailable.
 
 ## Manual bypass switch
@@ -64,6 +70,7 @@ ACI hides `Bridage_CDC` and current RTE PRE+. ACC hides `Bridage`, the locally e
 | ACI and ACC | `binary_sensor.3erl_zero_injection_3erl_data_stale` | API data freshness diagnostic. |
 | ACI and ACC | `select.3erl_zero_injection_zero_injection_mode` | Auto / On / Off operating mode. |
 | ACI and ACC | `switch.3erl_zero_injection_manual_bypass` | Suspends all relay commands. |
+| ACI and ACC | `button.3erl_zero_injection_refresh_3erl_data` | Forces an immediate poll of the 3ERL API. |
 
 
 The estimated-remuneration and curtailed-energy entities were removed: remuneration is published by 3ERL on <https://dashboard.3erl.fr>, while curtailed energy cannot be measured or estimated reliably from the configured inputs. No legacy entity migration or history/statistics transfer is performed. Old registry entries may remain unavailable after deployment.

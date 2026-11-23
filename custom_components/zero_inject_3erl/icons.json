@@ -53,6 +53,11 @@
       "mode": {
         "default": "mdi:tune"
       }
+    },
+    "button": {
+      "refresh": {
+        "default": "mdi:refresh"
+      }
     }
   }
 }

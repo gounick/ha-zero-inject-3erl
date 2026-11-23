@@ -11,6 +11,10 @@ Tous les changements notables du projet sont documentés dans ce fichier.
 - Les commandes de relais en désaccord sont désormais réessayées toutes les 30 secondes : un relais qui refuse une commande ou reste en désaccord sans changement d’état est corrigé sans attendre le prochain signal. Chaque appel de service expire après 30 secondes au lieu de pouvoir bloquer indéfiniment.
 - Nouveau test `test_i18n` imposant les règles de documentation bilingue : parité des clés `en.json`/`fr.json` et jumeau `*.fr.md` pour chaque fichier Markdown suivi.
 - Vérification de code mort `vulture` dans la suite de hooks prek, limitée à `custom_components` avec une liste blanche pour les conventions du cycle de vie Home Assistant.
+- Nouveau service `zero_inject_3erl.set_mode` : sélectionne le mode de fonctionnement, éventuellement avec une `duration` en minutes après laquelle il revient à `Auto`. Changer le mode par un autre moyen annule le retour programmé.
+- Nouveau bouton diagnostic `button.3erl_zero_injection_refresh_3erl_data` forçant une interrogation immédiate de l’API 3ERL.
+- Le diagnostic de défaut de commande du relais crée désormais un ticket dans Réparations tant que le défaut est actif et l’efface au rétablissement.
+- Skills agent sous `.agents/skills/` : `/add_entity`, `/pr_review`, `/release_verify`, `/bugfix` et `/api_schema_audit`.
 
 ### Modifié
 
