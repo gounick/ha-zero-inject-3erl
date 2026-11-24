@@ -41,6 +41,13 @@ DEFAULT_AGGREGATION_MODE = AGGREGATION_MODE_ACI
 ZERO_INJECT_MODES = ["Auto", "On", "Off"]
 MODE_UNIQUE_ID_SUFFIX = "mode"
 
+BYPASS_DURATION_UNIQUE_ID_SUFFIX = "bypass_duration"
+FORCED_MODE_DURATION_UNIQUE_ID_SUFFIX = "forced_mode_duration"
+DURATION_MIN_MINUTES = 1
+DURATION_MAX_MINUTES = 1440
+DEFAULT_BYPASS_DURATION_MINUTES = 60
+DEFAULT_FORCED_MODE_DURATION_MINUTES = 30
+
 # Behavior of the Auto mode when the 3ERL signal is stale: keep the last
 # known signal, release the relay, or keep the relay engaged.
 STALE_BEHAVIOR_KEEP_LAST = "keep_last"

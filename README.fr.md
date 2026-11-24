@@ -97,8 +97,8 @@ Configurez une mesure positive d’export dans les options. Les mesures ZLinky a
 
 ## Services
 
-- `zero_inject_3erl.set_bypass` active le bypass manuel, éventuellement avec une `duration` en minutes après laquelle il se désactive automatiquement ; `enable: false` le désactive.
-- `zero_inject_3erl.set_mode` sélectionne le mode (`Auto`/`On`/`Off`), éventuellement avec une `duration` après laquelle il revient à `Auto`.
+- `zero_inject_3erl.set_bypass` active le bypass manuel pour une durée limitée — `duration` explicite en minutes, ou le contrôle **Durée du bypass** si omise ; `enable: false` le désactive.
+- `zero_inject_3erl.set_mode` sélectionne le mode (`Auto`/`On`/`Off`) pour une durée limitée — `duration` explicite, ou le contrôle **Durée du mode forcé** — après laquelle il revient à `Auto`.
 
 Voir [services](docs/reference/services.fr.md). Un bouton diagnostic **Rafraîchir les données 3ERL** interroge aussi l’API à la demande.
 

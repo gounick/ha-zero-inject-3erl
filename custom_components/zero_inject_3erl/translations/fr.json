@@ -73,7 +73,7 @@
         },
         "duration": {
           "name": "Durée",
-          "description": "Durée optionnelle en minutes après laquelle le contournement se désactive automatiquement. Laisser vide pour un contournement persistant."
+          "description": "Durée optionnelle en minutes après laquelle le contournement se désactive automatiquement. Laisser vide pour utiliser la Durée du bypass configurée. Pour un contournement persistant, utiliser l'interrupteur."
         }
       }
     },
@@ -87,7 +87,7 @@
         },
         "duration": {
           "name": "Durée",
-          "description": "Durée optionnelle en minutes après laquelle le mode revient à Auto. Laisser vide pour une sélection persistante."
+          "description": "Durée optionnelle en minutes après laquelle le mode revient à Auto. Laisser vide pour utiliser la Durée du mode forcé configurée. Pour une sélection persistante, utiliser le sélecteur de mode."
         }
       }
     }
@@ -230,6 +230,14 @@
     "button": {
       "refresh": {
         "name": "Rafraîchir les données 3ERL"
+      }
+    },
+    "number": {
+      "bypass_duration": {
+        "name": "Durée du bypass"
+      },
+      "forced_mode_duration": {
+        "name": "Durée du mode forcé"
       }
     },
     "binary_sensor": {

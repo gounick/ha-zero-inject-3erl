@@ -18,11 +18,15 @@ from .const import (
     ATTR_BYPASS_DURATION,
     ATTR_BYPASS_ENABLE,
     ATTR_MODE_OPTION,
+    BYPASS_DURATION_UNIQUE_ID_SUFFIX,
     CONF_AGGREGATION_MODE,
     CONF_API_URL,
     DEFAULT_AGGREGATION_MODE,
     DEFAULT_API_URL,
+    DEFAULT_BYPASS_DURATION_MINUTES,
+    DEFAULT_FORCED_MODE_DURATION_MINUTES,
     DOMAIN,
+    FORCED_MODE_DURATION_UNIQUE_ID_SUFFIX,
     MODE_UNIQUE_ID_SUFFIX,
     SERVICE_SET_BYPASS,
     SERVICE_SET_MODE,
@@ -30,7 +34,7 @@ from .const import (
 )
 from .controller import ZeroInjectController
 from .coordinator import ThreeERLPricingCoordinator, ThreeERLUpdateCoordinator
-from .helpers import entry_settings
+from .helpers import configured_duration, entry_settings
 from .visibility import sync_contract_visibility
 
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
@@ -38,6 +42,7 @@ CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 PLATFORMS: list[Platform] = [
     Platform.BINARY_SENSOR,
     Platform.BUTTON,
+    Platform.NUMBER,
     Platform.SELECT,
     Platform.SENSOR,
     Platform.SWITCH,
@@ -138,7 +143,15 @@ async def async_setup_entry(hass: HomeAssistant, entry: ThreeERLConfigEntry) -> 
 
     async def _handle_set_bypass(call: ServiceCall) -> None:
         if call.data[ATTR_BYPASS_ENABLE]:
-            await controller.async_set_bypass(call.data.get(ATTR_BYPASS_DURATION))
+            duration = call.data.get(ATTR_BYPASS_DURATION)
+            if duration is None:
+                duration = configured_duration(
+                    hass,
+                    entry.entry_id,
+                    BYPASS_DURATION_UNIQUE_ID_SUFFIX,
+                    DEFAULT_BYPASS_DURATION_MINUTES,
+                )
+            await controller.async_set_bypass(duration)
         else:
             await controller.async_clear_bypass()
 
@@ -148,9 +161,15 @@ async def async_setup_entry(hass: HomeAssistant, entry: ThreeERLConfigEntry) -> 
         )
 
     async def _handle_set_mode(call: ServiceCall) -> None:
-        await controller.async_set_mode(
-            call.data[ATTR_MODE_OPTION], call.data.get(ATTR_BYPASS_DURATION)
-        )
+        duration = call.data.get(ATTR_BYPASS_DURATION)
+        if duration is None:
+            duration = configured_duration(
+                hass,
+                entry.entry_id,
+                FORCED_MODE_DURATION_UNIQUE_ID_SUFFIX,
+                DEFAULT_FORCED_MODE_DURATION_MINUTES,
+            )
+        await controller.async_set_mode(call.data[ATTR_MODE_OPTION], duration)
 
     if not hass.services.has_service(DOMAIN, SERVICE_SET_MODE):
         hass.services.async_register(

@@ -100,6 +100,7 @@ custom_components/zero_inject_3erl/
 ├── supervision.py    # Relay-control fault and grid-export diagnostics
 ├── select.py         # Mode selector
 ├── button.py         # Manual refresh button
+├── number.py         # Configurable durations for timed services
 ├── switch.py         # Persistent manual-bypass switch
 ├── visibility.py     # ACI/ACC entity visibility with user overrides
 ├── services.yaml     # Service definitions

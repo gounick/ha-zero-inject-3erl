@@ -191,6 +191,48 @@ def mode_unique_id(entry_id: str) -> str:
     return f"{DOMAIN}_{entry_id}_{MODE_UNIQUE_ID_SUFFIX}"
 
 
+def duration_unique_id(entry_id: str, suffix: str) -> str:
+    """Return the unique id of a duration number of a config entry.
+
+    :param entry_id: Config entry id.
+    :type entry_id: str
+    :param suffix: Unique id suffix (``BYPASS_DURATION_UNIQUE_ID_SUFFIX`` or
+        ``FORCED_MODE_DURATION_UNIQUE_ID_SUFFIX``).
+    :type suffix: str
+    :return: Unique id, prefixed with the domain like every other entity.
+    :rtype: str
+    """
+    return f"{DOMAIN}_{entry_id}_{suffix}"
+
+
+def configured_duration(hass: HomeAssistant, entry_id: str, suffix: str, default: float) -> float:
+    """Return the duration configured in a duration number, or the default.
+
+    :param hass: Home Assistant instance.
+    :type hass: HomeAssistant
+    :param entry_id: Config entry id.
+    :type entry_id: str
+    :param suffix: Unique id suffix of the duration number.
+    :type suffix: str
+    :param default: Fallback duration in minutes.
+    :type default: float
+    :return: Configured duration in minutes.
+    :rtype: float
+    """
+    entity_id = er.async_get(hass).async_get_entity_id(
+        "number", DOMAIN, duration_unique_id(entry_id, suffix)
+    )
+    if entity_id is None:
+        return default
+    state = hass.states.get(entity_id)
+    if state is None:
+        return default
+    try:
+        return float(state.state)
+    except ValueError:
+        return default
+
+
 def parse_heure_update(heure_update: Any) -> datetime | None:
     """Parse the ``Heure_Update`` field of the 3ERL API.
 

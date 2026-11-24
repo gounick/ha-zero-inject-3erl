@@ -58,6 +58,14 @@
       "refresh": {
         "default": "mdi:refresh"
       }
+    },
+    "number": {
+      "bypass_duration": {
+        "default": "mdi:timer-pause-outline"
+      },
+      "forced_mode_duration": {
+        "default": "mdi:timer-cog-outline"
+      }
     }
   }
 }

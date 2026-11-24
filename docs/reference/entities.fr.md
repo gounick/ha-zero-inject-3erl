@@ -39,6 +39,15 @@ Le défaut de commande du relais crée aussi un ticket dans Réparations tant qu
 
 `button.3erl_zero_injection_refresh_3erl_data` (diagnostic) interroge immédiatement l’API 3ERL, sans attendre la cadence adaptative. L’appuyer avec des données périmées retente la récupération ; le prochain poll reste dérivé du dernier `Heure_Update`.
 
+## Contrôles de durée
+
+Deux entités `number` configurent la durée par défaut (en minutes, 1–1440) appliquée par les services temporisés quand `duration` est omis. Leurs valeurs persistent au redémarrage.
+
+- `number.3erl_zero_injection_duree_du_bypass` (défaut 60) — utilisée par `set_bypass`.
+- `number.3erl_zero_injection_duree_du_mode_force` (défaut 30) — utilisée par `set_mode`.
+
+Un `duration` explicite dans l'appel de service prévaut sur la valeur configurée.
+
 L’entité `commanded_limitation` utilise le suffixe d’ID unique `commanded_limitation`. Les notifications décrivent une commande, pas l’acquittement du relais ni la mesure réseau. Les switchs relais d’origine restent la source des états remontés ; aucune entité d’état relais dupliquée n’est créée. Une panne API ne rend pas la supervision locale ni les commandes manuelles indisponibles.
 
 ## Interrupteur de bypass manuel
@@ -71,6 +80,8 @@ ACI masque `Bridage_CDC` et le PRE+ RTE courant. ACC masque `Bridage`, le PRE+ j
 | ACI et ACC | `select.3erl_zero_injection_zero_injection_mode` | Mode Auto / On / Off. |
 | ACI et ACC | `switch.3erl_zero_injection_manual_bypass` | Suspension manuelle des commandes. |
 | ACI et ACC | `button.3erl_zero_injection_refresh_3erl_data` | Force une interrogation immédiate de l’API 3ERL. |
+| ACI et ACC | `number.3erl_zero_injection_duree_du_bypass` | Durée par défaut du service `set_bypass`. |
+| ACI et ACC | `number.3erl_zero_injection_duree_du_mode_force` | Durée par défaut du service `set_mode`. |
 
 Les entités de rémunération estimée et d’énergie bridée ont été supprimées : la rémunération est publiée par 3ERL sur <https://dashboard.3erl.fr>, et l’énergie bridée ne peut pas être mesurée ou estimée de façon fiable à partir des entrées configurées. Aucune migration ni transfert de statistiques n’est fourni ; d’anciens registres peuvent rester indisponibles.
 
