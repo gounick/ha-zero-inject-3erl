@@ -4,6 +4,8 @@ Tous les changements notables du projet sont documentés dans ce fichier.
 
 ## [Non publié]
 
+## [0.3.0] - 2026-11-24
+
 ### Ajouté
 
 - Nouveau service `zero_inject_3erl.set_bypass` : active le bypass manuel, éventuellement pour une `duration` en minutes après laquelle il se désactive automatiquement ; `enable: false` le désactive. Désactiver l’interrupteur de bypass par n’importe quel moyen annule une expiration en attente.
