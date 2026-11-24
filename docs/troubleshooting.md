@@ -30,7 +30,7 @@ Auto preserves the last known signal during API failures after a first successfu
 
 ## Relay control fault
 
-Inspect `unavailable_relays`, `misaligned_relays` and `relay_states`. Unavailability is reported immediately; mismatches get a 30-second grace period. Misaligned commands are retried every 30 seconds until the relay acknowledges, and each attempt times out after 30 seconds. On recovery, a relay is aligned with the current command, not a queued old demand. Local supervision checks every five seconds without sending commands.
+Inspect `unavailable_relays`, `misaligned_relays` and `relay_states`. Unavailability is reported immediately; mismatches get a 30-second grace period. Misaligned commands are retried every 30 seconds until the relay acknowledges, and each attempt times out after 30 seconds. On recovery, a relay is aligned with the current command, not a queued old demand. Local supervision checks every five seconds without sending commands. While the fault is active, a Repairs issue is also raised under **Settings → Repairs** and cleared on recovery.
 
 ## Grid-export diagnostic is unknown
 
