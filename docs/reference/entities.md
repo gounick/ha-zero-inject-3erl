@@ -39,6 +39,15 @@ The relay-control fault also raises a Repairs issue while the fault is active an
 
 `button.3erl_zero_injection_refresh_3erl_data` (diagnostic) polls the 3ERL API immediately, bypassing the adaptive schedule. Pressing it while data is stale retries the fetch; the next poll is still derived from the last `Heure_Update`.
 
+## Duration controls
+
+Two `number` entities configure the default duration (in minutes, 1–1440) applied by the timed services when `duration` is omitted. Their values persist across restarts.
+
+- `number.3erl_zero_injection_bypass_duration` (default 60) — used by `set_bypass`.
+- `number.3erl_zero_injection_forced_mode_duration` (default 30) — used by `set_mode`.
+
+An explicit `duration` in a service call overrides the configured value.
+
 The commanded-limitation entity uses the unique ID suffix `commanded_limitation` and the default entity ID shown above. Legacy active-state entities are not migrated. Notifications describe the command, not relay acknowledgement or grid measurements. The original relay switches remain the source of reported relay states; no duplicate relay-state entity is created. API failures do not make local supervision or manual controls unavailable.
 
 ## Manual bypass switch
@@ -71,6 +80,8 @@ ACI hides `Bridage_CDC` and current RTE PRE+. ACC hides `Bridage`, the locally e
 | ACI and ACC | `select.3erl_zero_injection_zero_injection_mode` | Auto / On / Off operating mode. |
 | ACI and ACC | `switch.3erl_zero_injection_manual_bypass` | Suspends all relay commands. |
 | ACI and ACC | `button.3erl_zero_injection_refresh_3erl_data` | Forces an immediate poll of the 3ERL API. |
+| ACI and ACC | `number.3erl_zero_injection_bypass_duration` | Default duration for the `set_bypass` service. |
+| ACI and ACC | `number.3erl_zero_injection_forced_mode_duration` | Default duration for the `set_mode` service. |
 
 
 The estimated-remuneration and curtailed-energy entities were removed: remuneration is published by 3ERL on <https://dashboard.3erl.fr>, while curtailed energy cannot be measured or estimated reliably from the configured inputs. No legacy entity migration or history/statistics transfer is performed. Old registry entries may remain unavailable after deployment.

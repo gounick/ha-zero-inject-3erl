@@ -211,3 +211,58 @@ async def test_manual_mode_change_cancels_timed_mode(
     async_fire_time_changed(hass, dt_util.utcnow() + timedelta(minutes=2))
     await hass.async_block_till_done()
     assert hass.states.is_state(mode_id, "Off")
+
+
+def _number_entity_id(hass: HomeAssistant, entry: MockConfigEntry, suffix: str) -> str:
+    """Return the number entity id for the given duration suffix."""
+    entity_id = er.async_get(hass).async_get_entity_id(
+        "number", DOMAIN, f"{DOMAIN}_{entry.entry_id}_{suffix}"
+    )
+    assert entity_id is not None
+    return entity_id
+
+
+async def test_set_bypass_uses_configured_duration(
+    hass: HomeAssistant,
+    config_entry: MockConfigEntry,
+    mock_fetch: AsyncMock,
+) -> None:
+    """Test that a bypass without explicit duration uses the configured value."""
+    mock_fetch.return_value = sample_api_response(bridage=1)
+    await _setup(hass, config_entry)
+
+    number_id = _number_entity_id(hass, config_entry, "bypass_duration")
+    await hass.services.async_call(
+        "number", "set_value", {"entity_id": number_id, "value": 2}, blocking=True
+    )
+    await hass.services.async_call(DOMAIN, "set_bypass", {}, blocking=True)
+    await hass.async_block_till_done()
+    bypass_id = _bypass_entity_id(hass, config_entry)
+    assert hass.states.is_state(bypass_id, "on")
+
+    async_fire_time_changed(hass, dt_util.utcnow() + timedelta(minutes=2, seconds=5))
+    await hass.async_block_till_done()
+    assert hass.states.is_state(bypass_id, "off")
+
+
+async def test_set_mode_uses_configured_duration(
+    hass: HomeAssistant,
+    config_entry: MockConfigEntry,
+    mock_fetch: AsyncMock,
+) -> None:
+    """Test that set_mode without explicit duration uses the configured value."""
+    mock_fetch.return_value = sample_api_response(bridage=0)
+    await _setup(hass, config_entry)
+
+    number_id = _number_entity_id(hass, config_entry, "forced_mode_duration")
+    await hass.services.async_call(
+        "number", "set_value", {"entity_id": number_id, "value": 2}, blocking=True
+    )
+    await hass.services.async_call(DOMAIN, "set_mode", {"mode": "On"}, blocking=True)
+    await hass.async_block_till_done()
+    mode_id = _mode_entity_id(hass, config_entry)
+    assert hass.states.is_state(mode_id, "On")
+
+    async_fire_time_changed(hass, dt_util.utcnow() + timedelta(minutes=2, seconds=5))
+    await hass.async_block_till_done()
+    assert hass.states.is_state(mode_id, "Auto")

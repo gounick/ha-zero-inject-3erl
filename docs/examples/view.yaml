@@ -77,57 +77,54 @@ sections:
         heading: Timed overrides
         icon: mdi:timer-outline
 
-      # Services accept a duration in minutes (1–1440): set_bypass turns the
-      # bypass off at expiry, set_mode reverts to Auto. Any manual change
+      # The duration numbers hold the default duration used by the timed
+      # services when duration is omitted. An explicit duration in the
+      # service call overrides them (1–1440 minutes). Any manual change
       # (switch off, select change, another service call) cancels the timer.
+      - type: tile
+        entity: number.3erl_zero_injection_bypass_duration
+        name: Bypass duration
+        features:
+          - type: numeric-input
+      - type: tile
+        entity: number.3erl_zero_injection_forced_mode_duration
+        name: Forced mode duration
+        features:
+          - type: numeric-input
       - type: grid
         columns: 2
         square: false
         cards:
           - type: button
-            name: Bypass 1 h
+            name: Timed bypass
             icon: mdi:pause-circle
             tap_action:
               action: perform-action
               perform_action: zero_inject_3erl.set_bypass
               data:
                 enable: true
-                duration: 60
               confirmation:
-                text: Suspend automatic control for 1 hour?
+                text: Suspend automatic control for the configured duration?
           - type: button
-            name: Bypass 4 h
-            icon: mdi:pause-circle-outline
-            tap_action:
-              action: perform-action
-              perform_action: zero_inject_3erl.set_bypass
-              data:
-                enable: true
-                duration: 240
-              confirmation:
-                text: Suspend automatic control for 4 hours?
-          - type: button
-            name: Force On 30 min
+            name: Force On (timed)
             icon: mdi:power
             tap_action:
               action: perform-action
               perform_action: zero_inject_3erl.set_mode
               data:
                 mode: "On"
-                duration: 30
               confirmation:
-                text: Force On for 30 minutes, then back to Auto?
+                text: Force On for the configured duration, then back to Auto?
           - type: button
-            name: Force Off 30 min
+            name: Force Off (timed)
             icon: mdi:power-off
             tap_action:
               action: perform-action
               perform_action: zero_inject_3erl.set_mode
               data:
                 mode: "Off"
-                duration: 30
               confirmation:
-                text: Force Off for 30 minutes, then back to Auto?
+                text: Force Off for the configured duration, then back to Auto?
 
   - type: grid
     column_span: 2

@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 - New `test_i18n` test enforcing the bilingual documentation rules: `en.json`/`fr.json` key parity and a `*.fr.md` twin for every tracked Markdown file.
 - `vulture` dead-code check in the prek hook suite, scoped to `custom_components` with a whitelist for Home Assistant lifecycle conventions.
 - New `zero_inject_3erl.set_mode` service: selects the operating mode, optionally with a `duration` in minutes after which it reverts to `Auto`. Changing the mode by any other means cancels the pending revert.
+- New `number` entities `bypass_duration` (default 60 min) and `forced_mode_duration` (default 30 min), persisted across restarts: `set_bypass` and `set_mode` now apply them when `duration` is omitted. Persistent bypass/mode remains available through the switch and select entities.
 - New diagnostic button `button.3erl_zero_injection_refresh_3erl_data` forcing an immediate poll of the 3ERL API.
 - The relay-control fault diagnostic now also raises a Repairs issue while the fault is active and clears it on recovery.
 - Agent skills under `.agents/skills/`: `/add_entity`, `/pr_review`, `/release_verify`, `/bugfix` and `/api_schema_audit`.

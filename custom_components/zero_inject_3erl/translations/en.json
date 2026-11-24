@@ -73,7 +73,7 @@
         },
         "duration": {
           "name": "Duration",
-          "description": "Optional duration in minutes after which the bypass turns off automatically. Omit for a persistent bypass."
+          "description": "Optional duration in minutes after which the bypass turns off automatically. Omit to use the configured Bypass duration. For a persistent bypass, use the switch instead."
         }
       }
     },
@@ -87,7 +87,7 @@
         },
         "duration": {
           "name": "Duration",
-          "description": "Optional duration in minutes after which the mode reverts to Auto. Omit for a persistent selection."
+          "description": "Optional duration in minutes after which the mode reverts to Auto. Omit to use the configured Forced mode duration. For a persistent selection, use the mode select instead."
         }
       }
     }
@@ -230,6 +230,14 @@
     "button": {
       "refresh": {
         "name": "Refresh 3ERL data"
+      }
+    },
+    "number": {
+      "bypass_duration": {
+        "name": "Bypass duration"
+      },
+      "forced_mode_duration": {
+        "name": "Forced mode duration"
       }
     },
     "binary_sensor": {
