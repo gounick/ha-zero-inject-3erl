@@ -31,7 +31,7 @@ En Auto, le dernier signal valide est conservé pendant une panne API après une
 
 ## Défaut de pilotage des relais
 
-Inspectez `unavailable_relays`, `misaligned_relays` et `relay_states`. Une indisponibilité est signalée immédiatement ; un désaccord bénéficie de 30 secondes de tolérance. Les commandes en désaccord sont réessayées toutes les 30 secondes jusqu’à l’acquittement du relais, et chaque tentative expire après 30 secondes. Au retour, le relais est aligné sur la commande actuelle, pas sur une ancienne demande. La supervision locale vérifie l’état toutes les cinq secondes sans envoyer de commande.
+Inspectez `unavailable_relays`, `misaligned_relays` et `relay_states`. Une indisponibilité est signalée immédiatement ; un désaccord bénéficie de 30 secondes de tolérance. Les commandes en désaccord sont réessayées toutes les 30 secondes jusqu’à l’acquittement du relais, et chaque tentative expire après 30 secondes. Au retour, le relais est aligné sur la commande actuelle, pas sur une ancienne demande. La supervision locale vérifie l’état toutes les cinq secondes sans envoyer de commande. Tant que le défaut est actif, un ticket est aussi créé dans **Paramètres → Réparations** et effacé au rétablissement.
 
 ## Le diagnostic d’export est inconnu
 
